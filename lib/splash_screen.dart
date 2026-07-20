@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
-import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
-import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
 class SplashScreen extends StatefulWidget {
