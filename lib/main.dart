@@ -1,37 +1,96 @@
-import 'package:flutter/material.dart';
-import 'package:stevenako_flutter/home_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'package:auto_animated/auto_animated.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:stevenako_flutter/splash_screen.dart';
+import '/helpers/all_routes.dart';
+import 'helpers/di.dart';
+import 'helpers/language.dart';
+import 'helpers/navigation_service.dart';
+import 'helpers/register_provider.dart';
+import 'networks/dio/dio.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  await GetStorage.init();
+  diSetup();
+  // initiInternetChecker();
+  DioSingleton.instance.create();
+
+  // Set status bar color
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+  );
+  runApp(
+    const MyApp(),
+    // DevicePreview(
+    //   enabled: true, // Set to false to disable device preview
+    //   builder: (context) => const MyApp(), // Your app widget
+    // ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+    // rotation();
+    // setInitValue();
+    return MultiProvider(
+      providers: providers,
+      child: AnimateIfVisibleWrapper(
+        showItemInterval: const Duration(milliseconds: 150),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return const UtillScreenMobile();
+          },
+        ),
       ),
-      home: HomeScreen(),
+    );
+  }
+}
+
+class UtillScreenMobile extends StatelessWidget {
+  const UtillScreenMobile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      designSize: const Size(412, 827),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (_, child) {
+        return GetMaterialApp(
+          showPerformanceOverlay: false,
+          theme: ThemeData(
+            scaffoldBackgroundColor: Colors.black,
+            canvasColor: Colors.black,
+            useMaterial3: false,
+          ),
+          debugShowCheckedModeBanner: false,
+          translations: LocalString(),
+          builder: (context, widget) {
+            return MediaQuery(data: MediaQuery.of(context), child: widget!);
+          },
+          navigatorKey: NavigationService.navigatorKey,
+          onGenerateRoute: RouteGenerator.generateRoute,
+          // home: Loading(),
+          home: SplashScreen(),
+        );
+      },
     );
   }
 }
