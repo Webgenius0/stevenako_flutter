@@ -122,7 +122,7 @@ final class RouteGenerator {
       case Routes.navigationMenu:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const NavigationMenu(),
+                widget:   NavigationMenu(),
                 settings: settings,
               )
             : CupertinoPageRoute(builder: (context) => const NavigationMenu());

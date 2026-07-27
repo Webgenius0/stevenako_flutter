@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+
+import 'navigation_menu.dart';
 
 class OnboardingScreenThree extends StatefulWidget {
   const OnboardingScreenThree({super.key});
@@ -137,7 +141,9 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           // Inner action button (navigates to welcome/auth screen)
           GestureDetector(
             onTap: () {
-              NavigationService.navigateToReplacement(Routes.loginScreen);
+              // NavigationService.navigateToReplacement(Routes.loginScreen);
+              // NavigationService.navigateToReplacement(Routes.loginScreen);
+              Get.to(NavigationMenu());
             },
             child: Container(
               width: 64.w,

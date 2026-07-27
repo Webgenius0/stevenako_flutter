@@ -34,7 +34,7 @@ class _LoadingState extends State<Loading> {
     if (_isLoading) {
       return const SplashScreen();
     } else {
-      return const NavigationMenu();
+      return   NavigationMenu();
     }
     // else {
     //   bool isLoggedIn = appData.read(kKeyIsLoggedIn) ?? false;
