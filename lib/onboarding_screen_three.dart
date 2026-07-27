@@ -142,6 +142,8 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           GestureDetector(
             onTap: () {
               // NavigationService.navigateToReplacement(Routes.loginScreen);
+              NavigationService.navigateToReplacement(Routes.allChatScreen);
+
               // NavigationService.navigateToReplacement(Routes.loginScreen);
               Get.to(NavigationMenu());
             },

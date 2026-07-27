@@ -1,16 +1,14 @@
-
 import 'dart:ui';
-
 
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 
 import 'features/home/presentation/home_screen.dart';
 import 'features/explore/presentation/explore_screen.dart';
 import 'features/home/presentation/upload_post_screen.dart';
 import 'features/home/presentation/video_upload_screen.dart';
-import 'features/message/presentation/message_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 
 // Bouncy Tactile Floating Action Button
@@ -18,11 +16,7 @@ class TactileFAB extends StatefulWidget {
   final bool isMenuOpen;
   final VoidCallback onTap;
 
-  const TactileFAB({
-    super.key,
-    required this.isMenuOpen,
-    required this.onTap,
-  });
+  const TactileFAB({super.key, required this.isMenuOpen, required this.onTap});
 
   @override
   State<TactileFAB> createState() => _TactileFABState();
@@ -65,12 +59,10 @@ class _TactileFABState extends State<TactileFAB> {
           child: AnimatedRotation(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOutBack,
-            turns: widget.isMenuOpen ? 0.375 : 0.0, // Rotate + 135 degrees to form x
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-              size: 28,
-            ),
+            turns: widget.isMenuOpen
+                ? 0.375
+                : 0.0, // Rotate + 135 degrees to form x
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
         ),
       ),
@@ -95,7 +87,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
   final List<Widget> screens = [
     const HomeScreen(),
     const ExploreScreen(),
-    const MessageScreen(),
+    const AllChatScreen(),
     const ProfileScreen(),
   ];
 
@@ -121,7 +113,6 @@ class _NavigationMenuState extends State<NavigationMenu> {
   }
 
   Widget _buildMenuButton(IconData icon, String text) {
-
     return Container(
       width: 220,
       height: 48,
@@ -170,19 +161,13 @@ class _NavigationMenuState extends State<NavigationMenu> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1E1B2E),
-                  Color(0xFF0F0E17),
-                ],
+                colors: [Color(0xFF1E1B2E), Color(0xFF0F0E17)],
               ),
             ),
           ),
           SafeArea(
             bottom: false,
-            child: IndexedStack(
-              index: _currentIndex,
-              children: screens,
-            ),
+            child: IndexedStack(index: _currentIndex, children: screens),
           ),
           // Backdrop blur/dim when FAB menu is open
           IgnorePointer(
@@ -199,9 +184,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                 child: ClipRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-                    child: Container(
-                      color: Colors.black.withOpacity(0.4),
-                    ),
+                    child: Container(color: Colors.black.withOpacity(0.4)),
                   ),
                 ),
               ),
@@ -226,7 +209,9 @@ class _NavigationMenuState extends State<NavigationMenu> {
                       });
                     },
                     child: _buildMenuButton(
-                        Icons.videocam_outlined, 'Upload Video'),
+                      Icons.videocam_outlined,
+                      'Upload Video',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   StaggeredMenuItem(
@@ -262,8 +247,10 @@ class _NavigationMenuState extends State<NavigationMenu> {
                         // TODO: hook up real "create post" navigation here
                       });
                     },
-                    child:
-                    _buildMenuButton(Icons.bookmark_border, 'Create a Post'),
+                    child: _buildMenuButton(
+                      Icons.bookmark_border,
+                      'Create a Post',
+                    ),
                   ),
                 ],
               ),
@@ -320,19 +307,15 @@ class _StaggeredMenuItemState extends State<StaggeredMenuItem>
       curve: Curves.easeOut,
     );
 
-    _slideAnimation = Tween<double>(begin: 30.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutBack,
-      ),
-    );
+    _slideAnimation = Tween<double>(
+      begin: 30.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _scaleAnimation = Tween<double>(begin: 0.75, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutBack,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.75,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     if (widget.isVisible) {
       _startAnimation();
@@ -374,10 +357,7 @@ class _StaggeredMenuItemState extends State<StaggeredMenuItem>
           opacity: _fadeAnimation.value,
           child: Transform.translate(
             offset: Offset(0, _slideAnimation.value),
-            child: Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            ),
+            child: Transform.scale(scale: _scaleAnimation.value, child: child),
           ),
         );
       },
@@ -454,12 +434,9 @@ class CustomBottomNavBar extends StatelessWidget {
         // Floating Action Button nested inside the center rising dome
         Positioned(
           top:
-          4, // Nested cleanly in the dome area (peaking at y=0, bottom at y=24)
+              4, // Nested cleanly in the dome area (peaking at y=0, bottom at y=24)
           left: MediaQuery.of(context).size.width / 2 - 28,
-          child: TactileFAB(
-            isMenuOpen: isMenuOpen,
-            onTap: onFABTap,
-          ),
+          child: TactileFAB(isMenuOpen: isMenuOpen, onTap: onFABTap),
         ),
       ],
     );
@@ -620,7 +597,7 @@ class _HousePainter extends CustomPainter {
       // Draw vertical door slit (using background color cutout)
       final doorPaint = Paint()
         ..color =
-        const Color(0xFF13141F) // Same as bottom bar background
+            const Color(0xFF13141F) // Same as bottom bar background
         ..strokeWidth = 2.4
         ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;
@@ -802,7 +779,7 @@ class _ChatPainter extends CustomPainter {
       // Draw three dark dots inside
       final dotPaint = Paint()
         ..color =
-        const Color(0xFF13141F) // Same as bottom bar background
+            const Color(0xFF13141F) // Same as bottom bar background
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(w * 0.32, h * 0.48), 2.0, dotPaint);

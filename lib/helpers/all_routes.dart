@@ -1,5 +1,9 @@
 import 'dart:io';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
+
+import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
+import 'package:stevenako_flutter/features/message/presentation/contact_info_screen.dart';
+
 import 'package:stevenako_flutter/features/auth/register/presentation/forget_password.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
@@ -24,6 +28,9 @@ final class Routes {
   //---------------- Login Screen Start----------------
   static const String loginScreen = '/loginScreen';
   //---------------- Login Screen End----------------
+
+  static const String allChatScreen = '/allChatScreen';
+  static const String contactInfoScreen = '/contactInfoScreen';
 
   //---------------- Forget Password Screen Start----------------
   static const String forgetPasswordScreen = '/forgetPasswordScreen';
@@ -127,7 +134,7 @@ final class RouteGenerator {
       case Routes.navigationMenu:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget:   NavigationMenu(),
+                widget: NavigationMenu(),
                 settings: settings,
               )
             : CupertinoPageRoute(builder: (context) => const NavigationMenu());
@@ -140,6 +147,29 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(builder: (context) => const LoginScreen());
 
+      case Routes.allChatScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const AllChatScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const AllChatScreen());
+
+      case Routes.contactInfoScreen:
+        {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final name = args?['name'] as String? ?? 'Frances Swann';
+          final avatarUrl = args?['avatarUrl'] as String? ?? '';
+          return Platform.isAndroid
+              ? _FadedTransitionRoute(
+                  widget: ContactInfoScreen(name: name, avatarUrl: avatarUrl),
+                  settings: settings,
+                )
+              : CupertinoPageRoute(
+                  builder: (context) =>
+                      ContactInfoScreen(name: name, avatarUrl: avatarUrl),
+                );
+        }
       case Routes.forgetPasswordScreen:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
