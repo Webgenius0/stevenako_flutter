@@ -1,63 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final Widget icon;
   final VoidCallback onTap;
-  final Color? backgroundColor;
-  final Color? textColor;
-  final Border? border;
-  final bool isLoading;
 
   const CustomButton({
     super.key,
     required this.text,
-    required this.icon,
     required this.onTap,
-    this.backgroundColor,
-    this.textColor,
-    this.border,
-    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: isLoading ? null : onTap,
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        height: 52.h,
-        decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          border: border,
+    return Container(
+      width: double.infinity,
+      height: 56.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28.r),
+        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.w),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF9050F0), Color(0xFF3B1E8C)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        child: Center(
-          child: isLoading
-              ? SizedBox(
-                  width: 24.w,
-                  height: 24.w,
-                  child: CircularProgressIndicator(
-                    color: textColor ?? const Color(0xFF1F2937),
-                    strokeWidth: 2,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    icon,
-                    SizedBox(width: 12.w),
-                    Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: textColor ?? const Color(0xFF1F2937),
-                      ),
-                    ),
-                  ],
-                ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B5CF6).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(28.r),
+          onTap: onTap,
+          child: Center(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
         ),
       ),
     );
