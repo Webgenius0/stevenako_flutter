@@ -1,6 +1,12 @@
 import 'dart:io';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
 import 'package:stevenako_flutter/features/auth/register/presentation/forget_password.dart';
+import 'package:stevenako_flutter/features/auth/register/presentation/forget_password_otp_verify_screen.dart';
+import 'package:stevenako_flutter/features/auth/set_new_password/presentation/set_new_password_screen.dart';
+import 'package:stevenako_flutter/features/auth/set_new_password/presentation/success_screen.dart';
+import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_screen.dart';
+import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_verify_otp_screen.dart';
+import 'package:stevenako_flutter/features/auth/profile_setup/presentation/profile_setup_screen.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
@@ -27,6 +33,13 @@ final class Routes {
 
   //---------------- Forget Password Screen Start----------------
   static const String forgetPasswordScreen = '/forgetPasswordScreen';
+  static const String forgetPasswordVerifyOtpScreen =
+      '/forgetPasswordVerifyOtpScreen';
+  static const String setNewPassword = '/setNewPassword';
+  static const String successScreen = '/successScreen';
+  static const String signUpScreen = '/signUpScreen';
+  static const String signUpVerifyOtpScreen = '/signUpVerifyOtpScreen';
+  static const String profileSetupScreen = '/profileSetupScreen';
   //---------------- Forget Password Screen End----------------
 
   //---------------- Register Screen Start----------------
@@ -147,6 +160,66 @@ final class RouteGenerator {
                 settings: settings,
               )
             : CupertinoPageRoute(builder: (context) => const ForgetPassword());
+
+      case Routes.forgetPasswordVerifyOtpScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const ForgetPasswordOtpVerifyScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const ForgetPasswordOtpVerifyScreen(),
+              );
+
+      case Routes.setNewPassword:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const SetNewPasswordScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const SetNewPasswordScreen(),
+              );
+
+      case Routes.successScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const SuccessScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const SuccessScreen(),
+              );
+
+      case Routes.signUpScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const SignUpScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const SignUpScreen(),
+              );
+
+      case Routes.signUpVerifyOtpScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const SignUpVerifyOtpScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const SignUpVerifyOtpScreen(),
+              );
+
+      case Routes.profileSetupScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const ProfileSetupScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const ProfileSetupScreen(),
+              );
 
       default:
         return null;
