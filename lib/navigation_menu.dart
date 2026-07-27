@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:stevenako_flutter/features/explore/presentation/explore_screen.dart';
-import 'package:stevenako_flutter/features/message/presentation/message_screen.dart';
+import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 import 'features/home/presentation/home_screen.dart';
@@ -23,10 +23,10 @@ class _NavigationMenuState extends State<NavigationMenu> {
   static const Color _fabColor = Color(0xFF1B2D6B);
 
   final List<Widget> _pages = [
-    const HomeScreen(),
+    HomeScreen(),
     ExploreScreen(),
-    MessageScreen(),
-    const ProfileScreen(),
+    AllChatScreen(),
+    ProfileScreen(),
     // GuestUserProfile(),
   ];
 
