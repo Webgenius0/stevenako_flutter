@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CustomLoginTextField extends StatelessWidget {
+class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final String? hintText;
@@ -13,7 +13,7 @@ class CustomLoginTextField extends StatelessWidget {
   final bool obscureText;
   final VoidCallback? onToggleObscure;
 
-  const CustomLoginTextField({
+  const CustomTextField({
     super.key,
     required this.controller,
     required this.labelText,

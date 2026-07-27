@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
+import 'package:stevenako_flutter/features/auth/register/presentation/forget_password.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
@@ -23,6 +24,10 @@ final class Routes {
   //---------------- Login Screen Start----------------
   static const String loginScreen = '/loginScreen';
   //---------------- Login Screen End----------------
+
+  //---------------- Forget Password Screen Start----------------
+  static const String forgetPasswordScreen = '/forgetPasswordScreen';
+  //---------------- Forget Password Screen End----------------
 
   //---------------- Register Screen Start----------------
   // static const String registerScreen = '/registerScreen';
@@ -134,6 +139,14 @@ final class RouteGenerator {
                 settings: settings,
               )
             : CupertinoPageRoute(builder: (context) => const LoginScreen());
+
+      case Routes.forgetPasswordScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const ForgetPassword(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const ForgetPassword());
 
       default:
         return null;
