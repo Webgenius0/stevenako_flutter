@@ -8,6 +8,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:stevenako_flutter/splash_screen.dart';
 import '/helpers/all_routes.dart';
+
 import 'helpers/di.dart';
 import 'helpers/language.dart';
 import 'helpers/navigation_service.dart';
@@ -88,7 +89,8 @@ class UtillScreenMobile extends StatelessWidget {
           navigatorKey: NavigationService.navigatorKey,
           onGenerateRoute: RouteGenerator.generateRoute,
           // home: Loading(),
-          home: SplashScreen(),
+
+           home: SplashScreen(),
         );
       },
     );

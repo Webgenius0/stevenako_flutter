@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
+
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 import 'package:stevenako_flutter/features/message/presentation/contact_info_screen.dart';
+
+import 'package:stevenako_flutter/features/auth/register/presentation/forget_password.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
@@ -28,6 +31,57 @@ final class Routes {
 
   static const String allChatScreen = '/allChatScreen';
   static const String contactInfoScreen = '/contactInfoScreen';
+
+  //---------------- Forget Password Screen Start----------------
+  static const String forgetPasswordScreen = '/forgetPasswordScreen';
+  //---------------- Forget Password Screen End----------------
+
+  //---------------- Register Screen Start----------------
+  // static const String registerScreen = '/registerScreen';
+  // static const String registerVerifyScreen = '/registerVerifyScreen';
+  // static const String selectLocationScreen = '/selectLocationScreen';
+  // static const String homeScreen = '/homeScreen';
+
+  // static const String forgetPasswordScreen = '/forgetPasswordScreen';
+  // static const String forgetPasswordVerifyOtpScreen =
+  //     '/forgetPasswordVerifyOtpScreen';
+  // static const String setNewPassword = '/setNewPassword';
+
+  // static const String continueAsGuest = '/continueAsGuest';
+
+  // static const String buySellStep1Photos = '/buySellStep1Photos';
+  // static const String buySellStep2Details = '/buySellStep2Details';
+  // static const String buySellStep3Location = '/buySellStep3Location';
+  // static const String buySellStep4Contact = '/buySellStep4Contact';
+  // static const String buySellStep5Review = '/buySellStep5Review';
+  // static const String buySellDetails = '/buySellDetails';
+  // static const String buySellSuccess = '/buySellSuccess';
+
+  // static const String businessStep1Photos = '/businessStep1Photos';
+  // static const String businessStep2Info = '/businessStep2Info';
+  // static const String businessHoursSetter = '/businessHoursSetter';
+  // static const String businessStep3Gallery = '/businessStep3Gallery';
+  // static const String businessStep4Location = '/businessStep4Location';
+  // static const String businessStep5Contact = '/businessStep5Contact';
+  // static const String businessStep6Review = '/businessStep6Review';
+  // static const String businessDetails = '/businessDetails';
+  // static const String businessSuccess = '/businessSuccess';
+
+  // static const String jobStep1Photos = '/jobStep1Photos';
+  // static const String jobStep2Info = '/jobStep2Info';
+  // static const String jobStep3Location = '/jobStep3Location';
+  // static const String jobStep4Contact = '/jobStep4Contact';
+  // static const String jobStep5Review = '/jobStep5Review';
+  // static const String jobDetails = '/jobDetails';
+  // static const String jobSuccess = '/jobSuccess';
+
+  // static const String serviceStep1Photos = '/serviceStep1Photos';
+  // static const String serviceStep2Info = '/serviceStep2Info';
+  // static const String serviceStep3Location = '/serviceStep3Location';
+  // static const String serviceStep4Contact = '/serviceStep4Contact';
+  // static const String serviceStep5Review = '/serviceStep5Review';
+  // static const String serviceDetails = '/serviceDetails';
+  // static const String serviceSuccess = '/serviceSuccess';
 }
 
 final class RouteGenerator {
@@ -80,7 +134,7 @@ final class RouteGenerator {
       case Routes.navigationMenu:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const NavigationMenu(),
+                widget: NavigationMenu(),
                 settings: settings,
               )
             : CupertinoPageRoute(builder: (context) => const NavigationMenu());
@@ -112,9 +166,17 @@ final class RouteGenerator {
                   settings: settings,
                 )
               : CupertinoPageRoute(
-                  builder: (context) => ContactInfoScreen(name: name, avatarUrl: avatarUrl),
+                  builder: (context) =>
+                      ContactInfoScreen(name: name, avatarUrl: avatarUrl),
                 );
         }
+      case Routes.forgetPasswordScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const ForgetPassword(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const ForgetPassword());
 
       default:
         return null;
