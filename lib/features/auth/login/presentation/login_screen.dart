@@ -9,7 +9,9 @@ import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/remember_me_check_box_widget.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/social_login_button.dart';
+import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
+import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -116,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SizedBox(height: 36.h),
 
                                     // --------------- Email Field ---------------
-                                    CustomLoginTextField(
+                                    CustomTextField(
                                       controller: _emailController,
                                       labelText: 'Email address',
                                       hintText: 'Enter email address',
@@ -125,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SizedBox(height: 16.h),
 
                                     // --------------- Password Field ---------------
-                                    CustomLoginTextField(
+                                    CustomTextField(
                                       controller: _passwordController,
                                       labelText: 'Password',
                                       isPassword: true,
@@ -153,7 +155,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                         GestureDetector(
                                           onTap: () {
-                                            // Handle forgot password
+                                            NavigationService.navigateTo(
+                                              Routes.forgetPasswordScreen,
+                                            );
                                           },
                                           child: Text(
                                             'Forgot password?',
