@@ -4,34 +4,30 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
-import 'package:stevenako_flutter/features/message/widgets/contact_option_card.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
+import 'package:stevenako_flutter/features/setting/widgets/settings_action_card.dart';
 
-class ContactInfoScreen extends StatefulWidget {
+class BlockedUserDetailScreen extends StatefulWidget {
   final String name;
   final String avatarUrl;
 
-  const ContactInfoScreen({
+  const BlockedUserDetailScreen({
     super.key,
-    this.name = 'Frances Swann',
-    this.avatarUrl = '',
+    required this.name,
+    required this.avatarUrl,
   });
 
   @override
-  State<ContactInfoScreen> createState() => _ContactInfoScreenState();
+  State<BlockedUserDetailScreen> createState() =>
+      _BlockedUserDetailScreenState();
 }
 
-class _ContactInfoScreenState extends State<ContactInfoScreen> {
+class _BlockedUserDetailScreenState extends State<BlockedUserDetailScreen> {
   @override
   Widget build(BuildContext context) {
-    // Generate matches dynamically if it's the exact user from design
     final String displayUsername = widget.name == 'Frances Swann'
         ? '@Frances487'
         : '@${widget.name.replaceAll(' ', '').toLowerCase()}${widget.name.length * 7}';
-
-    final String displayBio = widget.name == 'Frances Swann'
-        ? 'I am a funny Video Maker'
-        : 'Hey there! I am using Stevenako.';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -54,7 +50,10 @@ class _ContactInfoScreenState extends State<ContactInfoScreen> {
                 child: SafeArea(
                   child: Column(
                     children: [
-                      CustomAppBar(title: 'Contact Info'),
+                      // Reusable Custom App Bar (Matches design header text "Blocked Users")
+                      const CustomAppBar(title: 'Blocked Users'),
+
+                      // Scrollable content
                       Expanded(
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
@@ -65,8 +64,8 @@ class _ContactInfoScreenState extends State<ContactInfoScreen> {
 
                               // --------------- Profile Avatar ---------------
                               Container(
-                                width: 120.r,
-                                height: 120.r,
+                                width: 100.r,
+                                height: 100.r,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -78,36 +77,23 @@ class _ContactInfoScreenState extends State<ContactInfoScreen> {
                                       color: Colors.black.withValues(
                                         alpha: 0.3,
                                       ),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(60.r),
+                                  borderRadius: BorderRadius.circular(50.r),
                                   child: widget.avatarUrl.isNotEmpty
                                       ? CachedNetworkImage(
                                           imageUrl: widget.avatarUrl,
                                           fit: BoxFit.cover,
-                                          placeholder: (context, url) => Container(
-                                            color: Colors.grey[900],
-                                            child: const Center(
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(Colors.white),
-                                              ),
-                                            ),
-                                          ),
                                           errorWidget: (context, url, error) =>
                                               Container(
                                                 color: Colors.grey[800],
                                                 child: const Icon(
                                                   Icons.person,
                                                   color: Colors.white70,
-                                                  size: 48,
                                                 ),
                                               ),
                                         )
@@ -116,65 +102,53 @@ class _ContactInfoScreenState extends State<ContactInfoScreen> {
                                           child: const Icon(
                                             Icons.person,
                                             color: Colors.white70,
-                                            size: 48,
                                           ),
                                         ),
                                 ),
                               ),
                               SizedBox(height: 16.h),
 
-                              // --------------- Name ---------------
+                              // --------------- Name & Handle ---------------
                               Text(
                                 widget.name,
                                 style: GoogleFonts.inter(
                                   color: Colors.white,
-                                  fontSize: 22.sp,
+                                  fontSize: 20.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               SizedBox(height: 4.h),
-
-                              // --------------- Username ---------------
                               Text(
                                 displayUsername,
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF94A3B8), // slate-400
-                                  fontSize: 14.sp,
+                                  color: const Color(0xFF64748B), // slate-500
+                                  fontSize: 13.sp,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              SizedBox(height: 8.h),
+                              SizedBox(height: 40.h),
 
-                              // --------------- Bio ---------------
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 32.w),
-                                child: Text(
-                                  displayBio,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF64748B), // slate-500
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 48.h),
-
-                              // --------------- Actions Container ---------------
+                              // --------------- Action Cards ---------------
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 24.w),
-                                child: ContactOptionCard(
-                                  name: widget.name,
-                                  onDeleteTap: () {
-                                    debugPrint(
-                                      'Delete conversation tapped for ${widget.name}',
-                                    );
-                                  },
-                                  onBlockTap: () {
-                                    debugPrint(
-                                      'Block contact tapped for ${widget.name}',
-                                    );
-                                  },
+                                child: Column(
+                                  children: [
+                                    // Action: Unblock User
+                                    SettingsActionCard(
+                                      label: 'Unblock User',
+                                      icon: Icons.person_add_outlined,
+                                      onTap: () {},
+                                    ),
+                                    SizedBox(height: 16.h),
+
+                                    // Action: Report User (Red Card)
+                                    SettingsActionCard(
+                                      label: 'Report User',
+                                      icon: Icons.person_off_outlined,
+                                      isDangerous: true,
+                                      onTap: () {},
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
