@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
+
 
 // ==========================================
 // 2. PHOTOS SUB-SCREEN (Photos Tab)
@@ -253,11 +255,10 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
 
   void _handleComment() {
     _commentController.forward(from: 0);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Comments coming soon!'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailsScreen(postData: widget.data),
       ),
     );
   }
@@ -286,7 +287,14 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                   onTapUp: (_) => setState(() => _isPressed = false),
                   onTapCancel: () => setState(() => _isPressed = false),
                   onDoubleTap: _handleDoubleTap,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PostDetailsScreen(postData: widget.data),
+                      ),
+                    );
+                  },
                   child: AnimatedScale(
                     scale: _isPressed ? 0.97 : 1.0,
                     duration: const Duration(milliseconds: 120),
@@ -374,7 +382,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                                             BoxShadow(
                                               color: const Color(
                                                 0xFFFF3F55,
-                                              ).withOpacity(0.4),
+                                              ).withValues(alpha: 0.4),
                                               blurRadius: 8,
                                               offset: const Offset(0, 3),
                                             ),

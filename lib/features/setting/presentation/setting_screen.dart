@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
+import 'package:stevenako_flutter/features/home/presentation/qr_code_screeen.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
@@ -135,7 +138,9 @@ class _SettingScreenState extends State<SettingScreen> {
                                     child: _buildSettingCard(
                                       icon: Icons.qr_code_scanner_rounded,
                                       label: 'QR Code',
-                                      onTap: _showQrCodeDialog,
+                                      onTap:  (){
+                                        Get.to(QrCodeScreeen());
+                                      },
                                     ),
                                   ),
                                   SizedBox(width: 12.w),
