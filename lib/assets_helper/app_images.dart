@@ -12,4 +12,5 @@ class AppImages {
   static const String onboardingThree =
       '$imageRoute/onboarding_screen_three.png';
   static const String bg = '$imageRoute/bg.png';
+  static const String card = '$imageRoute/card.png';
 }

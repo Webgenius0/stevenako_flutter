@@ -15,6 +15,15 @@ import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
 import 'package:stevenako_flutter/onboarding_screen_three.dart';
+import 'package:stevenako_flutter/features/setting/presentation/setting_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/account_center_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/my_wallet_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/blocked_users_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/blocked_user_detail_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/change_password_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/help_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/terms_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/privacy_policy_screen.dart';
 import 'package:flutter/cupertino.dart';
 
 final class Routes {
@@ -48,6 +57,16 @@ final class Routes {
   static const String signUpVerifyOtpScreen = '/signUpVerifyOtpScreen';
   static const String profileSetupScreen = '/profileSetupScreen';
   //---------------- Forget Password Screen End----------------
+
+  static const String settingScreen = '/settingScreen';
+  static const String accountCenterScreen = '/accountCenterScreen';
+  static const String myWalletScreen = '/myWalletScreen';
+  static const String blockedUsersScreen = '/blockedUsersScreen';
+  static const String blockedUserDetailScreen = '/blockedUserDetailScreen';
+  static const String changePasswordScreen = '/changePasswordScreen';
+  static const String helpScreen = '/helpScreen';
+  static const String termsScreen = '/termsScreen';
+  static const String privacyPolicyScreen = '/privacyPolicyScreen';
 
   //---------------- Register Screen Start----------------
   // static const String registerScreen = '/registerScreen';
@@ -191,6 +210,86 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(builder: (context) => const ForgetPassword());
 
+ 
+      case Routes.settingScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const SettingScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const SettingScreen());
+
+      case Routes.accountCenterScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const AccountCenterScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const AccountCenterScreen());
+
+      case Routes.myWalletScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const MyWalletScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const MyWalletScreen());
+
+      case Routes.blockedUsersScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const BlockedUsersScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const BlockedUsersScreen());
+
+      case Routes.blockedUserDetailScreen:
+        {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final name = args?['name'] as String? ?? 'Frances Swann';
+          final avatarUrl = args?['avatarUrl'] as String? ?? '';
+          return Platform.isAndroid
+              ? _FadedTransitionRoute(
+                  widget: BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
+                  settings: settings,
+                )
+              : CupertinoPageRoute(
+                  builder: (context) => BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
+                );
+        }
+
+      case Routes.changePasswordScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const ChangePasswordScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const ChangePasswordScreen());
+
+      case Routes.helpScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const HelpScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const HelpScreen());
+
+      case Routes.termsScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const TermsScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const TermsScreen());
+
+      case Routes.privacyPolicyScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const PrivacyPolicyScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(builder: (context) => const PrivacyPolicyScreen());
+ 
       case Routes.forgetPasswordVerifyOtpScreen:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
@@ -250,6 +349,7 @@ final class RouteGenerator {
             : CupertinoPageRoute(
                 builder: (context) => const ProfileSetupScreen(),
               );
+ 
 
       default:
         return null;

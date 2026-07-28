@@ -34,4 +34,5 @@ class AppIcons {
   static const String newBag = '$iconsRoute/newBag.svg';
   static const String google = '$iconsRoute/google.svg';
   static const String apple = '$iconsRoute/apple.svg';
+  static const String coin = '$iconsRoute/coin.svg';
 }

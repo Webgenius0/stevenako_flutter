@@ -54,14 +54,14 @@ class _AllChatScreenState extends State<AllChatScreen> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.black,
-        systemNavigationBarIconBrightness: Brightness.light,
+        // statusBarColor: Colors.transparent,
+        // statusBarIconBrightness: Brightness.light,
+        // statusBarBrightness: Brightness.dark,
+        // systemNavigationBarColor: Colors.black,
+        // systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        // backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         body: SizedBox.expand(
           child: Stack(
             children: [
