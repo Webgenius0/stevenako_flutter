@@ -737,7 +737,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
               icon,
               color: iconColor,
               size: 32,
-              shadows: const [
+              shadows:   [
                 Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
               ],
             ),
