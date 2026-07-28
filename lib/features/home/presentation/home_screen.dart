@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 
 import 'package:stevenako_flutter/features/home/presentation/photo_scree.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/releas_screen.dart';
+import 'package:stevenako_flutter/features/home/presentation/search_scren.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -98,12 +101,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 children: [
                   // Sliding Tab Selector Container
                   Container(
-                    height: 40,
-                    padding: const EdgeInsets.all(3.0),
+                    height: 40.h,
+                    padding:   EdgeInsets.all(3.0.sp),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white24, width: 1.0),
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: Colors.white24, width: 1.0.w),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -118,17 +121,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   // Search & Filter Actions
                   Row(
                     children: [
-                      _buildTopActionButton(Icons.search, () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Search tapped!')),
-                        );
-                      }),
+                      _buildTopActionButton(
+                        'assets/images/search-normal.png',
+                            () {
+                          // Your onTap code here
+                              Get.to(SearchScren());
+                        },
+                      ),
+                      // _buildTopActionButton(
+                      //   '',
+                      //       () {
+                      //     Get.to(() => SearchScreen());
+                      //   },
+                      // ),
                       const SizedBox(width: 10),
-                      _buildTopActionButton(Icons.tune, () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Filter tapped!')),
-                        );
-                      }),
+                      _buildTopActionButton(
+                        'assets/images/Settings.png',
+                            () {
+
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -151,9 +163,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        padding:   EdgeInsets.symmetric(horizontal: 18.w, vertical: 6.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(17.r),
           gradient: isActive
               ? const LinearGradient(
                   colors: [Color(0xFF9F75FF), Color(0xFF7C3AED)],
@@ -182,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTopActionButton(IconData icon, VoidCallback onTap) {
+  Widget _buildTopActionButton(String imagePath, VoidCallback onTap) {
     return _TapScale(
       onTap: onTap,
       child: Container(
@@ -191,9 +203,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(0.35),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white24, width: 1.0),
+          border: Border.all(
+            color: Colors.white24,
+            width: 1.0.w,
+          ),
         ),
-        child: Icon(icon, color: Colors.white, size: 18.sp),
+        child: Center(
+          child: Image.asset(
+            imagePath,
+            width: 18.w,
+            height: 18.h,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

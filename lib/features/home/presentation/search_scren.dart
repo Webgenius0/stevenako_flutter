@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 // ============================================================
 // SearchScren — Search bar + user results list with verified
@@ -90,7 +92,17 @@ class _SearchScrenState extends State<SearchScren> {
   }
 
   void _onUserTap(_SearchUser user) {
-    // TODO: navigate to this user's profile
+    // Navigator.push(
+    //   context,
+      // MaterialPageRoute(
+      //   builder: (context) => UserProfileScreen(
+      //     name: user.name,
+      //     handle: user.handle,
+      //     avatarUrl: user.avatarUrl,
+      //     isVerified: user.isVerified,
+      //   ),
+      // ),
+    // );
   }
 
   @override
@@ -113,8 +125,8 @@ class _SearchScrenState extends State<SearchScren> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Container(
-                  height: 56,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  height: 56.h,
+                  padding:   EdgeInsets.symmetric(horizontal: 20.w),
                   decoration: BoxDecoration(
                     border: Border.all(color: _cardBorder),
                     borderRadius: BorderRadius.circular(28),
@@ -127,17 +139,17 @@ class _SearchScrenState extends State<SearchScren> {
                           focusNode: _focusNode,
                           autofocus: true,
                           onChanged: (v) => setState(() => _query = v),
-                          style: const TextStyle(
+                          style:   TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 18.sp,
                           ),
-                          decoration: const InputDecoration(
+                          decoration:   InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
                             hintText: 'Search..',
                             hintStyle: TextStyle(
                               color: _hintColor,
-                              fontSize: 18,
+                              fontSize: 18.sp,
                             ),
                           ),
                         ),
@@ -145,10 +157,10 @@ class _SearchScrenState extends State<SearchScren> {
                       if (_query.isNotEmpty)
                         GestureDetector(
                           onTap: _clearSearch,
-                          child: const Padding(
-                            padding: EdgeInsets.only(left: 8),
+                          child:   Padding(
+                            padding: EdgeInsets.only(left: 8.w),
                             child: Icon(Icons.close,
-                                color: Colors.white, size: 24),
+                                color: Colors.white, size: 24.sp),
                           ),
                         ),
                     ],
@@ -156,21 +168,21 @@ class _SearchScrenState extends State<SearchScren> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
 
               // ---- Results list
               Expanded(
                 child: results.isEmpty
-                    ? const Center(
+                    ?   Center(
                   child: Text(
                     'No results found',
-                    style: TextStyle(color: _hintColor, fontSize: 15),
+                    style: TextStyle(color: _hintColor, fontSize: 15.sp),
                   ),
                 )
                     : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                   itemCount: results.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 24),
+                  separatorBuilder: (_, __) =>   SizedBox(height: 24.h),
                   itemBuilder: (context, index) {
                     final user = results[index];
                     return _SearchResultRow(
@@ -207,24 +219,24 @@ class _SearchResultRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         child: Row(
           children: [
             ClipOval(
               child: Image.network(
                 user.avatarUrl,
-                width: 64,
-                height: 64,
+                width: 64.w,
+                height: 64.h,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  width: 64,
-                  height: 64,
+                  width: 64.w,
+                  height: 64.h,
                   color: const Color(0xFF2A2A3A),
                   child: const Icon(Icons.person, color: Colors.white54),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,26 +247,26 @@ class _SearchResultRow extends StatelessWidget {
                         child: Text(
                           user.name,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style:   TextStyle(
                             color: Colors.white,
-                            fontSize: 21,
+                            fontSize: 21.sp,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                       if (user.isVerified) ...[
-                        const SizedBox(width: 8),
-                        const Icon(Icons.verified,
-                            color: _purple, size: 20),
+                        SizedBox(width: 8.w),
+                        Icon(Icons.verified,
+                            color: _purple, size: 20.sp),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   Text(
                     user.handle,
-                    style: const TextStyle(
+                    style:   TextStyle(
                       color: _hintColor,
-                      fontSize: 16,
+                      fontSize: 16.sp,
                     ),
                   ),
                 ],

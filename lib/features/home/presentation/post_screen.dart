@@ -1,14 +1,17 @@
-
 // ==========================================
 // 3. POSTS SUB-SCREEN (Posts Tab)
 // ==========================================
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class PostsSubScreen extends StatelessWidget {
+class PostsSubScreen extends StatefulWidget {
   const PostsSubScreen({super.key});
 
-  final List<Map<String, dynamic>> _posts = const [
+  @override
+  State<PostsSubScreen> createState() => _PostsSubScreenState();
+}
+
+class _PostsSubScreenState extends State<PostsSubScreen> {
+  final List<Map<String, dynamic>> _posts = [
     {
       'userName': 'Courtney Henry',
       'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
@@ -24,6 +27,136 @@ class PostsSubScreen extends StatelessWidget {
       'likes': 89,
     },
   ];
+
+  void _showPostOptions(BuildContext context, int index) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2C),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildOptionTile(
+                icon: Icons.bookmark_border,
+                label: 'Save post',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Post saved!')),
+                  );
+                },
+              ),
+              _buildOptionTile(
+                icon: Icons.edit_outlined,
+                label: 'Edit post',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edit coming soon!')),
+                  );
+                },
+              ),
+              _buildOptionTile(
+                icon: Icons.share_outlined,
+                label: 'Share post',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Share link copied!')),
+                  );
+                },
+              ),
+              _buildOptionTile(
+                icon: Icons.visibility_off_outlined,
+                label: 'Hide post',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Post hidden')),
+                  );
+                },
+              ),
+              const Divider(color: Colors.white12, height: 8),
+              _buildOptionTile(
+                icon: Icons.delete_outline,
+                label: 'Delete post',
+                iconColor: const Color(0xFFFF3F55),
+                textColor: const Color(0xFFFF3F55),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmDelete(index);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDelete(int index) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2C),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Delete post?', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'This action cannot be undone.',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                setState(() {
+                  _posts.removeAt(index);
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Post deleted')),
+                );
+              },
+              child: const Text('Delete', style: TextStyle(color: Color(0xFFFF3F55))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color iconColor = Colors.white70,
+    Color textColor = Colors.white,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: iconColor),
+      title: Text(label, style: TextStyle(color: textColor, fontSize: 14.5)),
+      onTap: onTap,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +204,13 @@ class PostsSubScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.more_horiz, color: Colors.white54),
+                    GestureDetector(
+                      onTap: () => _showPostOptions(context, index),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(Icons.more_horiz, color: Colors.white54),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -86,7 +225,7 @@ class PostsSubScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.favorite, color: const Color(0xFFFF3F55), size: 18),
+                        const Icon(Icons.favorite, color: Color(0xFFFF3F55), size: 18),
                         const SizedBox(width: 6),
                         Text('${post['likes']}', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
                       ],

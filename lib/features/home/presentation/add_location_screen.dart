@@ -32,6 +32,13 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   String _query = '';
   bool _usingCurrentLocation = false;
 
+  // Track the currently selected option so the Continue button knows
+  // what to confirm. Either a suggested location title, or the special
+  // 'current_location' marker.
+  String? _selectedValue;
+
+  // TODO: Replace with real geocoding/places-API results.
+
   final List<_LocationOption> _suggested = const [
     _LocationOption(title: 'New York, USA', subtitle: 'Manhattan, New York'),
     _LocationOption(title: 'Los Angeles, USA', subtitle: 'California'),
@@ -53,9 +60,9 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     return _suggested
         .where(
           (l) =>
-              l.title.toLowerCase().contains(q) ||
-              l.subtitle.toLowerCase().contains(q),
-        )
+      l.title.toLowerCase().contains(q) ||
+          l.subtitle.toLowerCase().contains(q),
+    )
         .toList();
   }
 
@@ -63,14 +70,28 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     Navigator.of(context).maybePop();
   }
 
-  void _onUseCurrentLocation() async {
+  Future<void> _onUseCurrentLocation() async {
     setState(() => _usingCurrentLocation = true);
-    // geocoding here, then pop with the resolved location.
-    Navigator.of(context).maybePop('current_location');
+
+    // TODO: hook up real geolocation (e.g. `geolocator` package) + reverse
+    // geocoding here to resolve an actual address/title before marking
+    // this as selected.
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+
+    if (!mounted) return;
+    setState(() {
+      _usingCurrentLocation = false;
+      _selectedValue = 'current_location';
+    });
   }
 
   void _onSelectLocation(_LocationOption location) {
-    Navigator.of(context).maybePop(location.title);
+    setState(() => _selectedValue = location.title);
+  }
+
+  void _onContinue() {
+    if (_selectedValue == null) return;
+    Navigator.of(context).maybePop(_selectedValue);
   }
 
   @override
@@ -165,6 +186,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                   children: [
                     _UseCurrentLocationRow(
                       isLoading: _usingCurrentLocation,
+                      isSelected: _selectedValue == 'current_location',
                       onTap: _onUseCurrentLocation,
                     ),
                     const SizedBox(height: 22),
@@ -183,6 +205,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                     for (int i = 0; i < results.length; i++) ...[
                       _LocationRow(
                         option: results[i],
+                        isSelected: _selectedValue == results[i].title,
                         onTap: () => _onSelectLocation(results[i]),
                       ),
                       if (i != results.length - 1) const SizedBox(height: 14),
@@ -200,6 +223,16 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                   ],
                 ),
               ),
+
+              // ---- Bottom Continue CTA
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: _ContinueButton(
+                  label: 'Continue',
+                  enabled: _selectedValue != null,
+                  onTap: _onContinue,
+                ),
+              ),
             ],
           ),
         ),
@@ -214,9 +247,14 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
 
 class _UseCurrentLocationRow extends StatelessWidget {
   final bool isLoading;
+  final bool isSelected;
   final VoidCallback onTap;
 
-  const _UseCurrentLocationRow({required this.isLoading, required this.onTap});
+  const _UseCurrentLocationRow({
+    required this.isLoading,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   static const Color _cardBorder = Color(0xFF2E2C3E);
   static const Color _purple = Color(0xFF7C3AED);
@@ -232,7 +270,10 @@ class _UseCurrentLocationRow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            border: Border.all(color: _cardBorder),
+            border: Border.all(
+              color: isSelected ? _purple : _cardBorder,
+              width: isSelected ? 1.4 : 1,
+            ),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -251,30 +292,34 @@ class _UseCurrentLocationRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: isLoading
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white,
+                    ),
+                  ),
+                )
                     : const Icon(
-                        Icons.my_location,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'Use current location',
-                style: TextStyle(
+                  Icons.my_location,
                   color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                  size: 20,
                 ),
               ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Text(
+                  'Use current location',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (isSelected)
+                const Icon(Icons.check_circle, color: _purple, size: 22),
             ],
           ),
         ),
@@ -285,14 +330,20 @@ class _UseCurrentLocationRow extends StatelessWidget {
 
 class _LocationRow extends StatelessWidget {
   final _LocationOption option;
+  final bool isSelected;
   final VoidCallback onTap;
 
-  const _LocationRow({required this.option, required this.onTap});
+  const _LocationRow({
+    required this.option,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   static const Color _cardBorder = Color(0xFF2E2C3E);
   static const Color _hintColor = Color(0xFF8B8A99);
   static const Color _iconBg = Color(0xFF352F4D);
   static const Color _iconColor = Color(0xFF9F75FF);
+  static const Color _purple = Color(0xFF7C3AED);
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +355,10 @@ class _LocationRow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            border: Border.all(color: _cardBorder),
+            border: Border.all(
+              color: isSelected ? _purple : _cardBorder,
+              width: isSelected ? 1.4 : 1,
+            ),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -344,7 +398,72 @@ class _LocationRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (isSelected)
+                const Icon(Icons.check_circle, color: _purple, size: 22),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Continue CTA (same style as your other screens)
+// ============================================================
+
+class _ContinueButton extends StatelessWidget {
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _ContinueButton({
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(30),
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.45,
+          child: Container(
+            width: double.infinity,
+            height: 54,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFF7C3AED),
+                  Color(0xFF6D28D9),
+                ],
+              ),
+              boxShadow: enabled
+                  ? [
+                BoxShadow(
+                  color: const Color(0xFF7C3AED).withOpacity(0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+                  : null,
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
       ),
