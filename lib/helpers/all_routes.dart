@@ -12,6 +12,7 @@ import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_scr
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_verify_otp_screen.dart';
 import 'package:stevenako_flutter/features/auth/profile_setup/presentation/profile_setup_screen.dart';
 import 'package:stevenako_flutter/features/profile/presentation/edit_profile_screen.dart';
+import 'package:stevenako_flutter/features/profile/presentation/dashboard_screen.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
@@ -69,6 +70,7 @@ final class Routes {
   static const String termsScreen = '/termsScreen';
   static const String privacyPolicyScreen = '/privacyPolicyScreen';
   static const String editProfileScreen = '/editProfileScreen';
+  static const String dashboardScreen = '/dashboardScreen';
 
   //---------------- Register Screen Start----------------
   // static const String registerScreen = '/registerScreen';
@@ -367,6 +369,16 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(
                 builder: (context) => const EditProfileScreen(),
+              );
+
+      case Routes.dashboardScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const DashboardScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const DashboardScreen(),
               );
 
       default:

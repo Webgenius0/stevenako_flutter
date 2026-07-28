@@ -15,7 +15,10 @@ class ProfileActionsRow extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () {
-                // Dashboard Action
+                Navigator.pushNamed(
+                  context,
+                  Routes.dashboardScreen,
+                );
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
