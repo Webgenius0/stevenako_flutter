@@ -8,7 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
+import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
+import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -356,6 +358,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                       text: 'Get Started',
                                       onTap: () {
                                         // Navigate to Home/Dashboard
+                                        NavigationService.navigateToReplacement(
+                                          Routes.navigationMenu,
+                                        );
                                       },
                                     ),
                                     SizedBox(height: 24.h),

@@ -141,11 +141,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           // Inner action button (navigates to welcome/auth screen)
           GestureDetector(
             onTap: () {
-              // NavigationService.navigateToReplacement(Routes.loginScreen);
-              NavigationService.navigateToReplacement(Routes.allChatScreen);
-
-              // NavigationService.navigateToReplacement(Routes.loginScreen);
-              Get.to(NavigationMenu());
+              NavigationService.navigateToReplacement(Routes.loginScreen);
             },
             child: Container(
               width: 64.w,
