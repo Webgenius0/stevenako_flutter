@@ -11,6 +11,7 @@ import 'package:stevenako_flutter/features/auth/set_new_password/presentation/su
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_screen.dart';
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_verify_otp_screen.dart';
 import 'package:stevenako_flutter/features/auth/profile_setup/presentation/profile_setup_screen.dart';
+import 'package:stevenako_flutter/features/profile/presentation/edit_profile_screen.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
 import 'package:stevenako_flutter/onboarding_screen_one.dart';
 import 'package:stevenako_flutter/onboarding_screen_two.dart';
@@ -67,6 +68,7 @@ final class Routes {
   static const String helpScreen = '/helpScreen';
   static const String termsScreen = '/termsScreen';
   static const String privacyPolicyScreen = '/privacyPolicyScreen';
+  static const String editProfileScreen = '/editProfileScreen';
 
   //---------------- Register Screen Start----------------
   // static const String registerScreen = '/registerScreen';
@@ -210,7 +212,6 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(builder: (context) => const ForgetPassword());
 
- 
       case Routes.settingScreen:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
@@ -225,7 +226,9 @@ final class RouteGenerator {
                 widget: const AccountCenterScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(builder: (context) => const AccountCenterScreen());
+            : CupertinoPageRoute(
+                builder: (context) => const AccountCenterScreen(),
+              );
 
       case Routes.myWalletScreen:
         return Platform.isAndroid
@@ -241,7 +244,9 @@ final class RouteGenerator {
                 widget: const BlockedUsersScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(builder: (context) => const BlockedUsersScreen());
+            : CupertinoPageRoute(
+                builder: (context) => const BlockedUsersScreen(),
+              );
 
       case Routes.blockedUserDetailScreen:
         {
@@ -250,11 +255,15 @@ final class RouteGenerator {
           final avatarUrl = args?['avatarUrl'] as String? ?? '';
           return Platform.isAndroid
               ? _FadedTransitionRoute(
-                  widget: BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
+                  widget: BlockedUserDetailScreen(
+                    name: name,
+                    avatarUrl: avatarUrl,
+                  ),
                   settings: settings,
                 )
               : CupertinoPageRoute(
-                  builder: (context) => BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
+                  builder: (context) =>
+                      BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
                 );
         }
 
@@ -264,7 +273,9 @@ final class RouteGenerator {
                 widget: const ChangePasswordScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(builder: (context) => const ChangePasswordScreen());
+            : CupertinoPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
+              );
 
       case Routes.helpScreen:
         return Platform.isAndroid
@@ -288,8 +299,10 @@ final class RouteGenerator {
                 widget: const PrivacyPolicyScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(builder: (context) => const PrivacyPolicyScreen());
- 
+            : CupertinoPageRoute(
+                builder: (context) => const PrivacyPolicyScreen(),
+              );
+
       case Routes.forgetPasswordVerifyOtpScreen:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
@@ -316,9 +329,7 @@ final class RouteGenerator {
                 widget: const SuccessScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(
-                builder: (context) => const SuccessScreen(),
-              );
+            : CupertinoPageRoute(builder: (context) => const SuccessScreen());
 
       case Routes.signUpScreen:
         return Platform.isAndroid
@@ -326,9 +337,7 @@ final class RouteGenerator {
                 widget: const SignUpScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(
-                builder: (context) => const SignUpScreen(),
-              );
+            : CupertinoPageRoute(builder: (context) => const SignUpScreen());
 
       case Routes.signUpVerifyOtpScreen:
         return Platform.isAndroid
@@ -349,7 +358,16 @@ final class RouteGenerator {
             : CupertinoPageRoute(
                 builder: (context) => const ProfileSetupScreen(),
               );
- 
+
+      case Routes.editProfileScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const EditProfileScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const EditProfileScreen(),
+              );
 
       default:
         return null;

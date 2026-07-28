@@ -15,48 +15,60 @@ class PhotosSubScreen extends StatefulWidget {
 class _PhotosSubScreenState extends State<PhotosSubScreen> {
   final List<Map<String, dynamic>> _photos = [
     {
-      'url': 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
       'isFollowing': false,
     },
     {
-      'url': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
       'isFollowing': true,
     },
     {
-      'url': 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
       'isFollowing': true,
     },
     {
-      'url': 'https://images.unsplash.com/photo-1472214222541-d510753a4707?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1472214222541-d510753a4707?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
       'isFollowing': true,
     },
     {
-      'url': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
       'isFollowing': true,
     },
     {
-      'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&auto=format&fit=crop&q=80',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'handle': '@frances',
       'likes': 10,
       'comments': 8,
@@ -67,9 +79,10 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.transparent, // Transparent to show the NavigationMenu gradient
+      color:
+          Colors.transparent, // Transparent to show the NavigationMenu gradient
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 64,
+        top: MediaQuery.of(context).padding.top,
         left: 12,
         right: 12,
       ),
@@ -82,10 +95,7 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
           childAspectRatio: 0.72,
         ),
         itemBuilder: (context, index) {
-          return _PhotoTile(
-            index: index,
-            data: _photos[index],
-          );
+          return _PhotoTile(index: index, data: _photos[index]);
         },
       ),
     );
@@ -139,41 +149,59 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _entranceFade = CurvedAnimation(parent: _entranceController, curve: Curves.easeOut);
+    _entranceFade = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOut,
+    );
     _entranceScale = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
     );
-    _entranceSlide = Tween<Offset>(
-      begin: const Offset(0, 0.15),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic));
+    _entranceSlide =
+        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _likeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _likeScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 60),
-    ]).animate(CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack));
+    _likeScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
+          TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 60),
+        ]).animate(
+          CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
+        );
 
     _shareController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 260),
     );
-    _shareScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 60),
-    ]).animate(CurvedAnimation(parent: _shareController, curve: Curves.easeOutBack));
+    _shareScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
+          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 60),
+        ]).animate(
+          CurvedAnimation(parent: _shareController, curve: Curves.easeOutBack),
+        );
 
     _commentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 260),
     );
-    _commentScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 60),
-    ]).animate(CurvedAnimation(parent: _commentController, curve: Curves.easeOutBack));
+    _commentScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
+          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 60),
+        ]).animate(
+          CurvedAnimation(
+            parent: _commentController,
+            curve: Curves.easeOutBack,
+          ),
+        );
 
     // Stagger: each tile starts a beat after the last, based on grid position
     Future.delayed(Duration(milliseconds: 60 * widget.index), () {
@@ -291,20 +319,24 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                                       color: Colors.white38,
                                       value: progress.expectedTotalBytes != null
                                           ? progress.cumulativeBytesLoaded /
-                                          progress.expectedTotalBytes!
+                                                progress.expectedTotalBytes!
                                           : null,
                                     ),
                                   ),
                                 ),
                               );
                             },
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: Colors.white10,
-                              child: const Center(
-                                child: Icon(Icons.broken_image_outlined,
-                                    color: Colors.white24, size: 28),
-                              ),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.white10,
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      color: Colors.white24,
+                                      size: 28,
+                                    ),
+                                  ),
+                                ),
                           ),
 
                           // Follow badge, top-right — fades/scales out once tapped
@@ -313,40 +345,51 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                             right: 10,
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 220),
-                              transitionBuilder: (child, anim) => ScaleTransition(
-                                scale: anim,
-                                child: FadeTransition(opacity: anim, child: child),
-                              ),
-                              child: _isFollowing
-                                  ? const SizedBox.shrink(key: ValueKey('hidden'))
-                                  : GestureDetector(
-                                key: const ValueKey('badge'),
-                                onTap: _toggleFollow,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF3F55),
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFFF3F55)
-                                            .withOpacity(0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Text(
-                                    'follow',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                              transitionBuilder: (child, anim) =>
+                                  ScaleTransition(
+                                    scale: anim,
+                                    child: FadeTransition(
+                                      opacity: anim,
+                                      child: child,
                                     ),
                                   ),
-                                ),
-                              ),
+                              child: _isFollowing
+                                  ? const SizedBox.shrink(
+                                      key: ValueKey('hidden'),
+                                    )
+                                  : GestureDetector(
+                                      key: const ValueKey('badge'),
+                                      onTap: _toggleFollow,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFF3F55),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFFFF3F55,
+                                              ).withOpacity(0.4),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Text(
+                                          'follow',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
 
@@ -362,13 +405,18 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                                     scale: scale * 1.2,
                                     child: Opacity(
                                       opacity: math.max(
-                                          0.0, 1.0 - (scale - 1.0).abs() * 1.6),
+                                        0.0,
+                                        1.0 - (scale - 1.0).abs() * 1.6,
+                                      ),
                                       child: const Icon(
                                         Icons.favorite,
                                         color: Color(0xFFFF3F55),
                                         size: 60,
                                         shadows: [
-                                          Shadow(color: Colors.black45, blurRadius: 10),
+                                          Shadow(
+                                            color: Colors.black45,
+                                            blurRadius: 10,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -429,7 +477,9 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                             child: Icon(
                               _isLiked ? Icons.favorite : Icons.favorite_border,
                               key: ValueKey(_isLiked),
-                              color: _isLiked ? const Color(0xFFFF3F55) : Colors.white70,
+                              color: _isLiked
+                                  ? const Color(0xFFFF3F55)
+                                  : Colors.white70,
                               size: 15,
                             ),
                           ),
@@ -441,7 +491,10 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                             child: Text(
                               '$_likeCount',
                               key: ValueKey(_likeCount),
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],
@@ -462,12 +515,18 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.chat_bubble_outline,
-                              color: Colors.white70, size: 14),
+                          const Icon(
+                            Icons.chat_bubble_outline,
+                            color: Colors.white70,
+                            size: 14,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${widget.data['comments']}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
