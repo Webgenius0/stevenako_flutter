@@ -7,29 +7,34 @@ import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/assets_helper/app_icons.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
-import 'package:stevenako_flutter/features/auth/login/widgets/remember_me_check_box_widget.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/social_login_button.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'dennis416@gmail.com');
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _fullNameController = TextEditingController(text: 'Alex Tass');
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
   bool _obscurePassword = true;
-  bool _rememberMe = true;
 
   @override
   void dispose() {
+    _fullNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -92,30 +97,47 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(height: 72.h),
+                                    SizedBox(height: 56.h),
 
                                     // --------------- Title ---------------
                                     Text(
-                                      'Welcome Back',
+                                      'Create your\naccount',
                                       style: GoogleFonts.inter(
                                         color: Colors.white,
                                         fontSize: 32.sp,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: -0.5,
+                                        height: 1.2,
                                       ),
                                     ),
                                     SizedBox(height: 8.h),
 
                                     // --------------- Subtitle ---------------
                                     Text(
-                                      'Pick up right where the scroll left off.',
+                                      'It only takes a minute to join the fun.',
                                       style: GoogleFonts.inter(
                                         color: const Color(0xFF9CA3AF),
                                         fontSize: 15.sp,
                                         fontWeight: FontWeight.w400,
                                       ),
                                     ),
-                                    SizedBox(height: 36.h),
+                                    SizedBox(height: 28.h),
+
+                                    // --------------- Full Name Field ---------------
+                                    CustomTextField(
+                                      controller: _fullNameController,
+                                      labelText: 'Full name',
+                                      hintText: 'Enter full name',
+                                    ),
+                                    SizedBox(height: 14.h),
+
+                                    // --------------- Username Field ---------------
+                                    CustomTextField(
+                                      controller: _usernameController,
+                                      labelText: 'username',
+                                      hintText: 'Enter username',
+                                    ),
+                                    SizedBox(height: 14.h),
 
                                     // --------------- Email Field ---------------
                                     CustomTextField(
@@ -124,12 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       hintText: 'Enter email address',
                                       keyboardType: TextInputType.emailAddress,
                                     ),
-                                    SizedBox(height: 16.h),
+                                    SizedBox(height: 14.h),
 
                                     // --------------- Password Field ---------------
                                     CustomTextField(
                                       controller: _passwordController,
                                       labelText: 'Password',
+                                      hintText: 'Enter password',
                                       isPassword: true,
                                       obscureText: _obscurePassword,
                                       onToggleObscure: () {
@@ -138,46 +161,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                         });
                                       },
                                     ),
-                                    SizedBox(height: 16.h),
+                                    SizedBox(height: 14.h),
 
-                                    // --------------- Remember Me & Forgot Password ---------------
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        RememberMeCheckbox(
-                                          value: _rememberMe,
-                                          onChanged: (val) {
-                                            setState(() {
-                                              _rememberMe = val;
-                                            });
-                                          },
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            NavigationService.navigateTo(
-                                              Routes.forgetPasswordScreen,
-                                            );
-                                          },
-                                          child: Text(
-                                            'Forgot password?',
-                                            style: GoogleFonts.inter(
-                                              color: const Color(0xFF9CA3AF),
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                    // --------------- Confirm Password Field ---------------
+                                    CustomTextField(
+                                      controller: _confirmPasswordController,
+                                      labelText: 'Confirm Password',
+                                      hintText: 'Enter confirm password',
+                                      isPassword: true,
+                                      obscureText: _obscurePassword,
+                                      onToggleObscure: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
                                     ),
 
                                     const Spacer(flex: 3),
+                                    SizedBox(height: 24.h),
 
-                                    // --------------- Login Button ---------------
+                                    // --------------- Sign Up Button ---------------
                                     CustomButton(
-                                      text: 'Login',
+                                      text: 'Sign Up',
                                       onTap: () {
-                                        // Handle login action
+                                        NavigationService.navigateTo(
+                                          Routes.signUpVerifyOtpScreen,
+                                        );
                                       },
                                     ),
                                     SizedBox(height: 24.h),
@@ -213,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     SizedBox(height: 24.h),
 
-                                    // --------------- Social Login Buttons ---------------
+                                    // --------------- Social Register Buttons ---------------
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -221,40 +230,40 @@ class _LoginScreenState extends State<LoginScreen> {
                                         SocialLoginButton(
                                           iconPath: AppIcons.google,
                                           onTap: () {
-                                            // Google Login
+                                            // Google Sign Up
                                           },
                                         ),
                                         SizedBox(width: 16.w),
                                         SocialLoginButton(
                                           iconPath: AppIcons.apple,
                                           onTap: () {
-                                            // Apple Login
+                                            // Apple Sign Up
                                           },
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 32.h),
+                                    SizedBox(height: 28.h),
 
-                                    // --------------- Sign Up Navigation ---------------
+                                    // --------------- Login Navigation ---------------
                                     Center(
                                       child: RichText(
                                         text: TextSpan(
-                                          text: 'Don’t have an account? ',
+                                          text: 'Already have an account? ',
                                           style: GoogleFonts.inter(
                                             color: const Color(0xFF9CA3AF),
                                             fontSize: 14.sp,
                                           ),
                                           children: [
                                             TextSpan(
-                                              text: 'Sign up',
+                                              text: 'Login',
                                               style: GoogleFonts.inter(
                                                 color: const Color(0xFF8B5CF6),
                                                 fontWeight: FontWeight.w600,
                                               ),
                                               recognizer: TapGestureRecognizer()
                                                 ..onTap = () {
-                                                  NavigationService.navigateTo(
-                                                    Routes.signUpScreen,
+                                                  NavigationService.navigateToReplacement(
+                                                    Routes.loginScreen,
                                                   );
                                                 },
                                             ),

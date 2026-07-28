@@ -9,19 +9,23 @@ import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
-class ForgetPassword extends StatefulWidget {
-  const ForgetPassword({super.key});
+class SetNewPasswordScreen extends StatefulWidget {
+  const SetNewPasswordScreen({super.key});
 
   @override
-  State<ForgetPassword> createState() => _ForgetPasswordState();
+  State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
 }
 
-class _ForgetPasswordState extends State<ForgetPassword> {
-  final _emailController = TextEditingController();
+class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -88,7 +92,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
                                     // --------------- Title ---------------
                                     Text(
-                                      'Forgot your password?',
+                                      'Set your password?',
                                       style: GoogleFonts.inter(
                                         color: Colors.white,
                                         fontSize: 32.sp,
@@ -100,7 +104,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
                                     // --------------- Subtitle ---------------
                                     Text(
-                                      'Please enter the email address associated with your account, and we\'ll email you a link to reset your password.',
+                                      'Please enter your new password and confirm it below to reset your password.',
                                       style: GoogleFonts.inter(
                                         color: const Color(0xFF9CA3AF),
                                         fontSize: 15.sp,
@@ -110,22 +114,43 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                                     ),
                                     SizedBox(height: 36.h),
 
-                                    // --------------- Email Field ---------------
+                                    // --------------- New Password Field ---------------
                                     CustomTextField(
-                                      controller: _emailController,
-                                      labelText: 'Email address',
-                                      hintText: 'Enter email address',
-                                      keyboardType: TextInputType.emailAddress,
+                                      controller: _newPasswordController,
+                                      labelText: 'New Password',
+                                      isPassword: true,
+                                      obscureText: _obscureNewPassword,
+                                      onToggleObscure: () {
+                                        setState(() {
+                                          _obscureNewPassword =
+                                              !_obscureNewPassword;
+                                        });
+                                      },
+                                    ),
+                                    SizedBox(height: 16.h),
+
+                                    // --------------- Confirm Password Field ---------------
+                                    CustomTextField(
+                                      controller: _confirmPasswordController,
+                                      labelText: 'Confirm Password',
+                                      isPassword: true,
+                                      obscureText: _obscureConfirmPassword,
+                                      onToggleObscure: () {
+                                        setState(() {
+                                          _obscureConfirmPassword =
+                                              !_obscureConfirmPassword;
+                                        });
+                                      },
                                     ),
 
                                     const Spacer(flex: 3),
 
-                                    // --------------- Send Code Button ---------------
+                                    // --------------- Update Button ---------------
                                     CustomButton(
-                                      text: 'Send Code',
+                                      text: 'Update',
                                       onTap: () {
-                                        NavigationService.navigateTo(
-                                          Routes.forgetPasswordVerifyOtpScreen,
+                                        NavigationService.navigateToReplacement(
+                                          Routes.successScreen,
                                         );
                                       },
                                     ),

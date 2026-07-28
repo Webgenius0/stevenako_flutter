@@ -4,25 +4,45 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
-import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
-import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
+import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
-class ForgetPassword extends StatefulWidget {
-  const ForgetPassword({super.key});
+class SignUpVerifyOtpScreen extends StatefulWidget {
+  const SignUpVerifyOtpScreen({super.key});
 
   @override
-  State<ForgetPassword> createState() => _ForgetPasswordState();
+  State<SignUpVerifyOtpScreen> createState() => _SignUpVerifyOtpScreenState();
 }
 
-class _ForgetPasswordState extends State<ForgetPassword> {
-  final _emailController = TextEditingController();
+class _SignUpVerifyOtpScreenState extends State<SignUpVerifyOtpScreen> {
+  final List<TextEditingController> _controllers =
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   @override
   void dispose() {
-    _emailController.dispose();
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  void _onOtpChanged(String value, int index) {
+    if (value.isNotEmpty) {
+      if (index < 3) {
+        _focusNodes[index + 1].requestFocus();
+      } else {
+        _focusNodes[index].unfocus();
+      }
+    } else {
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
+    }
   }
 
   @override
@@ -88,7 +108,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
                                     // --------------- Title ---------------
                                     Text(
-                                      'Forgot your password?',
+                                      'Please check your email!',
                                       style: GoogleFonts.inter(
                                         color: Colors.white,
                                         fontSize: 32.sp,
@@ -100,7 +120,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
                                     // --------------- Subtitle ---------------
                                     Text(
-                                      'Please enter the email address associated with your account, and we\'ll email you a link to reset your password.',
+                                      'We\'ve emailed a 4-digit confirmation code, please enter the code in below box to verify your email.',
                                       style: GoogleFonts.inter(
                                         color: const Color(0xFF9CA3AF),
                                         fontSize: 15.sp,
@@ -110,22 +130,65 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                                     ),
                                     SizedBox(height: 36.h),
 
-                                    // --------------- Email Field ---------------
-                                    CustomTextField(
-                                      controller: _emailController,
-                                      labelText: 'Email address',
-                                      hintText: 'Enter email address',
-                                      keyboardType: TextInputType.emailAddress,
+                                    // --------------- OTP Inputs Row ---------------
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: List.generate(4, (index) {
+                                        return SizedBox(
+                                          width: 60.w,
+                                          height: 80.w,
+                                          child: TextFormField(
+                                            controller: _controllers[index],
+                                            focusNode: _focusNodes[index],
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 22.sp,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            textAlign: TextAlign.center,
+                                            inputFormatters: [
+                                              LengthLimitingTextInputFormatter(
+                                                  1),
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                            ],
+                                            onChanged: (value) =>
+                                                _onOtpChanged(value, index),
+                                            decoration: InputDecoration(
+                                              contentPadding: EdgeInsets.zero,
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12.r),
+                                                borderSide: const BorderSide(
+                                                  color: Color(0xFF334155),
+                                                  width: 1.0,
+                                                ),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12.r),
+                                                borderSide: const BorderSide(
+                                                  color: Color(0xFFEF4444),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }),
                                     ),
 
                                     const Spacer(flex: 3),
 
-                                    // --------------- Send Code Button ---------------
+                                    // --------------- Verify Button ---------------
                                     CustomButton(
-                                      text: 'Send Code',
+                                      text: 'Verify',
                                       onTap: () {
-                                        NavigationService.navigateTo(
-                                          Routes.forgetPasswordVerifyOtpScreen,
+                                        // Handle verify code / complete signup redirection
+                                        NavigationService.navigateToReplacement(
+                                          Routes.profileSetupScreen,
                                         );
                                       },
                                     ),
