@@ -2,6 +2,7 @@
 // 3. POSTS SUB-SCREEN (Posts Tab)
 // ==========================================
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PostsSubScreen extends StatefulWidget {
   const PostsSubScreen({super.key});
@@ -272,7 +273,8 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                       onTap: () => _showCommentsSheet(index),
                       child: Row(
                         children: [
-                          const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 18),
+                          Image.asset('assets/images/mesagenva.png',height: 17.w,width: 17.w,),
+
                           const SizedBox(width: 6),
                           Text('$commentCount', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
                         ],

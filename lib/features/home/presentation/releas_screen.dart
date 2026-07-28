@@ -2,13 +2,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-// ==========================================
-// 1. REELS SUB-SCREEN (Video Tab)
-// ==========================================
-
-
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:preload_page_view/preload_page_view.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -338,6 +335,432 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
     });
   }
 
+  Future<void> _shareVideo() async {
+    final String userHandle = widget.data['userHandle'] ?? '@frances';
+    final String caption = widget.data['caption'] ?? '';
+    final String videoUrl = widget.data['videoUrl'] ?? '';
+    final String shareText =
+        'Watch this reel by $userHandle on StevenAko!\n\n"$caption"\n\n$videoUrl';
+
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: 'Reel by $userHandle',
+        ),
+      );
+      if (result.status == ShareResultStatus.success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Video link shared!'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showShareBottomSheet(context, shareText);
+      }
+    }
+  }
+
+  void _showShareBottomSheet(BuildContext context, String shareText) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E212D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Share Video',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: Colors.white),
+                title: const Text('Copy Video Link',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Clipboard.setData(ClipboardData(text: shareText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Video link copied to clipboard!'),
+                      duration: Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Colors.white),
+                title: const Text('Share via App...',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  SharePlus.instance.share(ShareParams(text: shareText));
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.send_rounded, color: Color(0xFF9D65FF)),
+                title: const Text('Send in Message',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Video sent in message!'),
+                      duration: Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCommentsBottomSheet(BuildContext context) {
+    final TextEditingController commentInputController = TextEditingController();
+    final List<Map<String, dynamic>> localComments = [
+      {
+        'id': '1',
+        'handle': '@kai',
+        'avatar':
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        'text': 'Absolutely stunning video! 🔥',
+        'time': '2h',
+        'likes': 4,
+        'isLiked': false,
+      },
+      {
+        'id': '2',
+        'handle': '@priya',
+        'avatar':
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        'text': 'Love the vibe here. ✨',
+        'time': '1h',
+        'likes': 2,
+        'isLiked': false,
+      },
+      {
+        'id': '3',
+        'handle': '@tom',
+        'avatar':
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+        'text': 'Incredible shot! 🚀',
+        'time': '30m',
+        'likes': 1,
+        'isLiked': false,
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.72,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF161722),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  border: Border.all(color: Colors.white12, width: 1),
+                ),
+                child: Column(
+                  children: [
+                    // Handle & Title
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 38.w,
+                            height: 4.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              borderRadius: BorderRadius.circular(2.r),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(width: 24.w),
+                              Text(
+                                '${widget.data['comments']} Comments',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.pop(bottomSheetContext),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white60,
+                                  size: 22.r,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(color: Colors.white12, height: 1),
+
+                    // Scrollable Comments List
+                    Expanded(
+                      child: ListView.separated(
+                        padding: EdgeInsets.all(16.r),
+                        itemCount: localComments.length,
+                        separatorBuilder: (context, index) => SizedBox(height: 14.h),
+                        itemBuilder: (context, index) {
+                          final item = localComments[index];
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(18.r),
+                                child: Image.network(
+                                  item['avatar'],
+                                  width: 36.r,
+                                  height: 36.r,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    width: 36.r,
+                                    height: 36.r,
+                                    color: Colors.grey[800],
+                                    child: const Icon(Icons.person, color: Colors.white70),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 14.w, vertical: 10.h),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF222533),
+                                        borderRadius: BorderRadius.circular(18.r),
+                                      ),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: '${item['handle']} ',
+                                              style: TextStyle(
+                                                color: const Color(0xFF9D65FF),
+                                                fontSize: 13.5.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: item['text'],
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13.5.sp,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 8.w),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            item['time'],
+                                            style: TextStyle(
+                                                color: Colors.white38, fontSize: 11.sp),
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          GestureDetector(
+                                            onTap: () {
+                                              setModalState(() {
+                                                commentInputController.text =
+                                                    '${item['handle']} ';
+                                              });
+                                            },
+                                            child: Text(
+                                              'Reply',
+                                              style: TextStyle(
+                                                  color: Colors.white60,
+                                                  fontSize: 11.5.sp,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    item['isLiked'] = !(item['isLiked'] as bool);
+                                    if (item['isLiked']) {
+                                      item['likes'] = (item['likes'] as int) + 1;
+                                    } else {
+                                      item['likes'] = (item['likes'] as int) - 1;
+                                    }
+                                  });
+                                },
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      item['isLiked']
+                                          ? Icons.favorite
+                                          : Icons.favorite_border_rounded,
+                                      size: 16.r,
+                                      color: item['isLiked']
+                                          ? const Color(0xFFFF3F5E)
+                                          : Colors.white38,
+                                    ),
+                                    if (item['likes'] > 0)
+                                      Text(
+                                        '${item['likes']}',
+                                        style: TextStyle(
+                                            color: Colors.white38, fontSize: 10.sp),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Add Comment Input Box
+                    Container(
+                      padding: EdgeInsets.only(
+                        left: 16.w,
+                        right: 16.w,
+                        top: 8.h,
+                        bottom: 16.h + MediaQuery.of(context).padding.bottom,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF161722),
+                        border: Border(
+                          top: BorderSide(color: Colors.white12, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF222533),
+                                borderRadius: BorderRadius.circular(15.r),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: TextField(
+                                controller: commentInputController,
+                                style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                                cursorColor: const Color(0xFFFF3F5E),
+                                decoration: InputDecoration(
+                                  hintText: 'Add a comment...',
+                                  hintStyle: TextStyle(
+                                      color: Colors.white38, fontSize: 14.sp),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.w, vertical: 12.h),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          IconButton(
+                            onPressed: () {
+                              final text = commentInputController.text.trim();
+                              if (text.isEmpty) return;
+
+                              setModalState(() {
+                                localComments.add({
+                                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                                  'handle': '@you',
+                                  'avatar':
+                                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+                                  'text': text,
+                                  'time': 'Just now',
+                                  'likes': 0,
+                                  'isLiked': false,
+                                });
+
+                                widget.data['comments'] =
+                                    (widget.data['comments'] as int) + 1;
+
+                                commentInputController.clear();
+                              });
+
+                              setState(() {});
+                            },
+                            icon: Image.asset(
+                              'assets/images/rocket.png',
+                              width: 22.r,
+                              height: 22.r,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showTipsBottomSheet(BuildContext context) {
     final amounts = [1, 5, 10, 50];
     int selectedAmount = 50;
@@ -387,11 +810,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.redeem_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                    Image.asset('assets/images/gift.png',height: 24.h,width: 24.w,),
                       SizedBox(width: 8.w),
                       Text(
                         'Tips',
@@ -527,11 +946,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.redeem_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
+                        Image.asset('assets/images/gift.png',height: 24.h,width: 24.w,),
                           SizedBox(width: 8.w),
                           Text(
                             'Send',
@@ -695,37 +1110,52 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
               ),
             ),
 
-          // Bottom Left Overlay details (User profile info)
+// Bottom Left Overlay details (User profile info)
           Positioned(
-            bottom: 140.h, // Raised above bottom nav bar area
-            left: 16,
-            right: 80, // Leave room for right overlay actions
+            bottom: 140.h,
+            left: 16.w,
+            right: 80.w,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Avatar, Name, Follow
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start, // <-- ADD THIS
                   children: [
                     CircleAvatar(
-                      radius: 20,
+                      radius: 20.r,
                       backgroundImage: NetworkImage(widget.data['avatar']),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        widget.data['userName'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    SizedBox(width: 8.w),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.data['userName'],
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.5.sp,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            widget.data['userHandle'],
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Tactile Follow Button
+                    SizedBox(width: 11.w),
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -734,47 +1164,41 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                        constraints: BoxConstraints(minWidth: 74.w),
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: _isFollowing
                               ? Colors.white24
                               : const Color(0xFFFF3F55),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(8.r),
                           border: _isFollowing ? Border.all(color: Colors.white30) : null,
                         ),
                         child: Text(
-                          _isFollowing ? 'following' : 'follow',
+                          _isFollowing ? 'Following' : 'Follow',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: _isFollowing ? Colors.white70 : Colors.white,
-                            fontSize: 12.5,
+                            fontSize: 12.5.sp,
                             fontWeight: FontWeight.bold,
+                            height: 1,
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  widget.data['userHandle'],
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 Text(
                   widget.data['caption'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
             ),
           ),
-
           // Right Vertical Action Menu Overlay
           Positioned(
             bottom: 130.h,
@@ -793,13 +1217,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                 // Comment
                 _buildActionItem(
-                 imagePath: 'assets/images/mesagenva.png',
+                  imagePath: 'assets/images/mesagenva.png',
                   label: '${widget.data['comments']}',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Comments section coming soon!')),
-                    );
-                  },
+                  onTap: () => _showCommentsBottomSheet(context),
                 ),
                 const SizedBox(height: 16),
 
@@ -809,11 +1229,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                   icon: Icons.reply,
                   label: '',
                   iconScaleX: -1.0, // Flip arrow to point top-right
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Link copied to clipboard!')),
-                    );
-                  },
+                  onTap: _shareVideo,
                 ),
                 const SizedBox(height: 16),
 
@@ -854,7 +1270,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                        colors: [Color(0xFFBF9405), Color(0xFFBF9405)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -867,13 +1283,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
-                      r'$',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    child: Image.asset(
+                      'assets/images/dolor.png',
+                      width: 20.w,
+                      height: 20.h,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

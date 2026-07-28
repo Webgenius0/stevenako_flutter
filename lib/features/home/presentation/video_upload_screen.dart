@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stevenako_flutter/features/home/presentation/sound_track_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/upload_post_screen.dart';
@@ -210,13 +211,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                       ),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: 10.0),
+                          padding:   EdgeInsets.only(top: 10.0.sp),
                           child: Text(
                             _isVideoMode ? 'Upload Video' : 'Preview',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style:   TextStyle(
                               color: Colors.white,
-                              fontSize: 20,
+                              fontSize: 20.sp,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -228,15 +229,15 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                           onTap: _pickVideo,
                         )
                       else
-                        const SizedBox(width: 44),
+                          SizedBox(width: 44.w),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                 Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
+                  padding:   EdgeInsets.only(right: 16.0.w),
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: Column(
@@ -244,13 +245,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                       children: [
                         _PillButton(
                           label: 'Music',
-                          icon: Icons.music_note_rounded,
+                           imagePath: 'assets/images/soudn.png',
                           onTap: _onMusicTap,
                         ),
-                        const SizedBox(height: 14),
+                          SizedBox(height: 14.h),
                         _PillButton(
                           label: 'Trim',
-                          icon: Icons.content_cut_rounded,
+                          imagePath: 'assets/images/treim.png',
                           onTap: _onTrimTap,
                         ),
                       ],
@@ -301,19 +302,19 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
           ),
           AnimatedOpacity(
             opacity: controller.value.isPlaying ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 200),
+            duration:   Duration(milliseconds: 200),
             child: Center(
               child: Container(
-                width: 64,
-                height: 64,
+                width: 64.w,
+                height: 64.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.black.withOpacity(0.4),
                 ),
-                child: const Icon(
+                child:   Icon(
                   Icons.play_arrow_rounded,
                   color: Colors.white,
-                  size: 40,
+                  size: 40.sp,
                 ),
               ),
             ),
@@ -345,13 +346,13 @@ class _CircleIconButton extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: Container(
-          width: 40,
-          height: 40,
+          width: 40.w,
+          height: 40.h,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.black.withOpacity(0.28),
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: Colors.white, size: 20.sp),
         ),
       ),
     );
@@ -360,12 +361,12 @@ class _CircleIconButton extends StatelessWidget {
 
 class _PillButton extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final String imagePath;
   final VoidCallback onTap;
 
   const _PillButton({
     required this.label,
-    required this.icon,
+    required this.imagePath,
     required this.onTap,
   });
 
@@ -375,27 +376,32 @@ class _PillButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.r),
         child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          height: 48.h,
+          padding:   EdgeInsets.symmetric(horizontal: 20.w),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.32),
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(30.r),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style:   TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 10),
-              Icon(icon, color: Colors.white, size: 18),
+                SizedBox(width: 10.w),
+              Image.asset(
+                imagePath,
+                width: 18.w,
+                height: 18.h,
+                color: Colors.white, // Remove if you don't want tint
+              ),
             ],
           ),
         ),
@@ -403,7 +409,6 @@ class _PillButton extends StatelessWidget {
     );
   }
 }
-
 class _ContinueButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -416,13 +421,13 @@ class _ContinueButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.r),
         child: Container(
           width: double.infinity,
-          height: 54,
+          height: 54.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(30.r),
             gradient: const LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
@@ -441,9 +446,9 @@ class _ContinueButton extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: const TextStyle(
+            style:   TextStyle(
               color: Colors.white,
-              fontSize: 17,
+              fontSize: 17.sp,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -509,11 +514,11 @@ class _TrimmerScreenState extends State<TrimmerScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           _isSaving
-              ? const Padding(
-            padding: EdgeInsets.all(16.0),
+              ?   Padding(
+            padding: EdgeInsets.all(16.0.sp),
             child: SizedBox(
-              width: 20,
-              height: 20,
+              width: 20.w,
+              height: 20.h,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 color: Colors.white,
@@ -522,9 +527,9 @@ class _TrimmerScreenState extends State<TrimmerScreen> {
           )
               : TextButton(
             onPressed: _saveTrimmedVideo,
-            child: const Text(
+            child:   Text(
               'Save',
-              style: TextStyle(color: Colors.deepPurpleAccent, fontSize: 16),
+              style: TextStyle(color: Colors.deepPurpleAccent, fontSize: 16.sp),
             ),
           ),
         ],
@@ -545,11 +550,11 @@ class _TrimmerScreenState extends State<TrimmerScreen> {
               onChangeEnd: (value) => _endValue = value,
               onChangePlaybackState: (value) => setState(() => _isPlaying = value),
             ),
-            const SizedBox(height: 20),
+              SizedBox(height: 20.h),
             IconButton(
               icon: Icon(
                 _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                size: 60,
+                size: 60.sp,
                 color: Colors.white,
               ),
               onPressed: () async {
@@ -561,7 +566,7 @@ class _TrimmerScreenState extends State<TrimmerScreen> {
                 setState(() => _isPlaying = playbackState);
               },
             ),
-            const SizedBox(height: 20),
+              SizedBox(height: 20.h),
           ],
         ),
       ),
