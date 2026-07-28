@@ -10,9 +10,19 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text('Explore screen'),
+    return const Scaffold(
+      backgroundColor: Colors.transparent, // Transparent to show the NavigationMenu gradient
+      body: SafeArea(
+        child: Center(
+          child: Text(
+            'Explore Screen',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }

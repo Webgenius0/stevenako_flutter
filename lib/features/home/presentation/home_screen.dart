@@ -31,13 +31,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       parent: _entranceController,
       curve: Curves.easeOut,
     );
-    _entranceSlide = Tween<Offset>(
-      begin: const Offset(0, -0.4),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeOutCubic,
-    ));
+    _entranceSlide =
+        Tween<Offset>(begin: const Offset(0, -0.4), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _entranceController.forward();
   }
@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         // Custom Top Navigation Tab Bar Overlay (animates in on load)
         Positioned(
-          top: 12,
+          top: MediaQuery.of(context).padding.top + 12,
           left: 16,
           right: 16,
           child: FadeTransition(
@@ -156,10 +156,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(17),
           gradient: isActive
               ? const LinearGradient(
-            colors: [Color(0xFF9F75FF), Color(0xFF7C3AED)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
+                  colors: [Color(0xFF9F75FF), Color(0xFF7C3AED)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
               : null,
         ),
         child: TweenAnimationBuilder<double>(
