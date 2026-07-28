@@ -2,6 +2,8 @@
 // 3. POSTS SUB-SCREEN (Posts Tab)
 // ==========================================
 import 'package:flutter/material.dart';
+import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
+
 
 class PostsSubScreen extends StatefulWidget {
   const PostsSubScreen({super.key});
@@ -172,12 +174,21 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
         separatorBuilder: (context, index) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           final post = _posts[index];
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E2C),
-              borderRadius: BorderRadius.circular(16),
-            ),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PostDetailsScreen(postData: post),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2C),
+                borderRadius: BorderRadius.circular(16),
+              ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -242,7 +253,8 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                 ),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );
