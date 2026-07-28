@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
-import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_app_bar.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_avatar.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_stats_row.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_actions_row.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_tab_button.dart';
+import 'package:stevenako_flutter/features/profile/widgets/profile_grid_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -133,164 +137,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   bottom: false,
                   child: Column(
                     children: [
-                      // --------------- Custom App Bar ---------------
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 12.h,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Frances Swann',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                // Wallet Balance Pill
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      Routes.myWalletScreen,
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 6.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF27273A,
-                                      ).withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(20.r),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF8B5CF6,
-                                        ).withValues(alpha: 0.3),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.credit_card_outlined,
-                                          color: const Color(0xFF9F75FF),
-                                          size: 16.sp,
-                                        ),
-                                        SizedBox(width: 6.w),
-                                        Container(
-                                          width: 1,
-                                          height: 12.h,
-                                          color: Colors.white24,
-                                        ),
-                                        SizedBox(width: 6.w),
-                                        Text(
-                                          '250.00',
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white,
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
-                                // Settings Gear Icon
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      Routes.settingScreen,
-                                    );
-                                  },
-                                  child: Icon(
-                                    Icons.settings_outlined,
-                                    color: Colors.white,
-                                    size: 24.sp,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      const ProfileAppBar(
+                        name: 'Frances Swann',
+                        balance: '250.00',
                       ),
-
-                      // --------------- Scrollable Profile Content ---------------
                       Expanded(
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
-                          padding: EdgeInsets.only(
-                            bottom: 120.h,
-                          ), // space for bottom nav
+                          padding: EdgeInsets.only(bottom: 120.h),
                           child: Column(
                             children: [
                               SizedBox(height: 10.h),
-
-                              // Profile Picture with Edit overlay
-                              Center(
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 96.r,
-                                      height: 96.r,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white24,
-                                          width: 2,
-                                        ),
-                                        image: const DecorationImage(
-                                          image: CachedNetworkImageProvider(
-                                            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-                                          ),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            Routes.profileSetupScreen,
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(5.r),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF1E1E2C),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.edit_outlined,
-                                            color: Colors.white,
-                                            size: 14.sp,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              const ProfileAvatar(
+                                imageUrl:
+                                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
                               ),
                               SizedBox(height: 12.h),
-
-                              // User Name, tag, and bio
                               Text(
                                 'Frances Swann',
                                 style: GoogleFonts.inter(
@@ -317,133 +179,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               SizedBox(height: 20.h),
-
-                              // Stats Row
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 40.w),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _buildStatItem('823', 'Likes'),
-                                    _buildDivider(),
-                                    _buildStatItem('3.7M', 'Followers'),
-                                    _buildDivider(),
-                                    _buildStatItem('925', 'Following'),
-                                  ],
-                                ),
+                              const ProfileStatsRow(
+                                likes: '823',
+                                followers: '3.7M',
+                                following: '925',
                               ),
                               SizedBox(height: 24.h),
-
-                              // Dashboard & Edit Buttons
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () {
-                                          // Dashboard Action
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          side: BorderSide(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.15,
-                                            ),
-                                            width: 1,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              30.r,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 14.h,
-                                          ),
-                                          backgroundColor: Colors.transparent,
-                                        ),
-                                        icon: Icon(
-                                          Icons.show_chart_outlined,
-                                          size: 20.sp,
-                                        ),
-                                        label: Text(
-                                          'Dashboard',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Expanded(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(
-                                                0xFF9F75FF,
-                                              ), // Lighter purple
-                                              Color(0xFF7C3AED), // Rich purple
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            30.r,
-                                          ),
-                                        ),
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            Navigator.pushNamed(
-                                              context,
-                                              Routes.profileSetupScreen,
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            foregroundColor: Colors.white,
-                                            backgroundColor: Colors.transparent,
-                                            shadowColor: Colors.transparent,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(30.r),
-                                            ),
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 14.h,
-                                            ),
-                                          ),
-                                          icon: Icon(
-                                            Icons.edit_outlined,
-                                            size: 20.sp,
-                                          ),
-                                          label: Text(
-                                            'Edit Profile',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              const ProfileActionsRow(),
                               SizedBox(height: 24.h),
-
-                              // Custom Tab Bar
                               Row(
                                 children: [
-                                  _buildTabButton(0, Icons.videocam_outlined),
-                                  _buildTabButton(1, Icons.grid_view_rounded),
-                                  _buildTabButton(
-                                    2,
-                                    Icons.bookmark_border_rounded,
+                                  ProfileTabButton(
+                                    index: 0,
+                                    activeTab: _activeTab,
+                                    assetPath: 'assets/images/video.png',
+                                    onTap: (val) =>
+                                        setState(() => _activeTab = val),
+                                  ),
+                                  ProfileTabButton(
+                                    index: 1,
+                                    activeTab: _activeTab,
+                                    assetPath: 'assets/images/gallery.png',
+                                    onTap: (val) =>
+                                        setState(() => _activeTab = val),
+                                  ),
+                                  ProfileTabButton(
+                                    index: 2,
+                                    activeTab: _activeTab,
+                                    assetPath: 'assets/images/save.png',
+                                    onTap: (val) =>
+                                        setState(() => _activeTab = val),
                                   ),
                                 ],
                               ),
                               SizedBox(height: 16.h),
-
-                              // Grid contents based on active tab
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                                 child: GridView.builder(
@@ -459,9 +228,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   itemCount: _currentItems.length,
                                   itemBuilder: (context, index) {
                                     final item = _currentItems[index];
-                                    return _buildGridCard(
-                                      item['image']!,
-                                      item['views']!,
+                                    return ProfileGridCard(
+                                      imageUrl: item['image']!,
+                                      viewCount: item['views']!,
                                     );
                                   },
                                 ),
@@ -476,154 +245,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String count, String label) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: Colors.white54,
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(width: 1, height: 24.h, color: Colors.white12);
-  }
-
-  Widget _buildTabButton(int index, IconData icon) {
-    final isActive = _activeTab == index;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          setState(() {
-            _activeTab = index;
-          });
-        },
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isActive ? const Color(0xFF9F75FF) : Colors.white60,
-              size: 24.sp,
-            ),
-            SizedBox(height: 8.h),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 2.h,
-              width: isActive ? 60.w : 0,
-              decoration: BoxDecoration(
-                color: const Color(0xFF9F75FF),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridCard(String imageUrl, String viewCount) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: const Color(0xFF1E1E2C),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF9F75FF),
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: const Color(0xFF1E1E2C),
-                  child: const Icon(Icons.error, color: Colors.white54),
-                ),
-              ),
-            ),
-            // Bottom shadow overlay
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.5),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Views Counter
-            Positioned(
-              bottom: 12.h,
-              left: 12.w,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.play_arrow_outlined,
-                      color: Colors.white,
-                      size: 14.sp,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      viewCount,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
