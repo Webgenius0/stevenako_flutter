@@ -10,6 +10,8 @@ import 'package:stevenako_flutter/features/profile/widgets/profile_actions_row.d
 import 'package:stevenako_flutter/features/profile/widgets/profile_tab_button.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_grid_card.dart';
 
+import 'package:stevenako_flutter/features/profile/widgets/profile_save_post_card.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -57,43 +59,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final List<Map<String, String>> _gridItems = [
     {
       'image':
-          'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400',
-      'views': '1.2k',
+          'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
+      'views': '10',
     },
     {
       'image':
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-      'views': '6.7k',
+          'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400',
+      'views': '10',
     },
     {
       'image':
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400',
-      'views': '3.5k',
+          'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400',
+      'views': '10',
     },
     {
       'image':
-          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400',
-      'views': '9.1k',
+          'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=400',
+      'views': '10',
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1541614101331-1a5a3a194e92?w=400',
+      'views': '10',
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400',
+      'views': '10',
     },
   ];
 
-  final List<Map<String, String>> _bookmarkItems = [
+  final List<Map<String, String?>> _saveItems = [
     {
-      'image':
-          'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
-      'views': '7.8k',
+      'avatar': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+      'username': 'Frances Swann',
+      'timeAgo': '2h',
+      'content': '',
+      'likes': '4.2K',
+      'comments': '312',
+      'shares': '891',
     },
     {
-      'image':
-          'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400',
-      'views': '5.0k',
+      'avatar': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+      'username': 'Frances Swann',
+      'timeAgo': '2h',
+      'content': "The creator economy is not just a trend — it's a fundamental restructuring of how value flows on the internet. REALM is built for that future.",
+      'likes': '4.2K',
+      'comments': '312',
+      'shares': '891',
+    },
+    {
+      'avatar': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+      'username': 'Frances Swann',
+      'timeAgo': '2h',
+      'content': "The creator economy is not just a trend — it's a fundamental restructuring of how value flows on the internet.",
+      'likes': '4.2K',
+      'comments': '312',
+      'shares': '891',
     },
   ];
 
   List<Map<String, String>> get _currentItems {
     if (_activeTab == 0) return _videoItems;
-    if (_activeTab == 1) return _gridItems;
-    return _bookmarkItems;
+    return _gridItems;
   }
 
   @override
@@ -187,53 +215,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               SizedBox(height: 24.h),
                               const ProfileActionsRow(),
                               SizedBox(height: 24.h),
-                              Row(
-                                children: [
-                                  ProfileTabButton(
-                                    index: 0,
-                                    activeTab: _activeTab,
-                                    assetPath: 'assets/images/video.png',
-                                    onTap: (val) =>
-                                        setState(() => _activeTab = val),
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 16.w),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      width: 1.h,
+                                    ),
                                   ),
-                                  ProfileTabButton(
-                                    index: 1,
-                                    activeTab: _activeTab,
-                                    assetPath: 'assets/images/gallery.png',
-                                    onTap: (val) =>
-                                        setState(() => _activeTab = val),
-                                  ),
-                                  ProfileTabButton(
-                                    index: 2,
-                                    activeTab: _activeTab,
-                                    assetPath: 'assets/images/save.png',
-                                    onTap: (val) =>
-                                        setState(() => _activeTab = val),
-                                  ),
-                                ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    ProfileTabButton(
+                                      index: 0,
+                                      activeTab: _activeTab,
+                                      assetPath: 'assets/images/video.png',
+                                      onTap: (val) =>
+                                          setState(() => _activeTab = val),
+                                    ),
+                                    ProfileTabButton(
+                                      index: 1,
+                                      activeTab: _activeTab,
+                                      assetPath: 'assets/images/gallery.png',
+                                      onTap: (val) =>
+                                          setState(() => _activeTab = val),
+                                    ),
+                                    ProfileTabButton(
+                                      index: 2,
+                                      activeTab: _activeTab,
+                                      assetPath: 'assets/images/save.png',
+                                      onTap: (val) =>
+                                          setState(() => _activeTab = val),
+                                    ),
+                                  ],
+                                ),
                               ),
                               SizedBox(height: 16.h),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 16.w),
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 12.h,
-                                        crossAxisSpacing: 12.w,
-                                        childAspectRatio: 0.72,
+                                child: _activeTab == 2
+                                    ? ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        padding: EdgeInsets.zero,
+                                        itemCount: _saveItems.length,
+                                        itemBuilder: (context, index) {
+                                          final item = _saveItems[index];
+                                          return ProfileSavePostCard(
+                                            avatarUrl: item['avatar']!,
+                                            username: item['username']!,
+                                            timeAgo: item['timeAgo']!,
+                                            content: item['content'],
+                                            likes: item['likes']!,
+                                            comments: item['comments']!,
+                                            shares: item['shares']!,
+                                          );
+                                        },
+                                      )
+                                    : GridView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 12.h,
+                                          crossAxisSpacing: 12.w,
+                                          childAspectRatio:
+                                              _activeTab == 1 ? 0.63 : 0.72,
+                                        ),
+                                        itemCount: _currentItems.length,
+                                        itemBuilder: (context, index) {
+                                          final item = _currentItems[index];
+                                          return ProfileGridCard(
+                                            imageUrl: item['image']!,
+                                            viewCount: item['views']!,
+                                            showStatsUnder: _activeTab == 1,
+                                            overlayIconPath: _activeTab == 2
+                                                ? 'assets/images/save.png'
+                                                : 'assets/images/play_icon.png',
+                                          );
+                                        },
                                       ),
-                                  itemCount: _currentItems.length,
-                                  itemBuilder: (context, index) {
-                                    final item = _currentItems[index];
-                                    return ProfileGridCard(
-                                      imageUrl: item['image']!,
-                                      viewCount: item['views']!,
-                                    );
-                                  },
-                                ),
                               ),
                             ],
                           ),

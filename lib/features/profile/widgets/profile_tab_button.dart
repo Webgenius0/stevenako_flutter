@@ -33,11 +33,19 @@ class ProfileTabButton extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 250),
               height: 2.h,
-              width: isActive ? 60.w : 0,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF9F75FF),
+                gradient: isActive
+                    ? const LinearGradient(
+                        colors: [
+                          Color(0xFF9F75FF),
+                          Color.fromARGB(255, 62, 63, 121),
+                        ],
+                      )
+                    : null,
+                color: isActive ? null : Colors.transparent,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),

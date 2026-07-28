@@ -70,7 +70,7 @@ class ProfileActionsRow extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushNamed(
                     context,
-                    Routes.profileSetupScreen,
+                    Routes.editProfileScreen,
                   );
                 },
                 style: ElevatedButton.styleFrom(
