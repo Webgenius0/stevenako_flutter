@@ -1,12 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 import 'features/home/presentation/home_screen.dart';
-import 'features/explore/presentation/explore_screen.dart';
-import 'features/home/presentation/upload_post_screen.dart';
-import 'features/home/presentation/video_upload_screen.dart';
+ import 'features/home/presentation/post_navtaiosn_screeen.dart';
+ import 'features/home/presentation/video_upload_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 
 // Bouncy Tactile Floating Action Button
@@ -84,7 +84,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
 
   final List<Widget> screens = [
     const HomeScreen(),
-    const ExploreScreen(),
+    const PostsSubScreen(),
     const AllChatScreen(),
     const ProfileScreen(),
   ];
@@ -109,14 +109,13 @@ class _NavigationMenuState extends State<NavigationMenu> {
     });
     action();
   }
-
-  Widget _buildMenuButton(IconData icon, String text) {
+  Widget _buildMenuButton(String imagePath, String text) {
     return Container(
-      width: 220,
-      height: 48,
+      width: 220.w,
+      height: 48.h,
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E2C),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -126,16 +125,21 @@ class _NavigationMenuState extends State<NavigationMenu> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22),
+        padding: EdgeInsets.symmetric(horizontal: 22.w),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 14),
+            Image.asset(
+              imagePath,
+              width: 20.w,
+              height: 20.h,
+              color: Colors.white, // Remove this line if your image is already colored
+            ),
+            SizedBox(width: 14.w),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 14.5,
+                fontSize: 14.5.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -200,11 +204,11 @@ class _NavigationMenuState extends State<NavigationMenu> {
                     delay: const Duration(milliseconds: 160),
                     onTap: () {
                       _closeMenuThen(() {
-                        Get.to(() => const VideoUploadScreen());
+                        Get.to(() => const VideoUploadScreen(tap: 'Upload Video',));
                       });
                     },
                     child: _buildMenuButton(
-                      Icons.videocam_outlined,
+                      'assets/images/video.png',
                       'Upload Video',
                     ),
                   ),
@@ -214,36 +218,38 @@ class _NavigationMenuState extends State<NavigationMenu> {
                     delay: const Duration(milliseconds: 80),
                     onTap: () {
                       _closeMenuThen(() {
-                        Get.to(UploadPostScreen());
+                        // Get.to(UploadPostScreen());
+                        Get.to(() => const VideoUploadScreen(tap: 'Upload Photos',));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Upload Photos tapped!'),
                             duration: Duration(seconds: 1),
                           ),
                         );
-                        // TODO: hook up real photo upload navigation here
                       });
                     },
-                    child: _buildMenuButton(Icons.upload, 'Upload Photos'),
+                    child: _buildMenuButton(
+                      'assets/images/uploand.png',
+                      'Upload Photos',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   StaggeredMenuItem(
                     isVisible: _isMenuOpen,
                     delay: const Duration(milliseconds: 0),
                     onTap: () {
-                      // Get.to(UploadPostScreen());
                       _closeMenuThen(() {
+                        Get.to(() => const VideoUploadScreen(tap: 'Create a Post',));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Create a Post tapped!'),
                             duration: Duration(seconds: 1),
                           ),
                         );
-                        // TODO: hook up real "create post" navigation here
                       });
                     },
                     child: _buildMenuButton(
-                      Icons.bookmark_border,
+                      'assets/images/postcreat.png',
                       'Create a Post',
                     ),
                   ),
@@ -264,7 +270,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
 }
 
 // Staggered Animation Wrapper for popup menu items
-class StaggeredMenuItem extends StatefulWidget {
+ class StaggeredMenuItem extends StatefulWidget {
   final bool isVisible;
   final Duration delay;
   final Widget child;
@@ -446,16 +452,36 @@ class CustomBottomNavBar extends StatelessWidget {
     Widget iconWidget;
     switch (index) {
       case 0:
-        iconWidget = HouseIcon(isActive: isActive, color: color);
+        iconWidget = Image.asset(
+          'assets/icons/home.png',
+          width: 24,
+          height: 24,
+          color: color,
+        );
         break;
       case 1:
-        iconWidget = BroadcastIcon(isActive: isActive, color: color);
+        iconWidget = Image.asset(
+          'assets/images/post.png',
+          width: 24,
+          height: 24,
+          color: color,
+        );
         break;
       case 2:
-        iconWidget = ChatIcon(isActive: isActive, color: color);
+        iconWidget = Image.asset(
+          'assets/images/mesagenva.png',
+          width: 24,
+          height: 24,
+          color: color,
+        );
         break;
       case 3:
-        iconWidget = ProfileIcon(isActive: isActive, color: color);
+        iconWidget = Image.asset(
+          'assets/icons/user.png',
+          width: 24,
+          height: 24,
+          color: color,
+        );
         break;
       default:
         iconWidget = const SizedBox.shrink();

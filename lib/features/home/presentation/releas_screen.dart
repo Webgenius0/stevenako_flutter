@@ -1,24 +1,11 @@
 
-// ==========================================
-// 1. REELS SUB-SCREEN (Video Tab)
-// ==========================================
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 // ==========================================
 // 1. REELS SUB-SCREEN (Video Tab)
 // ==========================================
-//
-// REQUIRED SETUP:
-// Add this to pubspec.yaml under dependencies:
-//   video_player: ^2.9.2
-// Then run: flutter pub get
-//
-// This uses NETWORK video urls in _reelsData for demo purposes.
-// If you want to bundle local video files instead, add them under
-// pubspec.yaml -> flutter -> assets (e.g. assets/videos/reel1.mp4),
-// put the file path in 'videoUrl', and set 'isNetwork': false.
-//
+
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:preload_page_view/preload_page_view.dart';
@@ -351,6 +338,252 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
     });
   }
 
+  void _showTipsBottomSheet(BuildContext context) {
+    final amounts = [1, 5, 10, 50];
+    int selectedAmount = 50;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF181924),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 12.h,
+                bottom: 24.h + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag indicator handle
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Header title: Gift icon + Tips
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.redeem_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Tips',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 28.h),
+
+                  // "Amount" section label
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Amount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+
+                  // Amount options selector
+                  Row(
+                    children: amounts.map((amount) {
+                      final isSelected = selectedAmount == amount;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 5.w),
+                          child: GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                selectedAmount = amount;
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: 52.h,
+                              decoration: BoxDecoration(
+                                color: isSelected ? null : Colors.white,
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '\$ $amount',
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 32.h),
+
+                  // Send button
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Trigger coin float animation
+                      final screenSize = MediaQuery.of(context).size;
+                      setState(() {
+                        _coinAnimX = screenSize.width / 2;
+                        _coinAnimY = screenSize.height / 2;
+                        _showCoinAnim = true;
+                      });
+                      Future.delayed(const Duration(milliseconds: 1000), () {
+                        if (mounted) {
+                          setState(() {
+                            _showCoinAnim = false;
+                          });
+                        }
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: Colors.greenAccent),
+                              SizedBox(width: 10.w),
+                              Text('Sent \$$selectedAmount tip to ${widget.data['userName']}!'),
+                            ],
+                          ),
+                          backgroundColor: const Color(0xFF181924),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 56.h,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF9061F9), Color(0xFF5B21B6)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(28.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF7C3AED).withOpacity(0.5),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.redeem_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Send',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          // Orange Coin Icon
+                          Container(
+                            width: 22.w,
+                            height: 22.h,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              r'$',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            '\$$selectedAmount',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -560,7 +793,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                 // Comment
                 _buildActionItem(
-                  icon: Icons.chat_bubble_outline,
+                 imagePath: 'assets/images/message.png',
                   label: '${widget.data['comments']}',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -572,6 +805,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                 // Share / Send
                 _buildActionItem(
+                  imagePath: 'assets/images/Share.png',
                   icon: Icons.reply,
                   label: '',
                   iconScaleX: -1.0, // Flip arrow to point top-right
@@ -613,9 +847,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                 // Interactive Coins Award Button
                 GestureDetector(
                   onTapDown: _triggerCoins,
+                  onTap: () => _showTipsBottomSheet(context),
                   child: Container(
-                    width: 42,
-                    height: 42,
+                    width: 42.w,
+                    height: 42.h,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
@@ -719,10 +954,12 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
   }
 
   Widget _buildActionItem({
-    required IconData icon,
+    IconData? icon,
+    String? imagePath, // NEW: pass asset path for image-based icons
     required String label,
     Color iconColor = Colors.white,
     double iconScaleX = 1.0,
+    double size = 32,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -733,11 +970,18 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
           Transform(
             alignment: Alignment.center,
             transform: Matrix4.identity()..scale(iconScaleX, 1.0, 1.0),
-            child: Icon(
+            child: imagePath != null
+                ? Image.asset(
+              imagePath,
+              width: size,
+              height: size,
+              color: iconColor, // remove this line if your image is already colored/full-color
+            )
+                : Icon(
               icon,
               color: iconColor,
-              size: 32,
-              shadows:   [
+              size: size,
+              shadows: const [
                 Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
               ],
             ),
@@ -760,4 +1004,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
       ),
     );
   }
+
+
+
 }

@@ -122,7 +122,13 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
   }
 
   void _onBack() {
-    // Return the selected people to the caller (e.g. the Post screen).
+    // Back arrow just closes without confirming a new selection.
+    Navigator.of(context).maybePop();
+  }
+
+  void _onContinue() {
+    // Continue confirms the current selection and returns it to the caller
+    // (e.g. the Post screen), so it can show "3 people tagged" etc.
     Navigator.of(context).maybePop(_selectedIds);
   }
 
@@ -223,6 +229,17 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
                       onTap: () => _toggle(person.id),
                     );
                   },
+                ),
+              ),
+
+              // ---- Bottom Continue CTA
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: _ContinueButton(
+                  label: _selectedIds.isEmpty
+                      ? 'Continue'
+                      : 'Continue (${_selectedIds.length})',
+                  onTap: _onContinue,
                 ),
               ),
             ],
@@ -342,6 +359,59 @@ class _PersonRow extends StatelessWidget {
                     : null,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Continue CTA (same style as the video upload / trim screens)
+// ============================================================
+
+class _ContinueButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _ContinueButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: double.infinity,
+          height: 54,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFF7C3AED),
+                Color(0xFF6D28D9),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7C3AED).withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
