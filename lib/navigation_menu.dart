@@ -1,10 +1,8 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
-
 import 'features/home/presentation/home_screen.dart';
 import 'features/explore/presentation/explore_screen.dart';
 import 'features/home/presentation/upload_post_screen.dart';
@@ -165,10 +163,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
               ),
             ),
           ),
-          SafeArea(
-            bottom: false,
-            child: IndexedStack(index: _currentIndex, children: screens),
-          ),
+          IndexedStack(index: _currentIndex, children: screens),
           // Backdrop blur/dim when FAB menu is open
           IgnorePointer(
             ignoring: !_isMenuOpen,

@@ -67,8 +67,12 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF0F0E17), // Deep background color
-      padding: const EdgeInsets.only(top: 64, left: 12, right: 12),
+      color: Colors.transparent, // Transparent to show the NavigationMenu gradient
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 64,
+        left: 12,
+        right: 12,
+      ),
       child: GridView.builder(
         itemCount: _photos.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -32,7 +32,6 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   String _query = '';
   bool _usingCurrentLocation = false;
 
-  // TODO: Replace with real geocoding/places-API results.
   final List<_LocationOption> _suggested = const [
     _LocationOption(title: 'New York, USA', subtitle: 'Manhattan, New York'),
     _LocationOption(title: 'Los Angeles, USA', subtitle: 'California'),
@@ -52,9 +51,11 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     if (_query.trim().isEmpty) return _suggested;
     final q = _query.toLowerCase();
     return _suggested
-        .where((l) =>
-    l.title.toLowerCase().contains(q) ||
-        l.subtitle.toLowerCase().contains(q))
+        .where(
+          (l) =>
+              l.title.toLowerCase().contains(q) ||
+              l.subtitle.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -64,7 +65,6 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
 
   void _onUseCurrentLocation() async {
     setState(() => _usingCurrentLocation = true);
-    // TODO: hook up real geolocation (e.g. `geolocator` package) + reverse
     // geocoding here, then pop with the resolved location.
     Navigator.of(context).maybePop('current_location');
   }
@@ -96,8 +96,11 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                   children: [
                     IconButton(
                       onPressed: _onBack,
-                      icon: const Icon(Icons.chevron_left,
-                          color: Colors.white, size: 30),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     const Expanded(
                       child: Text(
@@ -182,8 +185,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                         option: results[i],
                         onTap: () => _onSelectLocation(results[i]),
                       ),
-                      if (i != results.length - 1)
-                        const SizedBox(height: 14),
+                      if (i != results.length - 1) const SizedBox(height: 14),
                     ],
                     if (results.isEmpty)
                       const Padding(
@@ -214,10 +216,7 @@ class _UseCurrentLocationRow extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
 
-  const _UseCurrentLocationRow({
-    required this.isLoading,
-    required this.onTap,
-  });
+  const _UseCurrentLocationRow({required this.isLoading, required this.onTap});
 
   static const Color _cardBorder = Color(0xFF2E2C3E);
   static const Color _purple = Color(0xFF7C3AED);
@@ -252,16 +251,20 @@ class _UseCurrentLocationRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: isLoading
                     ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor:
-                    AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                    : const Icon(Icons.my_location,
-                    color: Colors.white, size: 20),
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Icon(
+                        Icons.my_location,
+                        color: Colors.white,
+                        size: 20,
+                      ),
               ),
               const SizedBox(width: 16),
               const Text(
@@ -314,8 +317,11 @@ class _LocationRow extends StatelessWidget {
                   color: _iconBg,
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.location_on,
-                    color: _iconColor, size: 20),
+                child: const Icon(
+                  Icons.location_on,
+                  color: _iconColor,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -333,10 +339,7 @@ class _LocationRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       option.subtitle,
-                      style: const TextStyle(
-                        color: _hintColor,
-                        fontSize: 14.5,
-                      ),
+                      style: const TextStyle(color: _hintColor, fontSize: 14.5),
                     ),
                   ],
                 ),

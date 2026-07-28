@@ -28,8 +28,12 @@ class PostsSubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF0F0E17),
-      padding: const EdgeInsets.only(top: 64, left: 16, right: 16),
+      color: Colors.transparent, // Transparent to show the NavigationMenu gradient
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 64,
+        left: 16,
+        right: 16,
+      ),
       child: ListView.separated(
         itemCount: _posts.length,
         separatorBuilder: (context, index) => const SizedBox(height: 16),
