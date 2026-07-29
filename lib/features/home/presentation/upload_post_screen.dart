@@ -6,6 +6,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/home/presentation/add_location_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/tag_people_screeen.dart';
+import 'package:stevenako_flutter/helpers/navigation_service.dart';
 
 class UploadPostScreen extends StatefulWidget {
   final String? thumbnailPath; // path to the video's preview frame
@@ -89,6 +90,8 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
 
   void _onPostNow() {
     // TODO: upload video + caption + settings to backend
+     NavigationService.goBack;
+     NavigationService.goBack;
   }
 
   @override

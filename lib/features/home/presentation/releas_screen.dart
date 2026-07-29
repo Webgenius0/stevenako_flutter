@@ -1233,12 +1233,12 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                 ),
                 const SizedBox(height: 16),
 
-                // Mute / Unmute toggle
-                _buildActionItem(
-                  icon: _isMuted ? Icons.volume_off : Icons.volume_up,
-                  label: '',
-                  onTap: _toggleMute,
-                ),
+                // // Mute / Unmute toggle
+                // _buildActionItem(
+                //   icon: _isMuted ? Icons.volume_off : Icons.volume_up,
+                //   label: '',
+                //   onTap: _toggleMute,
+                // ),
                 const SizedBox(height: 16),
 
                 // Spinning Vinyl Music Disk
@@ -1381,24 +1381,20 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()..scale(iconScaleX, 1.0, 1.0),
-            child: imagePath != null
-                ? Image.asset(
-              imagePath,
-              width: size,
-              height: size,
-              color: iconColor, // remove this line if your image is already colored/full-color
-            )
-                : Icon(
-              icon,
-              color: iconColor,
-              size: size,
-              shadows: const [
-                Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-              ],
-            ),
+          imagePath != null
+              ? Image.asset(
+            imagePath,
+            width: size,
+            height: size,
+            color: iconColor, // remove this line if your image is already colored/full-color
+          )
+              : Icon(
+            icon,
+            color: iconColor,
+            size: size,
+            shadows: const [
+              Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+            ],
           ),
           if (label.isNotEmpty) ...[
             const SizedBox(height: 4),
