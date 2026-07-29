@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
+import 'features/home/presentation/creat_a_post_screen.dart';
 import 'features/home/presentation/home_screen.dart';
  import 'features/home/presentation/post_navtaiosn_screeen.dart';
  import 'features/home/presentation/uploand_photo_screen.dart';
@@ -240,7 +241,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                     delay: const Duration(milliseconds: 0),
                     onTap: () {
                       _closeMenuThen(() {
-                        Get.to(() => const VideoUploadScreen(tap: 'Create a Post',));
+                        Get.to(() =>   CreatAPostScreeen(thumbnailPath: 'Create a Post',));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Create a Post tapped!'),

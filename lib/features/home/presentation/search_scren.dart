@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-
 // ============================================================
 // SearchScren — Search bar + user results list with verified
-// badges. Matches the provided design 1:1.
-// (Class name kept exactly as given, typo and all, so it stays
-// a drop-in replacement for your existing stub.)
+// badges and back button navigation.
 // ============================================================
 
 class _SearchUser {
@@ -35,7 +32,6 @@ class _SearchScrenState extends State<SearchScren> {
   static const Color _bgBottom = Color(0xFF0F0E17);
   static const Color _cardBorder = Color(0xFF3A3850);
   static const Color _hintColor = Color(0xFF8B8A99);
-  static const Color _purple = Color(0xFF7C3AED);
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -81,8 +77,8 @@ class _SearchScrenState extends State<SearchScren> {
     final q = _query.toLowerCase();
     return _allUsers
         .where((u) =>
-    u.name.toLowerCase().contains(q) ||
-        u.handle.toLowerCase().contains(q))
+            u.name.toLowerCase().contains(q) ||
+            u.handle.toLowerCase().contains(q))
         .toList();
   }
 
@@ -91,18 +87,12 @@ class _SearchScrenState extends State<SearchScren> {
     setState(() => _query = '');
   }
 
+  void _onBack() {
+    Navigator.of(context).maybePop();
+  }
+
   void _onUserTap(_SearchUser user) {
-    // Navigator.push(
-    //   context,
-      // MaterialPageRoute(
-      //   builder: (context) => UserProfileScreen(
-      //     name: user.name,
-      //     handle: user.handle,
-      //     avatarUrl: user.avatarUrl,
-      //     isVerified: user.isVerified,
-      //   ),
-      // ),
-    // );
+    // TODO: Navigate to UserProfileScreen if needed
   }
 
   @override
@@ -121,54 +111,68 @@ class _SearchScrenState extends State<SearchScren> {
         child: SafeArea(
           child: Column(
             children: [
-              // ---- Search field
+              // ---- Header with Back button + Search field
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Container(
-                  height: 56.h,
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: _cardBorder),
-                    borderRadius: BorderRadius.circular(28.r),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _focusNode,
-                          autofocus: true,
-                          onChanged: (v) => setState(() => _query = v),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            hintText: 'Search..',
-                            hintStyle: TextStyle(
-                              color: _hintColor,
-                              fontSize: 18.sp,
+                padding: const EdgeInsets.fromLTRB(8, 16, 20, 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: _onBack,
+                      icon: Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30.sp,
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 56.h,
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: _cardBorder),
+                          borderRadius: BorderRadius.circular(28.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _focusNode,
+                                autofocus: true,
+                                onChanged: (v) => setState(() => _query = v),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.sp,
+                                ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  hintText: 'Search..',
+                                  hintStyle: TextStyle(
+                                    color: _hintColor,
+                                    fontSize: 18.sp,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            if (_query.isNotEmpty)
+                              GestureDetector(
+                                onTap: _clearSearch,
+                                behavior: HitTestBehavior.opaque,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8.w),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 24.sp,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (_query.isNotEmpty)
-                        GestureDetector(
-                          onTap: _clearSearch,
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 8.w),
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 24.sp,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 12.h),
@@ -176,24 +180,24 @@ class _SearchScrenState extends State<SearchScren> {
               // ---- Results list
               Expanded(
                 child: results.isEmpty
-                    ?   Center(
-                  child: Text(
-                    'No results found',
-                    style: TextStyle(color: _hintColor, fontSize: 15.sp),
-                  ),
-                )
+                    ? Center(
+                        child: Text(
+                          'No results found',
+                          style: TextStyle(color: _hintColor, fontSize: 15.sp),
+                        ),
+                      )
                     : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                  itemCount: results.length,
-                  separatorBuilder: (_, __) =>   SizedBox(height: 24.h),
-                  itemBuilder: (context, index) {
-                    final user = results[index];
-                    return _SearchResultRow(
-                      user: user,
-                      onTap: () => _onUserTap(user),
-                    );
-                  },
-                ),
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                        itemCount: results.length,
+                        separatorBuilder: (context, index) => SizedBox(height: 24.h),
+                        itemBuilder: (context, index) {
+                          final user = results[index];
+                          return _SearchResultRow(
+                            user: user,
+                            onTap: () => _onUserTap(user),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -250,7 +254,7 @@ class _SearchResultRow extends StatelessWidget {
                         child: Text(
                           user.name,
                           overflow: TextOverflow.ellipsis,
-                          style:   TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
@@ -259,15 +263,14 @@ class _SearchResultRow extends StatelessWidget {
                       ),
                       if (user.isVerified) ...[
                         SizedBox(width: 8.w),
-                        Icon(Icons.verified,
-                            color: _purple, size: 20.sp),
+                        Icon(Icons.verified, color: _purple, size: 20.sp),
                       ],
                     ],
                   ),
                   SizedBox(height: 4.h),
                   Text(
                     user.handle,
-                    style:   TextStyle(
+                    style: TextStyle(
                       color: _hintColor,
                       fontSize: 16.sp,
                     ),
