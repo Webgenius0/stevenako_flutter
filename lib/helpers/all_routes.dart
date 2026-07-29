@@ -377,9 +377,7 @@ final class RouteGenerator {
                 widget: const DashboardScreen(),
                 settings: settings,
               )
-            : CupertinoPageRoute(
-                builder: (context) => const DashboardScreen(),
-              );
+            : CupertinoPageRoute(builder: (context) => const DashboardScreen());
 
       default:
         return null;
