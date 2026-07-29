@@ -128,13 +128,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               Get.to(SearchScren());
                         },
                       ),
-                      // _buildTopActionButton(
-                      //   '',
-                      //       () {
-                      //     Get.to(() => SearchScreen());
-                      //   },
-                      // ),
-                      const SizedBox(width: 10),
+
+                        SizedBox(width: 30.w),
                       _buildTopActionButton(
                         'assets/images/Settings.png',
                             () {
@@ -168,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(17.r),
           gradient: isActive
               ? const LinearGradient(
-                  colors: [Color(0xFF9F75FF), Color(0xFF7C3AED)],
+                  colors: [Color(0xFF402380), Color(0xFF7C3AED)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
@@ -197,24 +192,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildTopActionButton(String imagePath, VoidCallback onTap) {
     return _TapScale(
       onTap: onTap,
-      child: Container(
-        width: 36.w,
-        height: 36.h,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.35),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white24,
-            width: 1.0.w,
-          ),
-        ),
-        child: Center(
-          child: Image.asset(
-            imagePath,
-            width: 18.w,
-            height: 18.h,
-            color: Colors.white,
-          ),
+      child: Center(
+        child: Image.asset(
+          imagePath,
+          width: 24.w,
+          height: 24.h,
+          color: Colors.white,
         ),
       ),
     );

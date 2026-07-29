@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
 
 
@@ -175,7 +176,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
           TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
           TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 60),
         ]).animate(
-          CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
+          CurvedAnimation(parent: _likeController, curve: Curves.easeOutCubic),
         );
 
     _shareController = AnimationController(
@@ -187,7 +188,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
           TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
           TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 60),
         ]).animate(
-          CurvedAnimation(parent: _shareController, curve: Curves.easeOutBack),
+          CurvedAnimation(parent: _shareController, curve: Curves.easeOutCubic),
         );
 
     _commentController = AnimationController(
@@ -201,7 +202,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
         ]).animate(
           CurvedAnimation(
             parent: _commentController,
-            curve: Curves.easeOutBack,
+            curve: Curves.easeOutCubic,
           ),
         );
 
@@ -479,7 +480,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
+                            duration:   Duration(milliseconds: 200),
                             transitionBuilder: (child, anim) =>
                                 ScaleTransition(scale: anim, child: child),
                             child: Icon(
@@ -523,11 +524,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.chat_bubble_outline,
-                            color: Colors.white70,
-                            size: 14,
-                          ),
+                          Image.asset('assets/images/chat.png',height: 14.h,width: 14.h,),
                           const SizedBox(width: 4),
                           Text(
                             '${widget.data['comments']}',
@@ -551,11 +548,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                         scale: _shareScale.value,
                         child: child,
                       ),
-                      child: const Icon(
-                        Icons.ios_share_rounded,
-                        color: Colors.white70,
-                        size: 14,
-                      ),
+                    child: Image.asset('assets/images/ShareIcon.png',height: 14.h,width: 14.w,),
                     ),
                   ),
                 ],

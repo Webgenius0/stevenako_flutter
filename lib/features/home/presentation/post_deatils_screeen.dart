@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
+
 
 class PostDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? postData;
@@ -147,6 +150,127 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       _isFollowing = !_isFollowing;
     });
   }
+
+  Future<void> _sharePost() async {
+    final String postHandle = widget.postData?['handle'] ?? '@frances';
+    final String postCaption =
+        'Golden hour ride through the city streets. Nothing beats the feeling of wind rushing past on two wheels. 🏍️✨\n#cycling #streetphotography #goldenhour';
+    final String postUrl = widget.postData?['url'] ??
+        'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop&q=80';
+    final String shareText =
+        'Check out this post by $postHandle on StevenAko!\n\n"$postCaption"\n\n$postUrl';
+
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: 'Post by $postHandle',
+        ),
+      );
+
+      if (result.status == ShareResultStatus.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Post shared successfully!'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showShareBottomSheet(shareText);
+      }
+    }
+  }
+
+  void _showShareBottomSheet(String shareText) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E212D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Share Post',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              // Copy Link / Text
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: Colors.white),
+                title: const Text('Copy Post Link',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Clipboard.setData(ClipboardData(text: shareText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Link copied to clipboard!'),
+                      duration: Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+
+              // Share via native apps
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Colors.white),
+                title: const Text('Share via App...',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  SharePlus.instance.share(ShareParams(text: shareText));
+                },
+              ),
+
+              // Direct Message option
+              ListTile(
+                leading: const Icon(Icons.send_rounded, color: Color(0xFF9D65FF)),
+                title: const Text('Send in Message',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sent to direct messages!'),
+                      duration: Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
   void _toggleCommentLike(CommentItem comment) {
     setState(() {
@@ -682,11 +806,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Colors.white,
-              size: 23.r,
-            ),
+           Image.asset('assets/images/chat.png',height: 24.h,width: 24.w,),
             SizedBox(width: 8.w),
             Text(
               '$_commentCount',
@@ -702,20 +822,18 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
         // Share Icon
         GestureDetector(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Share link copied to clipboard!'),
-                duration: Duration(seconds: 2),
+          onTap: _sharePost,
+          child: Image.asset(
+            'assets/images/ShareIcon.png',
+            height: 24.h,
+            width: 24.w,
+            errorBuilder: (context, error, stackTrace) => Transform.rotate(
+              angle: -0.4,
+              child: Icon(
+                Icons.shortcut_rounded,
+                color: Colors.white,
+                size: 24.r,
               ),
-            );
-          },
-          child: Transform.rotate(
-            angle: -0.4,
-            child: Icon(
-              Icons.shortcut_rounded,
-              color: Colors.white,
-              size: 24.r,
             ),
           ),
         ),
@@ -1084,14 +1202,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                           color: const Color(0xFF9D65FF),
                           size: 24.r,
                         )
-                      : Transform.rotate(
-                          angle: -0.4,
-                          child: Icon(
-                            Icons.send_rounded,
-                            color: Colors.white.withValues(alpha: 0.85),
-                            size: 20.r,
-                          ),
-                        ),
+                      : Image.asset('assets/images/rocket.png',height: 24.h,width: 24.h,),
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   constraints: const BoxConstraints(),
                 ),

@@ -6,7 +6,8 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 import 'features/home/presentation/home_screen.dart';
  import 'features/home/presentation/post_navtaiosn_screeen.dart';
- import 'features/home/presentation/video_upload_screen.dart';
+ import 'features/home/presentation/uploand_photo_screen.dart';
+import 'features/home/presentation/video_upload_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 
 // Bouncy Tactile Floating Action Button
@@ -219,7 +220,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                     onTap: () {
                       _closeMenuThen(() {
                         // Get.to(UploadPostScreen());
-                        Get.to(() => const VideoUploadScreen(tap: 'Upload Photos',));
+                        Get.to(() =>   UploadPhotoScreen(tap: 'Upload Photos',));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Upload Photos tapped!'),

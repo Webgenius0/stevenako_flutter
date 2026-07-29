@@ -126,10 +126,10 @@ class _SearchScrenState extends State<SearchScren> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Container(
                   height: 56.h,
-                  padding:   EdgeInsets.symmetric(horizontal: 20.w),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   decoration: BoxDecoration(
                     border: Border.all(color: _cardBorder),
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(28.r),
                   ),
                   child: Row(
                     children: [
@@ -139,11 +139,11 @@ class _SearchScrenState extends State<SearchScren> {
                           focusNode: _focusNode,
                           autofocus: true,
                           onChanged: (v) => setState(() => _query = v),
-                          style:   TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18.sp,
+                            fontSize: 16.sp,
                           ),
-                          decoration:   InputDecoration(
+                          decoration: InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
                             hintText: 'Search..',
@@ -157,17 +157,20 @@ class _SearchScrenState extends State<SearchScren> {
                       if (_query.isNotEmpty)
                         GestureDetector(
                           onTap: _clearSearch,
-                          child:   Padding(
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
                             padding: EdgeInsets.only(left: 8.w),
-                            child: Icon(Icons.close,
-                                color: Colors.white, size: 24.sp),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
               ),
-
               SizedBox(height: 12.h),
 
               // ---- Results list
@@ -249,7 +252,7 @@ class _SearchResultRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:   TextStyle(
                             color: Colors.white,
-                            fontSize: 21.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
                           ),
                         ),

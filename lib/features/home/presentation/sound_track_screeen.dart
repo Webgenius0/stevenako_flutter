@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // ============================================================
 // SoundTrackScreeen — Sound/audio detail page: cover art, sound
@@ -131,12 +132,11 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                     ),
                     IconButton(
                       onPressed: _onToggleSave,
-                      icon: Icon(
-                        _isSaved
-                            ? Icons.bookmark
-                            : Icons.bookmark_border,
-                        color: Colors.white,
-                        size: 26,
+                      icon: Image.asset(
+                        'assets/images/bookmarkIcon.png',
+                        width: 26,
+                        height: 26,
+                        color: _isSaved ?   Colors.red : Colors.white,
                       ),
                     ),
                   ],
@@ -325,22 +325,21 @@ class _VideoTile extends StatelessWidget {
               right: 8,
               child: Container(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 14),
-                    const SizedBox(width: 2),
+                    Image.asset('assets/images/palyIcon.png',height: 11.h,width: 11.w,),
+                      SizedBox(width: 4.w),
                     Text(
                       video.views,
-                      style: const TextStyle(
+                      style:   TextStyle(
                         color: Colors.white,
-                        fontSize: 12.5,
+                        fontSize: 12.5.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
