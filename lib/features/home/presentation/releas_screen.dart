@@ -793,7 +793,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                 // Comment
                 _buildActionItem(
-                 imagePath: 'assets/images/message.png',
+                 imagePath: 'assets/images/mesagenva.png',
                   label: '${widget.data['comments']}',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -805,7 +805,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                 // Share / Send
                 _buildActionItem(
-                  imagePath: 'assets/images/Share.png',
+                  imagePath: 'assets/images/ShareIcon.png',
                   icon: Icons.reply,
                   label: '',
                   iconScaleX: -1.0, // Flip arrow to point top-right
