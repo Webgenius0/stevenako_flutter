@@ -6,10 +6,7 @@ import 'package:stevenako_flutter/helpers/all_routes.dart';
 class ProfileAvatar extends StatelessWidget {
   final String imageUrl;
 
-  const ProfileAvatar({
-    super.key,
-    required this.imageUrl,
-  });
+  const ProfileAvatar({super.key, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +18,7 @@ class ProfileAvatar extends StatelessWidget {
             height: 96.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white24,
-                width: 2,
-              ),
+              border: Border.all(color: Colors.white24, width: 2),
               image: DecorationImage(
                 image: CachedNetworkImageProvider(imageUrl),
                 fit: BoxFit.cover,
@@ -36,10 +30,7 @@ class ProfileAvatar extends StatelessWidget {
             right: 0,
             child: GestureDetector(
               onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  Routes.profileSetupScreen,
-                );
+                Navigator.pushNamed(context, Routes.editProfileScreen);
               },
               child: Image.asset(
                 'assets/images/edit.png',
