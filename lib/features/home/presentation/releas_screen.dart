@@ -1094,21 +1094,21 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
           // Thin video progress bar pinned above bottom overlay
           if (widget.isVideoInitialized && widget.videoController != null)
-            Positioned(
-              bottom: 96,
-              left: 0,
-              right: 0,
-              child: VideoProgressIndicator(
-                widget.videoController!,
-                allowScrubbing: true,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                colors: const VideoProgressColors(
-                  playedColor: Color(0xFFFF3F55),
-                  bufferedColor: Colors.white30,
-                  backgroundColor: Colors.white12,
-                ),
-              ),
-            ),
+            // Positioned(
+            //   bottom: 96,
+            //   left: 0,
+            //   right: 0,
+            //   child: VideoProgressIndicator(
+            //     widget.videoController!,
+            //     allowScrubbing: true,
+            //     padding: const EdgeInsets.symmetric(horizontal: 12),
+            //     colors: const VideoProgressColors(
+            //       playedColor: Color(0xFFFF3F55),
+            //       bufferedColor: Colors.white30,
+            //       backgroundColor: Colors.white12,
+            //     ),
+            //   ),
+            // ),
 
 // Bottom Left Overlay details (User profile info)
           Positioned(
