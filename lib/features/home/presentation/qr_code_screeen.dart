@@ -38,7 +38,6 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
   static const Color _bgBottom = Color(0xFF0F0E17);
   static const Color _hintColor = Color(0xFF8B8A99);
   static const Color _qrBg = Color(0xFF242238);
-  static const Color _circleBg = Color(0xFF2E2C42);
 
   final GlobalKey _qrKey = GlobalKey();
   bool _isSaving = false;
@@ -49,7 +48,6 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
 
   Future<void> _onDownload() async {
     setState(() => _isSaving = true);
-    // TODO: capture `_qrKey`'s RenderRepaintBoundary to a PNG and save it
     // to the device gallery (e.g. using `image_gallery_saver` or similar).
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
@@ -89,8 +87,11 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
                   children: [
                     IconButton(
                       onPressed: _onBack,
-                      icon: const Icon(Icons.chevron_left,
-                          color: Colors.white, size: 30),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     const Expanded(
                       child: Text(
@@ -121,8 +122,11 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: const Color(0xFF2A2A3A),
-                      child: const Icon(Icons.person,
-                          color: Colors.white54, size: 40),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white54,
+                        size: 40,
+                      ),
                     ),
                   ),
                 ),
@@ -142,10 +146,7 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
               const SizedBox(height: 6),
               Text(
                 widget.handle,
-                style: const TextStyle(
-                  color: _hintColor,
-                  fontSize: 17,
-                ),
+                style: const TextStyle(color: _hintColor, fontSize: 17),
               ),
 
               const SizedBox(height: 36),
@@ -233,12 +234,12 @@ class _CircleActionButton extends StatelessWidget {
           height: 64,
           child: isLoading
               ? const Padding(
-            padding: EdgeInsets.all(20),
-            child: CircularProgressIndicator(
-              strokeWidth: 2.2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-            ),
-          )
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                  ),
+                )
               : Icon(icon, color: Colors.white, size: 24),
         ),
       ),

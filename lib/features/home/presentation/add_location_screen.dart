@@ -23,21 +23,13 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   static const Color _bgTop = Color(0xFF1E1B2E);
   static const Color _bgBottom = Color(0xFF0F0E17);
   static const Color _cardBorder = Color(0xFF2E2C3E);
-  static const Color _purple = Color(0xFF7C3AED);
-  static const Color _purpleLight = Color(0xFF9F75FF);
   static const Color _hintColor = Color(0xFF8B8A99);
-  static const Color _iconBg = Color(0xFF352F4D);
 
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   bool _usingCurrentLocation = false;
 
-  // Track the currently selected option so the Continue button knows
-  // what to confirm. Either a suggested location title, or the special
-  // 'current_location' marker.
   String? _selectedValue;
-
-  // TODO: Replace with real geocoding/places-API results.
 
   final List<_LocationOption> _suggested = const [
     _LocationOption(title: 'New York, USA', subtitle: 'Manhattan, New York'),
@@ -60,9 +52,9 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     return _suggested
         .where(
           (l) =>
-      l.title.toLowerCase().contains(q) ||
-          l.subtitle.toLowerCase().contains(q),
-    )
+              l.title.toLowerCase().contains(q) ||
+              l.subtitle.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -292,20 +284,20 @@ class _UseCurrentLocationRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: isLoading
                     ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                  ),
-                )
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
                     : const Icon(
-                  Icons.my_location,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                        Icons.my_location,
+                        color: Colors.white,
+                        size: 20,
+                      ),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -441,19 +433,16 @@ class _ContinueButton extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: [
-                  Color(0xFF7C3AED),
-                  Color(0xFF6D28D9),
-                ],
+                colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
               ),
               boxShadow: enabled
                   ? [
-                BoxShadow(
-                  color: const Color(0xFF7C3AED).withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ]
+                      BoxShadow(
+                        color: const Color(0xFF7C3AED).withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
                   : null,
             ),
             child: Text(

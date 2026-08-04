@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/home/presentation/qr_code_screeen.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/features/setting/widgets/custom_logout_dialog.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -20,55 +19,12 @@ class SettingScreen extends StatefulWidget {
 
 class _SettingScreenState extends State<SettingScreen> {
   // Show dialog with a QR Code
-  void _showQrCodeDialog() {
+
+  // Show logout confirmation dialog
+  void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'My QR Code',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Container(
-                padding: EdgeInsets.all(12.r),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: QrImageView(
-                  data: 'https://stevenako.example.com/user/frances487',
-                  version: QrVersions.auto,
-                  size: 200.r,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'Close',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFEE8E80),
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (BuildContext context) => const CustomLogoutDialog(),
     );
   }
 
@@ -138,7 +94,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                     child: _buildSettingCard(
                                       icon: Icons.qr_code_scanner_rounded,
                                       label: 'QR Code',
-                                      onTap:  (){
+                                      onTap: () {
                                         Get.to(QrCodeScreeen());
                                       },
                                     ),
@@ -146,8 +102,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                   SizedBox(width: 12.w),
                                   Expanded(
                                     child: _buildSettingCard(
-                                      icon:
-                                          Icons.account_balance_wallet_outlined,
+                                      icon: Icons.wallet_giftcard_outlined,
                                       label: 'My Wallet',
                                       onTap: () {
                                         NavigationService.navigateTo(
@@ -240,7 +195,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                 icon: Icons.logout_rounded,
                                 label: 'Log Out',
                                 onTap: () {
-                                  Navigator.maybePop(context);
+                                  _showLogoutDialog();
                                 },
                               ),
                               SizedBox(height: 32.h),
@@ -294,11 +249,6 @@ class _SettingScreenState extends State<SettingScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white.withValues(alpha: 0.2),
-                  size: 14.sp,
                 ),
               ],
             ),

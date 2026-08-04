@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -71,27 +70,11 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
     }
   }
 
-  IconData get _privacyIcon {
-    switch (_privacy) {
-      case PrivacyOption.everyone:
-        return Icons.lock_open_outlined;
-      case PrivacyOption.friends:
-        return Icons.people_alt_outlined;
-      case PrivacyOption.followersOnly:
-        return Icons.person_outline;
-      case PrivacyOption.onlyMe:
-        return Icons.lock_outline;
-    }
-  }
-
-  void _onSaveDraft() {
-    // TODO: persist draft locally / to backend
-  }
+  void _onSaveDraft() {}
 
   void _onPostNow() {
-    // TODO: upload video + caption + settings to backend
-     NavigationService.goBack;
-     NavigationService.goBack;
+    NavigationService.goBack;
+    NavigationService.goBack;
   }
 
   @override
@@ -115,8 +98,11 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
                   children: [
                     IconButton(
                       onPressed: _onBack,
-                      icon: const Icon(Icons.chevron_left,
-                          color: Colors.white, size: 30),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     const Expanded(
                       child: Text(
@@ -167,7 +153,7 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
                                     isDense: true,
                                     contentPadding: EdgeInsets.zero,
                                     hintText:
-                                    'Describe your video, add hashtags, or mention your friends',
+                                        'Describe your video, add hashtags, or mention your friends',
                                     hintStyle: TextStyle(
                                       color: _hintColor,
                                       fontSize: 16.5,
@@ -178,41 +164,39 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-
                           ],
                         ),
                       ),
 
-                        SizedBox(height: 24.h),
+                      SizedBox(height: 24.h),
 
                       _NavRow(
-
                         label: 'Tag people',
                         onTap: _onTagPeople,
                         imagePath: 'assets/images/gift.png',
                       ),
-                        SizedBox(height: 12.h),
+                      SizedBox(height: 12.h),
                       _NavRow(
-
                         label: 'Location',
-                        onTap: _onLocation, imagePath: 'assets/images/location.png',
+                        onTap: _onLocation,
+                        imagePath: 'assets/images/location.png',
                       ),
-                        SizedBox(height: 12.h),
+                      SizedBox(height: 12.h),
                       _NavRow(
-
                         label: _privacyLabel,
-                        onTap: _onPrivacy, imagePath: 'assets/images/anyone.png',
+                        onTap: _onPrivacy,
+                        imagePath: 'assets/images/anyone.png',
                       ),
                       const SizedBox(height: 12),
                       _ToggleRow(
-                         imagePath: 'assets/images/message.png',
+                        imagePath: 'assets/images/message.png',
                         label: 'Allow comments',
                         value: _allowComments,
                         onChanged: (v) => setState(() => _allowComments = v),
                       ),
                       const SizedBox(height: 12),
                       _ToggleRow(
-                       imagePath: 'assets/images/gift.png',
+                        imagePath: 'assets/images/gift.png',
                         label: 'Allow Gifts',
                         value: _allowGifts,
                         onChanged: (v) => setState(() => _allowGifts = v),
@@ -234,7 +218,10 @@ class _UploadPostScreenState extends State<UploadPostScreen> {
                         onPressed: _onSaveDraft,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: _purpleLight, width: 1.4),
+                          side: const BorderSide(
+                            color: _purpleLight,
+                            width: 1.4,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -335,7 +322,8 @@ class _NavRow extends StatelessWidget {
                 imagePath,
                 width: 22,
                 height: 22,
-                color: Colors.white, // Remove this if your PNG is already colored
+                color:
+                    Colors.white, // Remove this if your PNG is already colored
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -461,9 +449,9 @@ extension PrivacyOptionLabel on PrivacyOption {
 /// Shows the privacy setting bottom sheet and returns the selected
 /// [PrivacyOption], or null if dismissed without a change.
 Future<PrivacyOption?> showPrivacySettingSheet(
-    BuildContext context, {
-      required PrivacyOption current,
-    }) {
+  BuildContext context, {
+  required PrivacyOption current,
+}) {
   return showModalBottomSheet<PrivacyOption>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -591,8 +579,11 @@ class _PrivacyOptionCard extends StatelessWidget {
                   return const SizedBox(
                     width: 24,
                     height: 24,
-                    child: Icon(Icons.image_not_supported_outlined,
-                        color: Colors.white38, size: 20),
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.white38,
+                      size: 20,
+                    ),
                   );
                 },
               ),
@@ -627,7 +618,10 @@ class _PrivacyOptionCard extends StatelessWidget {
               // against the (variable-height) text block beside it.
               Align(
                 alignment: Alignment.center,
-                child: _RadioDot(isSelected: isSelected, activeColor: selectedBorder),
+                child: _RadioDot(
+                  isSelected: isSelected,
+                  activeColor: selectedBorder,
+                ),
               ),
             ],
           ),
@@ -658,15 +652,15 @@ class _RadioDot extends StatelessWidget {
       ),
       child: isSelected
           ? Center(
-        child: Container(
-          width: 11,
-          height: 11,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: activeColor,
-          ),
-        ),
-      )
+              child: Container(
+                width: 11,
+                height: 11,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: activeColor,
+                ),
+              ),
+            )
           : null,
     );
   }

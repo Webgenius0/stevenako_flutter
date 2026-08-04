@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
-
-import 'navigation_menu.dart';
 
 class OnboardingScreenThree extends StatefulWidget {
   const OnboardingScreenThree({super.key});
@@ -131,7 +127,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
               value: 1.0,
               strokeWidth: 2.w,
               strokeCap: StrokeCap.round,
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 Color(0xFF8B5CF6), // Purple progress color
               ),
@@ -151,12 +147,12 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
                 shape: BoxShape.circle,
                 color: const Color(0xFF1E1A3C), // Dark Indigo
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 1.w,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
