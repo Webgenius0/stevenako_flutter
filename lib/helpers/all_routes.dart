@@ -26,6 +26,7 @@ import 'package:stevenako_flutter/features/setting/presentation/change_password_
 import 'package:stevenako_flutter/features/setting/presentation/help_screen.dart';
 import 'package:stevenako_flutter/features/setting/presentation/terms_screen.dart';
 import 'package:stevenako_flutter/features/setting/presentation/privacy_policy_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/notifications_activity_screen.dart';
 import 'package:flutter/cupertino.dart';
 
 final class Routes {
@@ -69,6 +70,7 @@ final class Routes {
   static const String helpScreen = '/helpScreen';
   static const String termsScreen = '/termsScreen';
   static const String privacyPolicyScreen = '/privacyPolicyScreen';
+  static const String notificationsActivityScreen = '/notificationsActivityScreen';
   static const String editProfileScreen = '/editProfileScreen';
   static const String dashboardScreen = '/dashboardScreen';
 
@@ -303,6 +305,16 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(
                 builder: (context) => const PrivacyPolicyScreen(),
+              );
+
+      case Routes.notificationsActivityScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const NotificationsActivityScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const NotificationsActivityScreen(),
               );
 
       case Routes.forgetPasswordVerifyOtpScreen:

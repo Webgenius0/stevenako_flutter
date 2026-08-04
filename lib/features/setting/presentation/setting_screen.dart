@@ -126,11 +126,8 @@ class _SettingScreenState extends State<SettingScreen> {
                                 icon: Icons.notifications_none_rounded,
                                 label: 'Notification & Activity',
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Notifications clicked'),
-                                      duration: Duration(seconds: 1),
-                                    ),
+                                  NavigationService.navigateTo(
+                                    Routes.notificationsActivityScreen,
                                   );
                                 },
                               ),
