@@ -36,7 +36,7 @@ class SoundTrackScreeen extends StatefulWidget {
     this.soundTitle = 'original sound - axelrosethebullmastiff',
     this.artistName = 'Axel Rose | Bullmastiff',
     this.coverImageUrl =
-    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
+        'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
     this.postCount = 4366,
   });
 
@@ -48,15 +48,13 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
   static const Color _bgTop = Color(0xFF1E1B2E);
   static const Color _bgBottom = Color(0xFF0F0E17);
   static const Color _hintColor = Color(0xFF9C9AAB);
-  static const Color _badgeRed = Color(0xFFEF4444);
 
   bool _isSaved = false;
 
-  // TODO: Replace with real videos that use this sound, from your backend.
   final List<_SoundVideo> _videos = const [
     _SoundVideo(
       thumbnailUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
       views: '5.6k',
       creatorName: 'Jerome Bell',
       creatorAvatarUrl: 'https://i.pravatar.cc/150?img=5',
@@ -64,7 +62,7 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
     ),
     _SoundVideo(
       thumbnailUrl:
-      'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400',
+          'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400',
       views: '5.6k',
       creatorName: 'Brooklyn Sim...',
       creatorAvatarUrl: 'https://i.pravatar.cc/150?img=9',
@@ -72,7 +70,7 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
     ),
     _SoundVideo(
       thumbnailUrl:
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
       views: '5.6k',
       creatorName: 'Alex Rivera',
       creatorAvatarUrl: 'https://i.pravatar.cc/150?img=15',
@@ -80,7 +78,7 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
     ),
     _SoundVideo(
       thumbnailUrl:
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400',
+          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400',
       views: '5.6k',
       creatorName: 'Morgan Lee',
       creatorAvatarUrl: 'https://i.pravatar.cc/150?img=20',
@@ -127,8 +125,11 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                   children: [
                     IconButton(
                       onPressed: _onBack,
-                      icon: const Icon(Icons.chevron_left,
-                          color: Colors.white, size: 30),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     IconButton(
                       onPressed: _onToggleSave,
@@ -136,7 +137,7 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                         'assets/images/bookmarkIcon.png',
                         width: 26,
                         height: 26,
-                        color: _isSaved ?   Colors.red : Colors.white,
+                        color: _isSaved ? Colors.red : Colors.white,
                       ),
                     ),
                   ],
@@ -221,8 +222,11 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                                   ),
                                 ),
                                 const SizedBox(width: 4),
-                                const Icon(Icons.chevron_right,
-                                    color: Colors.white, size: 20),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ],
                             ),
                           ),
@@ -246,8 +250,7 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                 child: GridView.builder(
                   padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
                   itemCount: _videos.length,
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.72,
                     crossAxisSpacing: 6,
@@ -294,9 +297,8 @@ class _VideoTile extends StatelessWidget {
             Image.network(
               video.thumbnailUrl,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: const Color(0xFF2A2A3A),
-              ),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: const Color(0xFF2A2A3A)),
             ),
 
             // Bottom gradient for legible name/avatar overlay
@@ -324,8 +326,7 @@ class _VideoTile extends StatelessWidget {
               top: 8,
               right: 8,
               child: Container(
-                padding:
-                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(12.r),
@@ -333,11 +334,15 @@ class _VideoTile extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset('assets/images/palyIcon.png',height: 11.h,width: 11.w,),
-                      SizedBox(width: 4.w),
+                    Image.asset(
+                      'assets/images/palyIcon.png',
+                      height: 11.h,
+                      width: 11.w,
+                    ),
+                    SizedBox(width: 4.w),
                     Text(
                       video.views,
-                      style:   TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w600,
@@ -382,8 +387,7 @@ class _VideoTile extends StatelessWidget {
                   ),
                   if (video.isVerified) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.verified,
-                        color: _badgeRed, size: 14),
+                    const Icon(Icons.verified, color: _badgeRed, size: 14),
                   ],
                 ],
               ),

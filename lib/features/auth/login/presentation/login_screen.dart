@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/assets_helper/app_icons.dart';
@@ -13,7 +12,6 @@ import 'package:stevenako_flutter/features/auth/login/widgets/social_login_butto
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
-import 'package:stevenako_flutter/navigation_menu.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

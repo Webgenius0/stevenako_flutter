@@ -33,17 +33,13 @@ class TagPeopleScreeen extends StatefulWidget {
 class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
   static const Color _bgTop = Color(0xFF1E1B2E);
   static const Color _bgBottom = Color(0xFF0F0E17);
-  static const Color _cardColor = Color(0xFF1A1926);
   static const Color _cardBorder = Color(0xFF2E2C3E);
-  static const Color _purple = Color(0xFF7C3AED);
-  static const Color _purpleLight = Color(0xFF9F75FF);
   static const Color _hintColor = Color(0xFF8B8A99);
 
   final TextEditingController _searchController = TextEditingController();
   late Set<String> _selectedIds;
   String _query = '';
 
-  // TODO: Replace with real people from your backend/contacts/follow graph.
   final List<_Person> _people = const [
     _Person(
       id: 'alexm',
@@ -105,9 +101,11 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
     if (_query.trim().isEmpty) return _people;
     final q = _query.toLowerCase();
     return _people
-        .where((p) =>
-    p.name.toLowerCase().contains(q) ||
-        p.handle.toLowerCase().contains(q))
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(q) ||
+              p.handle.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -155,8 +153,11 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
                   children: [
                     IconButton(
                       onPressed: _onBack,
-                      icon: const Icon(Icons.chevron_left,
-                          color: Colors.white, size: 30),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                     const Expanded(
                       child: Text(
@@ -324,10 +325,7 @@ class _PersonRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       person.handle,
-                      style: const TextStyle(
-                        color: _hintColor,
-                        fontSize: 14.5,
-                      ),
+                      style: const TextStyle(color: _hintColor, fontSize: 14.5),
                     ),
                   ],
                 ),
@@ -349,13 +347,13 @@ class _PersonRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: isSelected
                     ? Container(
-                  width: 11,
-                  height: 11,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                )
+                        width: 11,
+                        height: 11,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      )
                     : null,
               ),
             ],
@@ -392,10 +390,7 @@ class _ContinueButton extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [
-                Color(0xFF7C3AED),
-                Color(0xFF6D28D9),
-              ],
+              colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
             ),
             boxShadow: [
               BoxShadow(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:stevenako_flutter/assets_helper/app_colors.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_list_item.dart';
 import 'package:stevenako_flutter/features/message/presentation/conversation_screen.dart';
@@ -86,31 +87,40 @@ class _AllChatScreenState extends State<AllChatScreen> {
                           children: [
                             // "All Chat" badge button
                             Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 18.w,
-                                vertical: 8.h,
-                              ),
                               decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF7C3AED,
-                                ), // Purple-blue badge
-                                borderRadius: BorderRadius.circular(20.r),
-                                boxShadow: [
-                                  BoxShadow(
+                                borderRadius: BorderRadius.circular(120.r),
+                                border: Border.all(color: AppColor.c797A7C),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 18.w,
+                                    vertical: 8.h,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: const Color(
                                       0xFF7C3AED,
-                                    ).withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    ), // Purple-blue badge
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF7C3AED,
+                                        ).withValues(alpha: 0.3),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: Text(
-                                'All Chat',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
+                                  child: Text(
+                                    'All Chat',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

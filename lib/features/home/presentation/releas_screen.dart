@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -32,10 +31,12 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       'userName': 'Frances Swann',
       'userHandle': '@frances',
       'caption': 'I\'m good !! How are you? #farewell',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'likes': 10,
       'comments': 8,
-      'videoUrl': 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      'videoUrl':
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
       'isNetwork': true,
       'musicTitle': 'Original Sound - Frances S.',
     },
@@ -43,10 +44,12 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       'userName': 'David Miller',
       'userHandle': '@david_m',
       'caption': 'Cyberpunk night vibes in the city 🌃 #neon #future',
-      'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       'likes': 420,
       'comments': 32,
-      'videoUrl': 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+      'videoUrl':
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
       'isNetwork': true,
       'musicTitle': 'Synthwave Nights - V.2',
     },
@@ -54,10 +57,12 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       'userName': 'Sophia Taylor',
       'userHandle': '@sophia_sun',
       'caption': 'Golden hour in paradise 🌴☀️ #sunset #beach #escape',
-      'avatar': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
       'likes': 812,
       'comments': 54,
-      'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'videoUrl':
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       'isNetwork': true,
       'musicTitle': 'Summer Breeze - Sophia',
     },
@@ -98,24 +103,27 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
       _controllers[index] = controller;
 
-      controller.initialize().then((_) {
-        if (!mounted) return;
-        controller.setLooping(true);
-        setState(() {
-          _initializedStates[index] = true;
-          _errorStates[index] = false;
-        });
-        if (index == _currentPage && widget.isActive && _isVisible) {
-          controller.play();
-        }
-      }).catchError((error) {
-        debugPrint('Preload error for video index $index: $error');
-        if (!mounted) return;
-        setState(() {
-          _errorStates[index] = true;
-          _initializedStates[index] = false;
-        });
-      });
+      controller
+          .initialize()
+          .then((_) {
+            if (!mounted) return;
+            controller.setLooping(true);
+            setState(() {
+              _initializedStates[index] = true;
+              _errorStates[index] = false;
+            });
+            if (index == _currentPage && widget.isActive && _isVisible) {
+              controller.play();
+            }
+          })
+          .catchError((error) {
+            debugPrint('Preload error for video index $index: $error');
+            if (!mounted) return;
+            setState(() {
+              _errorStates[index] = true;
+              _initializedStates[index] = false;
+            });
+          });
     } catch (e) {
       debugPrint('Setup error for video index $index: $e');
       _errorStates[index] = true;
@@ -132,7 +140,10 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
     // Play current video
     final currentController = _controllers[newIndex];
-    if (currentController != null && _initializedStates[newIndex] == true && widget.isActive && _isVisible) {
+    if (currentController != null &&
+        _initializedStates[newIndex] == true &&
+        widget.isActive &&
+        _isVisible) {
       currentController.play();
     } else {
       _initControllerForIndex(newIndex);
@@ -232,12 +243,12 @@ class ReelPageItem extends StatefulWidget {
   State<ReelPageItem> createState() => _ReelPageItemState();
 }
 
-class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderStateMixin {
+class _ReelPageItemState extends State<ReelPageItem>
+    with SingleTickerProviderStateMixin {
   bool _isLiked = false;
   bool _isFollowing = false;
   late int _likeCount;
 
-  bool _isMuted = false;
   bool _showPauseIcon = false;
 
   // Music vinyl rotation controller
@@ -289,15 +300,6 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
     });
   }
 
-  void _toggleMute() {
-    final controller = widget.videoController;
-    if (controller == null) return;
-    setState(() {
-      _isMuted = !_isMuted;
-      controller.setVolume(_isMuted ? 0.0 : 1.0);
-    });
-  }
-
   void _triggerCoins(TapDownDetails details) {
     setState(() {
       _coinAnimX = details.globalPosition.dx;
@@ -344,10 +346,7 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
     try {
       final result = await SharePlus.instance.share(
-        ShareParams(
-          text: shareText,
-          subject: 'Reel by $userHandle',
-        ),
+        ShareParams(text: shareText, subject: 'Reel by $userHandle'),
       );
       if (result.status == ShareResultStatus.success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -399,8 +398,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
               ListTile(
                 leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text('Copy Video Link',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Copy Video Link',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   Clipboard.setData(ClipboardData(text: shareText));
@@ -416,8 +417,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
               ListTile(
                 leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text('Share via App...',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Share via App...',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   SharePlus.instance.share(ShareParams(text: shareText));
@@ -425,9 +428,14 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
               ),
 
               ListTile(
-                leading: const Icon(Icons.send_rounded, color: Color(0xFF9D65FF)),
-                title: const Text('Send in Message',
-                    style: TextStyle(color: Colors.white)),
+                leading: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF9D65FF),
+                ),
+                title: const Text(
+                  'Send in Message',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -448,7 +456,8 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
   }
 
   void _showCommentsBottomSheet(BuildContext context) {
-    final TextEditingController commentInputController = TextEditingController();
+    final TextEditingController commentInputController =
+        TextEditingController();
     final List<Map<String, dynamic>> localComments = [
       {
         'id': '1',
@@ -497,14 +506,19 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                 height: MediaQuery.of(context).size.height * 0.72,
                 decoration: BoxDecoration(
                   color: const Color(0xFF161722),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
                   border: Border.all(color: Colors.white12, width: 1),
                 ),
                 child: Column(
                   children: [
                     // Handle & Title
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -550,7 +564,8 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                       child: ListView.separated(
                         padding: EdgeInsets.all(16.r),
                         itemCount: localComments.length,
-                        separatorBuilder: (context, index) => SizedBox(height: 14.h),
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 14.h),
                         itemBuilder: (context, index) {
                           final item = localComments[index];
                           return Row(
@@ -565,11 +580,14 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Container(
-                                    width: 36.r,
-                                    height: 36.r,
-                                    color: Colors.grey[800],
-                                    child: const Icon(Icons.person, color: Colors.white70),
-                                  ),
+                                        width: 36.r,
+                                        height: 36.r,
+                                        color: Colors.grey[800],
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: Colors.white70,
+                                        ),
+                                      ),
                                 ),
                               ),
                               SizedBox(width: 10.w),
@@ -579,10 +597,14 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                   children: [
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 14.w, vertical: 10.h),
+                                        horizontal: 14.w,
+                                        vertical: 10.h,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF222533),
-                                        borderRadius: BorderRadius.circular(18.r),
+                                        borderRadius: BorderRadius.circular(
+                                          18.r,
+                                        ),
                                       ),
                                       child: RichText(
                                         text: TextSpan(
@@ -614,7 +636,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                           Text(
                                             item['time'],
                                             style: TextStyle(
-                                                color: Colors.white38, fontSize: 11.sp),
+                                              color: Colors.white38,
+                                              fontSize: 11.sp,
+                                            ),
                                           ),
                                           SizedBox(width: 12.w),
                                           GestureDetector(
@@ -627,9 +651,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                             child: Text(
                                               'Reply',
                                               style: TextStyle(
-                                                  color: Colors.white60,
-                                                  fontSize: 11.5.sp,
-                                                  fontWeight: FontWeight.w600),
+                                                color: Colors.white60,
+                                                fontSize: 11.5.sp,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -642,11 +667,14 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                               GestureDetector(
                                 onTap: () {
                                   setModalState(() {
-                                    item['isLiked'] = !(item['isLiked'] as bool);
+                                    item['isLiked'] =
+                                        !(item['isLiked'] as bool);
                                     if (item['isLiked']) {
-                                      item['likes'] = (item['likes'] as int) + 1;
+                                      item['likes'] =
+                                          (item['likes'] as int) + 1;
                                     } else {
-                                      item['likes'] = (item['likes'] as int) - 1;
+                                      item['likes'] =
+                                          (item['likes'] as int) - 1;
                                     }
                                   });
                                 },
@@ -665,7 +693,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                       Text(
                                         '${item['likes']}',
                                         style: TextStyle(
-                                            color: Colors.white38, fontSize: 10.sp),
+                                          color: Colors.white38,
+                                          fontSize: 10.sp,
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -701,15 +731,22 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                               ),
                               child: TextField(
                                 controller: commentInputController,
-                                style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14.sp,
+                                ),
                                 cursorColor: const Color(0xFFFF3F5E),
                                 decoration: InputDecoration(
                                   hintText: 'Add a comment...',
                                   hintStyle: TextStyle(
-                                      color: Colors.white38, fontSize: 14.sp),
+                                    color: Colors.white38,
+                                    fontSize: 14.sp,
+                                  ),
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 16.w, vertical: 12.h),
+                                    horizontal: 16.w,
+                                    vertical: 12.h,
+                                  ),
                                   isDense: true,
                                 ),
                               ),
@@ -723,10 +760,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
 
                               setModalState(() {
                                 localComments.add({
-                                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                                  'id': DateTime.now().millisecondsSinceEpoch
+                                      .toString(),
                                   'handle': '@you',
                                   'avatar':
-                                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+                                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
                                   'text': text,
                                   'time': 'Just now',
                                   'likes': 0,
@@ -810,7 +848,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                    Image.asset('assets/images/gift.png',height: 24.h,width: 24.w,),
+                      Image.asset(
+                        'assets/images/gift.png',
+                        height: 24.h,
+                        width: 24.w,
+                      ),
                       SizedBox(width: 8.w),
                       Text(
                         'Tips',
@@ -858,7 +900,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                 color: isSelected ? null : Colors.white,
                                 gradient: isSelected
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                                        colors: [
+                                          Color(0xFF8B5CF6),
+                                          Color(0xFF6D28D9),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -867,7 +912,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                                          color: const Color(
+                                            0xFF8B5CF6,
+                                          ).withOpacity(0.4),
                                           blurRadius: 8,
                                           offset: const Offset(0, 3),
                                         ),
@@ -878,7 +925,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                               child: Text(
                                 '\$ $amount',
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.black87,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -914,14 +963,21 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                         SnackBar(
                           content: Row(
                             children: [
-                              const Icon(Icons.check_circle, color: Colors.greenAccent),
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.greenAccent,
+                              ),
                               SizedBox(width: 10.w),
-                              Text('Sent \$$selectedAmount tip to ${widget.data['userName']}!'),
+                              Text(
+                                'Sent \$$selectedAmount tip to ${widget.data['userName']}!',
+                              ),
                             ],
                           ),
                           backgroundColor: const Color(0xFF181924),
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
                       );
                     },
@@ -946,7 +1002,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                        Image.asset('assets/images/gift.png',height: 24.h,width: 24.w,),
+                          Image.asset(
+                            'assets/images/gift.png',
+                            height: 24.h,
+                            width: 24.w,
+                          ),
                           SizedBox(width: 8.w),
                           Text(
                             'Send',
@@ -1046,7 +1106,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
                                   onPressed: widget.onRetry,
-                                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                                  icon: const Icon(
+                                    Icons.refresh_rounded,
+                                    size: 18,
+                                  ),
                                   label: const Text('Retry'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFFF3F55),
@@ -1058,7 +1121,9 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                                 ),
                               ],
                             )
-                          : const CircularProgressIndicator(color: Color(0xFFFF3F55)),
+                          : const CircularProgressIndicator(
+                              color: Color(0xFFFF3F55),
+                            ),
                     ),
                   ),
           ),
@@ -1109,96 +1174,100 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
             //     ),
             //   ),
             // ),
-
-// Bottom Left Overlay details (User profile info)
-          Positioned(
-            bottom: 140.h,
-            left: 16.w,
-            right: 80.w,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start, // <-- ADD THIS
-                  children: [
-                    CircleAvatar(
-                      radius: 20.r,
-                      backgroundImage: NetworkImage(widget.data['avatar']),
-                    ),
-                    SizedBox(width: 8.w),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.data['userName'],
+            // Bottom Left Overlay details (User profile info)
+            Positioned(
+              bottom: 140.h,
+              left: 16.w,
+              right: 80.w,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start, // <-- ADD THIS
+                    children: [
+                      CircleAvatar(
+                        radius: 20.r,
+                        backgroundImage: NetworkImage(widget.data['avatar']),
+                      ),
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.data['userName'],
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.5.sp,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              widget.data['userHandle'],
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 11.w),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isFollowing = !_isFollowing;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 6.h,
+                          ),
+                          constraints: BoxConstraints(minWidth: 74.w),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _isFollowing
+                                ? Colors.white24
+                                : const Color(0xFFFF3F55),
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: _isFollowing
+                                ? Border.all(color: Colors.white30)
+                                : null,
+                          ),
+                          child: Text(
+                            _isFollowing ? 'Following' : 'Follow',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: _isFollowing
+                                  ? Colors.white70
+                                  : Colors.white,
+                              fontSize: 12.5.sp,
                               fontWeight: FontWeight.bold,
-                              fontSize: 15.5.sp,
+                              height: 1,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.data['userHandle'],
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 11.w),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isFollowing = !_isFollowing;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-                        constraints: BoxConstraints(minWidth: 74.w),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _isFollowing
-                              ? Colors.white24
-                              : const Color(0xFFFF3F55),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: _isFollowing ? Border.all(color: Colors.white30) : null,
-                        ),
-                        child: Text(
-                          _isFollowing ? 'Following' : 'Follow',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _isFollowing ? Colors.white70 : Colors.white,
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.bold,
-                            height: 1,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  widget.data['caption'],
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: 6.h),
+                  Text(
+                    widget.data['caption'],
+                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                  ),
+                ],
+              ),
             ),
-          ),
           // Right Vertical Action Menu Overlay
           Positioned(
             bottom: 130.h,
@@ -1333,7 +1402,10 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                     child: Opacity(
                       opacity: 1.0 - val,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFBBF24),
                           borderRadius: BorderRadius.circular(12),
@@ -1344,7 +1416,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.monetization_on, color: Colors.white, size: 16),
+                            Icon(
+                              Icons.monetization_on,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               '+10 Coins!',
@@ -1383,19 +1459,24 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
         children: [
           imagePath != null
               ? Image.asset(
-            imagePath,
-            width: size,
-            height: size,
-            color: iconColor, // remove this line if your image is already colored/full-color
-          )
+                  imagePath,
+                  width: size,
+                  height: size,
+                  color:
+                      iconColor, // remove this line if your image is already colored/full-color
+                )
               : Icon(
-            icon,
-            color: iconColor,
-            size: size,
-            shadows: const [
-              Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-            ],
-          ),
+                  icon,
+                  color: iconColor,
+                  size: size,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black45,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
           if (label.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
@@ -1405,7 +1486,11 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 shadows: [
-                  Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 1)),
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
                 ],
               ),
             ),
@@ -1414,7 +1499,4 @@ class _ReelPageItemState extends State<ReelPageItem> with SingleTickerProviderSt
       ),
     );
   }
-
-
-
 }

@@ -15,33 +15,40 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
   final List<Map<String, dynamic>> _posts = [
     {
       'userName': 'Courtney Henry',
-      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       'time': '2 hours ago',
-      'text': 'Just completed my design exploration on custom Flutter Beziers! Feels amazing to draw paths from scratch. 💻✨',
+      'text':
+          'Just completed my design exploration on custom Flutter Beziers! Feels amazing to draw paths from scratch. 💻✨',
       'likes': 142,
       'comments': <Map<String, String>>[
         {
           'userName': 'Alex Turner',
-          'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+          'avatar':
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
           'text': 'This looks amazing! 🔥',
         },
         {
           'userName': 'Priya Shah',
-          'avatar': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
+          'avatar':
+              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
           'text': 'Bezier curves are so satisfying to build.',
         },
       ],
     },
     {
       'userName': 'Michael Brown',
-      'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      'avatar':
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
       'time': '5 hours ago',
-      'text': 'Who is up for a sunset hike tomorrow at Sentinel Rock? The skies are clear! ⛰️🥾',
+      'text':
+          'Who is up for a sunset hike tomorrow at Sentinel Rock? The skies are clear! ⛰️🥾',
       'likes': 89,
       'comments': <Map<String, String>>[
         {
           'userName': 'David Miller',
-          'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          'avatar':
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
           'text': 'Count me in!',
         },
       ],
@@ -75,9 +82,9 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                 label: 'Save post',
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Post saved!')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Post saved!')));
                 },
               ),
               _buildOptionTile(
@@ -105,9 +112,9 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                 label: 'Hide post',
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Post hidden')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Post hidden')));
                 },
               ),
               const Divider(color: Colors.white12, height: 8),
@@ -135,8 +142,13 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E2C),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Delete post?', style: TextStyle(color: Colors.white)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete post?',
+            style: TextStyle(color: Colors.white),
+          ),
           content: const Text(
             'This action cannot be undone.',
             style: TextStyle(color: Colors.white70),
@@ -144,7 +156,10 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -152,18 +167,22 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                 setState(() {
                   _posts.removeAt(index);
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Post deleted')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Post deleted')));
               },
-              child: const Text('Delete', style: TextStyle(color: Color(0xFFFF3F55))),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Color(0xFFFF3F55)),
+              ),
             ),
           ],
         );
       },
     );
   }
-// ---------- Comments bottom sheet ----------
+
+  // ---------- Comments bottom sheet ----------
   void _showCommentsSheet(int postIndex) {
     showModalBottomSheet(
       context: context,
@@ -233,11 +252,18 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                         children: [
                           Text(
                             post['userName'],
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.5),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                            ),
                           ),
                           Text(
                             post['time'],
-                            style: const TextStyle(color: Colors.white30, fontSize: 11),
+                            style: const TextStyle(
+                              color: Colors.white30,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -263,9 +289,19 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.favorite, color: Color(0xFFFF3F55), size: 18),
+                        const Icon(
+                          Icons.favorite,
+                          color: Color(0xFFFF3F55),
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
-                        Text('${post['likes']}', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                        Text(
+                          '${post['likes']}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(width: 24),
@@ -273,10 +309,20 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                       onTap: () => _showCommentsSheet(index),
                       child: Row(
                         children: [
-                          Image.asset('assets/images/mesagenva.png',height: 17.w,width: 17.w,),
+                          Image.asset(
+                            'assets/images/mesagenva.png',
+                            height: 17.w,
+                            width: 17.w,
+                          ),
 
                           const SizedBox(width: 6),
-                          Text('$commentCount', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                          Text(
+                            '$commentCount',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.5,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -298,10 +344,7 @@ class _CommentsSheet extends StatefulWidget {
   final Map<String, dynamic> post;
   final ValueChanged<List<Map<String, String>>> onCommentsChanged;
 
-  const _CommentsSheet({
-    required this.post,
-    required this.onCommentsChanged,
-  });
+  const _CommentsSheet({required this.post, required this.onCommentsChanged});
 
   @override
   State<_CommentsSheet> createState() => _CommentsSheetState();
@@ -426,7 +469,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               const SizedBox(height: 8),
               ListTile(
                 leading: const Icon(Icons.reply, color: Colors.white70),
-                title: const Text('Reply', style: TextStyle(color: Colors.white, fontSize: 14.5)),
+                title: const Text(
+                  'Reply',
+                  style: TextStyle(color: Colors.white, fontSize: 14.5),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _startReply(index);
@@ -434,8 +480,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               ),
               if (isOwnComment) ...[
                 ListTile(
-                  leading: const Icon(Icons.edit_outlined, color: Colors.white70),
-                  title: const Text('Edit', style: TextStyle(color: Colors.white, fontSize: 14.5)),
+                  leading: const Icon(
+                    Icons.edit_outlined,
+                    color: Colors.white70,
+                  ),
+                  title: const Text(
+                    'Edit',
+                    style: TextStyle(color: Colors.white, fontSize: 14.5),
+                  ),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _startEdit(index);
@@ -443,8 +495,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 ),
                 const Divider(color: Colors.white12, height: 8),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Color(0xFFFF3F55)),
-                  title: const Text('Delete', style: TextStyle(color: Color(0xFFFF3F55), fontSize: 14.5)),
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFFF3F55),
+                  ),
+                  title: const Text(
+                    'Delete',
+                    style: TextStyle(color: Color(0xFFFF3F55), fontSize: 14.5),
+                  ),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _confirmDeleteComment(index);
@@ -465,8 +523,13 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E2C),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Delete comment?', style: TextStyle(color: Colors.white)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete comment?',
+            style: TextStyle(color: Colors.white),
+          ),
           content: const Text(
             'This action cannot be undone.',
             style: TextStyle(color: Colors.white70),
@@ -474,14 +537,20 @@ class _CommentsSheetState extends State<_CommentsSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 _deleteComment(index);
               },
-              child: const Text('Delete', style: TextStyle(color: Color(0xFFFF3F55))),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Color(0xFFFF3F55)),
+              ),
             ),
           ],
         );
@@ -499,7 +568,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: DraggableScrollableSheet(
         initialChildSize: 0.65,
         minChildSize: 0.4,
@@ -533,114 +604,134 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               Expanded(
                 child: _comments.isEmpty
                     ? const Center(
-                  child: Text(
-                    'No comments yet.\nBe the first to comment!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white38, fontSize: 13),
-                  ),
-                )
+                        child: Text(
+                          'No comments yet.\nBe the first to comment!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, fontSize: 13),
+                        ),
+                      )
                     : ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _comments.length,
-                  itemBuilder: (context, index) {
-                    final comment = _comments[index];
-                    final isOwnComment = comment['userName'] == _currentUserName;
-                    final replyTo = comment['replyTo'];
-                    final wasEdited = comment['edited'] == 'true';
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: _comments.length,
+                        itemBuilder: (context, index) {
+                          final comment = _comments[index];
+                          final replyTo = comment['replyTo'];
+                          final wasEdited = comment['edited'] == 'true';
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: GestureDetector(
-                        onLongPress: () => _showCommentOptions(index),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundImage: NetworkImage(comment['avatar']!),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 18),
+                            child: GestureDetector(
+                              onLongPress: () => _showCommentOptions(index),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (replyTo != null && replyTo.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 3),
-                                      child: Text(
-                                        'Replying to $replyTo',
-                                        style: const TextStyle(
-                                          color: Color(0xFFFF3F55),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  Text(
-                                    comment['userName']!,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundImage: NetworkImage(
+                                      comment['avatar']!,
                                     ),
                                   ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    comment['text']!,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      if (wasEdited)
-                                        const Padding(
-                                          padding: EdgeInsets.only(right: 10),
-                                          child: Text(
-                                            'edited',
-                                            style: TextStyle(color: Colors.white30, fontSize: 11),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (replyTo != null &&
+                                            replyTo.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 3,
+                                            ),
+                                            child: Text(
+                                              'Replying to $replyTo',
+                                              style: const TextStyle(
+                                                color: Color(0xFFFF3F55),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      GestureDetector(
-                                        onTap: () => _startReply(index),
-                                        child: const Text(
-                                          'Reply',
-                                          style: TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 11.5,
+                                        Text(
+                                          comment['userName']!,
+                                          style: const TextStyle(
+                                            color: Colors.white,
                                             fontWeight: FontWeight.w600,
+                                            fontSize: 13,
                                           ),
                                         ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          comment['text']!,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            if (wasEdited)
+                                              const Padding(
+                                                padding: EdgeInsets.only(
+                                                  right: 10,
+                                                ),
+                                                child: Text(
+                                                  'edited',
+                                                  style: TextStyle(
+                                                    color: Colors.white30,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ),
+                                            GestureDetector(
+                                              onTap: () => _startReply(index),
+                                              child: const Text(
+                                                'Reply',
+                                                style: TextStyle(
+                                                  color: Colors.white54,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // 3-dot options button (also opens same sheet)
+                                  GestureDetector(
+                                    onTap: () => _showCommentOptions(index),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(4),
+                                      child: Icon(
+                                        Icons.more_vert,
+                                        color: Colors.white38,
+                                        size: 18,
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            // 3-dot options button (also opens same sheet)
-                            GestureDetector(
-                              onTap: () => _showCommentOptions(index),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
-                                child: Icon(Icons.more_vert, color: Colors.white38, size: 18),
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
 
               // Reply / Edit banner
               if (_replyingToIndex != null || _editingIndex != null)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   color: const Color(0xFF2A2A3A),
                   child: Row(
                     children: [
@@ -649,12 +740,19 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           _editingIndex != null
                               ? 'Editing comment'
                               : 'Replying to ${_comments[_replyingToIndex!]['userName']}',
-                          style: const TextStyle(color: Colors.white60, fontSize: 12.5),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12.5,
+                          ),
                         ),
                       ),
                       GestureDetector(
                         onTap: _cancelReplyOrEdit,
-                        child: const Icon(Icons.close, color: Colors.white54, size: 16),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white54,
+                          size: 16,
+                        ),
                       ),
                     ],
                   ),
@@ -676,7 +774,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         child: TextField(
                           controller: _controller,
                           focusNode: _focusNode,
-                          style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                          ),
                           decoration: InputDecoration(
                             hintText: _editingIndex != null
                                 ? 'Edit your comment...'
@@ -686,7 +787,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                             hintStyle: const TextStyle(color: Colors.white38),
                             filled: true,
                             fillColor: const Color(0xFF2A2A3A),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,
@@ -705,7 +809,11 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                             color: Color(0xFFFF3F55),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                          child: const Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],
