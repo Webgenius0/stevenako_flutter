@@ -1,4 +1,3 @@
-
 import 'package:auto_animated/auto_animated.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -87,9 +86,9 @@ class UtillScreenMobile extends StatelessWidget {
           },
           navigatorKey: NavigationService.navigatorKey,
           onGenerateRoute: RouteGenerator.generateRoute,
-          // home: Loading(),
 
-           home: SplashScreen(),
+          // home: Loading(),
+          home: SplashScreen(),
         );
       },
     );
