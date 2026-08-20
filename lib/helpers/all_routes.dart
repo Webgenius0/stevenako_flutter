@@ -318,23 +318,43 @@ final class RouteGenerator {
               );
 
       case Routes.forgetPasswordVerifyOtpScreen:
+        final args = settings.arguments;
+        String? email;
+        if (args is String) {
+          email = args;
+        } else if (args is Map<String, dynamic>) {
+          email = args['email'] as String?;
+        }
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const ForgetPasswordOtpVerifyScreen(),
+                widget: ForgetPasswordOtpVerifyScreen(email: email),
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => const ForgetPasswordOtpVerifyScreen(),
+                builder: (context) => ForgetPasswordOtpVerifyScreen(email: email),
+                settings: settings,
               );
 
       case Routes.setNewPassword:
+        final args = settings.arguments;
+        String? email;
+        String? resetToken;
+        String? otp;
+        if (args is String) {
+          resetToken = args;
+        } else if (args is Map) {
+          email = args['email']?.toString();
+          resetToken = (args['reset_token'] ?? args['resetToken'] ?? args['token'] ?? args['otp'])?.toString();
+          otp = args['otp']?.toString();
+        }
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const SetNewPasswordScreen(),
+                widget: SetNewPasswordScreen(email: email, resetToken: resetToken, otp: otp),
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => const SetNewPasswordScreen(),
+                builder: (context) => SetNewPasswordScreen(email: email, resetToken: resetToken, otp: otp),
+                settings: settings,
               );
 
       case Routes.successScreen:
@@ -354,13 +374,21 @@ final class RouteGenerator {
             : CupertinoPageRoute(builder: (context) => const SignUpScreen());
 
       case Routes.signUpVerifyOtpScreen:
+        final args = settings.arguments;
+        String? email;
+        if (args is String) {
+          email = args;
+        } else if (args is Map) {
+          email = args['email']?.toString();
+        }
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const SignUpVerifyOtpScreen(),
+                widget: SignUpVerifyOtpScreen(email: email),
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => const SignUpVerifyOtpScreen(),
+                builder: (context) => SignUpVerifyOtpScreen(email: email),
+                settings: settings,
               );
 
       case Routes.profileSetupScreen:

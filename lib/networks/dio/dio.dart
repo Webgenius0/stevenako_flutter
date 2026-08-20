@@ -40,15 +40,22 @@ final class DioSingleton {
   }
 
   void create() {
+    final String? savedToken = appData.read(kKeyAccessToken);
+    final Map<String, dynamic> headers = {
+      NetworkConstants.ACCEPT: NetworkConstants.ACCEPT_TYPE,
+      NetworkConstants.ACCEPT_LANGUAGE: appData.read(kKeyCountryCode) ?? "pt",
+      NetworkConstants.APP_KEY: NetworkConstants.APP_KEY_VALUE,
+    };
+
+    if (savedToken != null && savedToken.toString().trim().isNotEmpty) {
+      headers[NetworkConstants.AUTHORIZATION] = "Bearer ${savedToken.toString().trim()}";
+    }
+
     BaseOptions options = BaseOptions(
         baseUrl: url,
         connectTimeout: const Duration(milliseconds: 100000), 
         receiveTimeout: const Duration(milliseconds: 100000),
-        headers: {
-          NetworkConstants.ACCEPT: NetworkConstants.ACCEPT_TYPE,
-          NetworkConstants.ACCEPT_LANGUAGE: appData.read(kKeyCountryCode) ?? "pt",
-          NetworkConstants.APP_KEY: NetworkConstants.APP_KEY_VALUE,
-        });
+        headers: headers);
     dio = _createDio(options);
   }
 

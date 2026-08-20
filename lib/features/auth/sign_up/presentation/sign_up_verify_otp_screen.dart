@@ -4,12 +4,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
-import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class SignUpVerifyOtpScreen extends StatefulWidget {
-  const SignUpVerifyOtpScreen({super.key});
+  final String? email;
+
+  const SignUpVerifyOtpScreen({
+    super.key,
+    this.email,
+  });
 
   @override
   State<SignUpVerifyOtpScreen> createState() => _SignUpVerifyOtpScreenState();
@@ -42,6 +49,63 @@ class _SignUpVerifyOtpScreenState extends State<SignUpVerifyOtpScreen> {
       if (index > 0) {
         _focusNodes[index - 1].requestFocus();
       }
+    }
+  }
+
+  Future<void> _handleResendOtp() async {
+    KeyboardUtil.hideKeyboard(context);
+    String email = widget.email?.trim() ?? '';
+    if (email.isEmpty) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is String) {
+        email = routeArgs.trim();
+      } else if (routeArgs is Map) {
+        email = routeArgs['email']?.toString().trim() ?? '';
+      }
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Email is required to resend OTP.');
+      return;
+    }
+
+    await forgotRxObj.forgotFun(email: email);
+  }
+
+  Future<void> _handleVerifyOtp() async {
+    KeyboardUtil.hideKeyboard(context);
+    final otp = _controllers.map((c) => c.text.trim()).join();
+
+    if (otp.length < 4) {
+      ToastUtil.showShortToast('Please enter the complete 4-digit OTP');
+      return;
+    }
+
+    String email = widget.email?.trim() ?? '';
+    if (email.isEmpty) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is String) {
+        email = routeArgs.trim();
+      } else if (routeArgs is Map) {
+        email = routeArgs['email']?.toString().trim() ?? '';
+      }
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Email is required. Please re-enter email.');
+      return;
+    }
+
+    final response = await verifyOtpRxObj.verifyOtpFun(
+      email: email,
+      otp: otp,
+    );
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      NavigationService.navigateToReplacement(
+        Routes.profileSetupScreen,
+      );
     }
   }
 
@@ -79,7 +143,7 @@ class _SignUpVerifyOtpScreenState extends State<SignUpVerifyOtpScreen> {
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -179,16 +243,48 @@ class _SignUpVerifyOtpScreenState extends State<SignUpVerifyOtpScreen> {
                                         );
                                       }),
                                     ),
+                                    SizedBox(height: 24.h),
+
+                                    // --------------- Resend OTP ---------------
+                                    Center(
+                                      child: ValueListenableBuilder<bool>(
+                                        valueListenable: forgotRxObj.isLoading,
+                                        builder: (context, isResending, child) {
+                                          return GestureDetector(
+                                            onTap: isResending ? null : _handleResendOtp,
+                                            child: RichText(
+                                              text: TextSpan(
+                                                text: "Didn't receive the code? ",
+                                                style: GoogleFonts.inter(
+                                                  color: const Color(0xFF9CA3AF),
+                                                  fontSize: 14.sp,
+                                                ),
+                                                children: [
+                                                  TextSpan(
+                                                    text: isResending ? 'Sending...' : 'Resend OTP',
+                                                    style: GoogleFonts.inter(
+                                                      color: const Color(0xFF8B5CF6),
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
 
                                     const Spacer(flex: 3),
 
                                     // --------------- Verify Button ---------------
-                                    CustomButton(
-                                      text: 'Verify',
-                                      onTap: () {
-                                        // Handle verify code / complete signup redirection
-                                        NavigationService.navigateToReplacement(
-                                          Routes.profileSetupScreen,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: verifyOtpRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Verify',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _handleVerifyOtp,
                                         );
                                       },
                                     ),

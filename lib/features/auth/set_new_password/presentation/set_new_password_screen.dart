@@ -8,9 +8,20 @@ import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
-  const SetNewPasswordScreen({super.key});
+  final String? email;
+  final String? resetToken;
+  final String? otp;
+
+  const SetNewPasswordScreen({
+    super.key,
+    this.email,
+    this.resetToken,
+    this.otp,
+  });
 
   @override
   State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
@@ -27,6 +38,73 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleUpdatePassword() async {
+    KeyboardUtil.hideKeyboard(context);
+
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (newPassword.isEmpty) {
+      ToastUtil.showShortToast('Please enter your new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ToastUtil.showShortToast('Password must be at least 6 characters');
+      return;
+    }
+
+    if (confirmPassword != newPassword) {
+      ToastUtil.showShortToast('Passwords do not match');
+      return;
+    }
+
+    String email = widget.email?.trim() ?? '';
+    String resetToken = widget.resetToken?.trim() ?? widget.otp?.trim() ?? '';
+
+    if (email.isEmpty || resetToken.isEmpty) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is String && resetToken.isEmpty) {
+        resetToken = routeArgs.trim();
+      } else if (routeArgs is Map) {
+        if (email.isEmpty) {
+          email = routeArgs['email']?.toString().trim() ?? '';
+        }
+        if (resetToken.isEmpty) {
+          resetToken = routeArgs['reset_token']?.toString().trim() ??
+              routeArgs['resetToken']?.toString().trim() ??
+              routeArgs['token']?.toString().trim() ??
+              routeArgs['otp']?.toString().trim() ??
+              '';
+        }
+      }
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Email is missing. Please restart password reset process.');
+      return;
+    }
+
+    if (resetToken.isEmpty) {
+      ToastUtil.showShortToast('Reset token is missing. Please verify OTP again.');
+      return;
+    }
+
+    final response = await setNewPasswordRxObj.setNewPasswordFun(
+      email: email,
+      password: newPassword,
+      passwordConfirmation: confirmPassword,
+      resetToken: resetToken,
+    );
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      NavigationService.navigateToReplacement(
+        Routes.successScreen,
+      );
+    }
   }
 
   @override
@@ -63,7 +141,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -146,11 +224,13 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                                     const Spacer(flex: 3),
 
                                     // --------------- Update Button ---------------
-                                    CustomButton(
-                                      text: 'Update',
-                                      onTap: () {
-                                        NavigationService.navigateToReplacement(
-                                          Routes.successScreen,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: setNewPasswordRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Update',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _handleUpdatePassword,
                                         );
                                       },
                                     ),

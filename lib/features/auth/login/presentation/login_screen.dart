@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rxdart/rxdart.dart';
+
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/assets_helper/app_icons.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
-import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
+import 'package:stevenako_flutter/features/auth/login/model/login_model.dart';
+ import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/remember_me_check_box_widget.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/social_login_button.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+
+import '../data/rx.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,17 +27,183 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'dennis416@gmail.com');
+  late final SigninRx _signinRx;
+
+  final _emailController = TextEditingController(
+    text: 'email',
+  );
+
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _rememberMe = true;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _signinRx = SigninRx(
+      empty: const PostLoginModel(
+        success: false,
+        code: 0,
+        message: '',
+        data: null,
+      ),
+      dataFetcher: BehaviorSubject<PostLoginModel>(),
+    );
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _signinRx.dataFetcher.close();
     super.dispose();
   }
+
+  // ---------------------------------------------------------------------------
+  // EMAIL VALIDATION
+  // ---------------------------------------------------------------------------
+
+  String? _validateEmail(String value) {
+    final email = value.trim();
+
+    if (email.isEmpty) {
+      return 'Please enter your email address';
+    }
+
+    final emailRegex = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      return 'Please enter a valid email address';
+    }
+
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // PASSWORD VALIDATION
+  // ---------------------------------------------------------------------------
+
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your password';
+    }
+
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // VALIDATION ERROR
+  // ---------------------------------------------------------------------------
+
+  void _showValidationError(String message) {
+    ToastUtil.showShortToast(message);
+  }
+
+  // ---------------------------------------------------------------------------
+  // LOGIN
+  // ---------------------------------------------------------------------------
+
+  Future<void> _handleLogin() async {
+    // Prevent multiple API requests
+    if (_isLoading) return;
+
+    // Hide keyboard
+    KeyboardUtil.hideKeyboard(context);
+
+    // Validate email
+    final emailError = _validateEmail(
+      _emailController.text,
+    );
+
+    if (emailError != null) {
+      _showValidationError(emailError);
+      return;
+    }
+
+    // Validate password
+    final passwordError = _validatePassword(
+      _passwordController.text,
+    );
+
+    if (passwordError != null) {
+      _showValidationError(passwordError);
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await _signinRx.signInFun(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (result.success == true) {
+        NavigationService.navigateToReplacement(
+          Routes.navigationMenu,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ToastUtil.showShortToast(
+        'Unable to sign in. Please try again.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // FORGOT PASSWORD
+  // ---------------------------------------------------------------------------
+
+  void _handleForgotPassword() {
+    if (_isLoading) return;
+
+    KeyboardUtil.hideKeyboard(context);
+
+    NavigationService.navigateTo(
+      Routes.forgetPasswordScreen,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SIGN UP
+  // ---------------------------------------------------------------------------
+
+  void _handleSignUp() {
+    if (_isLoading) return;
+
+    KeyboardUtil.hideKeyboard(context);
+
+    NavigationService.navigateTo(
+      Routes.signUpScreen,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -44,18 +216,29 @@ class _LoginScreenState extends State<LoginScreen> {
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
-        onTap: () => KeyboardUtil.hideKeyboard(context),
+        onTap: () {
+          KeyboardUtil.hideKeyboard(context);
+        },
         child: Scaffold(
           backgroundColor: Colors.black,
           body: SizedBox.expand(
             child: Stack(
               children: [
-                // --------------- Background Image ---------------
+                // ----------------------------------------------------------------
+                // BACKGROUND IMAGE
+                // ----------------------------------------------------------------
+
                 Positioned.fill(
-                  child: Image.asset(AppImages.loginBg, fit: BoxFit.cover),
+                  child: Image.asset(
+                    AppImages.loginBg,
+                    fit: BoxFit.cover,
+                  ),
                 ),
 
-                // --------------- Top subtle glow overlay ---------------
+                // ----------------------------------------------------------------
+                // TOP GLOW
+                // ----------------------------------------------------------------
+
                 Positioned(
                   top: 0,
                   left: 0,
@@ -75,26 +258,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // --------------- UI Content ---------------
+                // ----------------------------------------------------------------
+                // CONTENT
+                // ----------------------------------------------------------------
+
                 Positioned.fill(
                   child: SafeArea(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
                           physics: const ClampingScrollPhysics(),
+                          keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
                               minHeight: constraints.maxHeight,
                             ),
                             child: IntrinsicHeight(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w,
+                                ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   children: [
                                     SizedBox(height: 72.h),
 
-                                    // --------------- Title ---------------
+                                    // ------------------------------------------------
+                                    // TITLE
+                                    // ------------------------------------------------
+
                                     Text(
                                       'Welcome Back',
                                       style: GoogleFonts.inter(
@@ -104,9 +298,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                         letterSpacing: -0.5,
                                       ),
                                     ),
+
                                     SizedBox(height: 8.h),
 
-                                    // --------------- Subtitle ---------------
+                                    // ------------------------------------------------
+                                    // SUBTITLE
+                                    // ------------------------------------------------
+
                                     Text(
                                       'Pick up right where the scroll left off.',
                                       style: GoogleFonts.inter(
@@ -115,56 +313,74 @@ class _LoginScreenState extends State<LoginScreen> {
                                         fontWeight: FontWeight.w400,
                                       ),
                                     ),
+
                                     SizedBox(height: 36.h),
 
-                                    // --------------- Email Field ---------------
+                                    // ------------------------------------------------
+                                    // EMAIL
+                                    // ------------------------------------------------
+
                                     CustomTextField(
                                       controller: _emailController,
                                       labelText: 'Email address',
                                       hintText: 'Enter email address',
-                                      keyboardType: TextInputType.emailAddress,
+                                      keyboardType:
+                                      TextInputType.emailAddress,
                                     ),
+
                                     SizedBox(height: 16.h),
 
-                                    // --------------- Password Field ---------------
+                                    // ------------------------------------------------
+                                    // PASSWORD
+                                    // ------------------------------------------------
+
                                     CustomTextField(
                                       controller: _passwordController,
                                       labelText: 'Password',
                                       isPassword: true,
                                       obscureText: _obscurePassword,
                                       onToggleObscure: () {
+                                        if (_isLoading) return;
+
                                         setState(() {
-                                          _obscurePassword = !_obscurePassword;
+                                          _obscurePassword =
+                                          !_obscurePassword;
                                         });
                                       },
                                     ),
+
                                     SizedBox(height: 16.h),
 
-                                    // --------------- Remember Me & Forgot Password ---------------
+                                    // ------------------------------------------------
+                                    // REMEMBER + FORGOT
+                                    // ------------------------------------------------
+
                                     Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                       children: [
                                         RememberMeCheckbox(
                                           value: _rememberMe,
                                           onChanged: (val) {
+                                            if (_isLoading) return;
+
                                             setState(() {
                                               _rememberMe = val;
                                             });
                                           },
                                         ),
+
                                         GestureDetector(
-                                          onTap: () {
-                                            NavigationService.navigateTo(
-                                              Routes.forgetPasswordScreen,
-                                            );
-                                          },
+                                          onTap:
+                                          _handleForgotPassword,
                                           child: Text(
                                             'Forgot password?',
                                             style: GoogleFonts.inter(
-                                              color: const Color(0xFF9CA3AF),
+                                              color:
+                                              const Color(0xFF9CA3AF),
                                               fontSize: 14.sp,
-                                              fontWeight: FontWeight.w500,
+                                              fontWeight:
+                                              FontWeight.w500,
                                             ),
                                           ),
                                         ),
@@ -173,19 +389,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                     const Spacer(flex: 3),
 
-                                    // --------------- Login Button ---------------
+                                    // ------------------------------------------------
+                                    // LOGIN BUTTON
+                                    // ------------------------------------------------
+
                                     CustomButton(
-                                      text: 'Login',
-                                      onTap: () {
-                                        // Handle login action
-                                        NavigationService.navigateToReplacement(
-                                          Routes.navigationMenu,
-                                        );
-                                      },
+                                      text: _isLoading
+                                          ? 'Signing in...'
+                                          : 'Login',
+                                      onTap: _isLoading
+                                          ? () {}
+                                          : _handleLogin,
                                     ),
+
                                     SizedBox(height: 24.h),
 
-                                    // --------------- Divider ---------------
+                                    // ------------------------------------------------
+                                    // DIVIDER
+                                    // ------------------------------------------------
+
                                     Row(
                                       children: [
                                         const Expanded(
@@ -195,13 +417,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         Padding(
-                                          padding: EdgeInsets.symmetric(
+                                          padding:
+                                          EdgeInsets.symmetric(
                                             horizontal: 12.w,
                                           ),
                                           child: Text(
                                             'or',
                                             style: GoogleFonts.inter(
-                                              color: const Color(0xFF9CA3AF),
+                                              color:
+                                              const Color(0xFF9CA3AF),
                                               fontSize: 14.sp,
                                             ),
                                           ),
@@ -214,57 +438,76 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       ],
                                     ),
+
                                     SizedBox(height: 24.h),
 
-                                    // --------------- Social Login Buttons ---------------
+                                    // ------------------------------------------------
+                                    // SOCIAL LOGIN
+                                    // ------------------------------------------------
+
                                     Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      MainAxisAlignment.center,
                                       children: [
                                         SocialLoginButton(
                                           iconPath: AppIcons.google,
-                                          onTap: () {
+                                          onTap: _isLoading
+                                              ? () {}
+                                              : () {
                                             // Google Login
                                           },
                                         ),
+
                                         SizedBox(width: 16.w),
+
                                         SocialLoginButton(
                                           iconPath: AppIcons.apple,
-                                          onTap: () {
+                                          onTap: _isLoading
+                                              ? () {}
+                                              : () {
                                             // Apple Login
                                           },
                                         ),
                                       ],
                                     ),
+
                                     SizedBox(height: 32.h),
 
-                                    // --------------- Sign Up Navigation ---------------
+                                    // ------------------------------------------------
+                                    // SIGN UP
+                                    // ------------------------------------------------
+
                                     Center(
                                       child: RichText(
                                         text: TextSpan(
-                                          text: 'Don’t have an account? ',
+                                          text:
+                                          'Don’t have an account? ',
                                           style: GoogleFonts.inter(
-                                            color: const Color(0xFF9CA3AF),
+                                            color:
+                                            const Color(0xFF9CA3AF),
                                             fontSize: 14.sp,
                                           ),
                                           children: [
                                             TextSpan(
                                               text: 'Sign up',
                                               style: GoogleFonts.inter(
-                                                color: const Color(0xFF8B5CF6),
-                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                const Color(
+                                                  0xFF8B5CF6,
+                                                ),
+                                                fontWeight:
+                                                FontWeight.w600,
                                               ),
-                                              recognizer: TapGestureRecognizer()
-                                                ..onTap = () {
-                                                  NavigationService.navigateTo(
-                                                    Routes.signUpScreen,
-                                                  );
-                                                },
+                                              recognizer:
+                                              TapGestureRecognizer()
+                                                ..onTap =
+                                                    _handleSignUp,
                                             ),
                                           ],
                                         ),
                                       ),
                                     ),
+
                                     SizedBox(height: 20.h),
                                   ],
                                 ),
@@ -276,6 +519,59 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
+                // ----------------------------------------------------------------
+                // FULL SCREEN LOADING OVERLAY
+                // ----------------------------------------------------------------
+
+                if (_isLoading)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.35),
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 20.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111111),
+                            borderRadius:
+                            BorderRadius.circular(16.r),
+                            border: Border.all(
+                              color: const Color(0xFF2A2A2A),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 22.w,
+                                height: 22.w,
+                                child:
+                                const CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  valueColor:
+                                  AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF8B5CF6),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 14.w),
+                              Text(
+                                'Signing in...',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
