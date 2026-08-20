@@ -8,6 +8,8 @@ import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ForgetPassword extends StatefulWidget {
   const ForgetPassword({super.key});
@@ -23,6 +25,32 @@ class _ForgetPasswordState extends State<ForgetPassword> {
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSendCode() async {
+    KeyboardUtil.hideKeyboard(context);
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Please enter your email address');
+      return;
+    }
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ToastUtil.showShortToast('Please enter a valid email address');
+      return;
+    }
+
+    final response = await forgotRxObj.forgotFun(email: email);
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      NavigationService.navigateTo(
+        Routes.forgetPasswordVerifyOtpScreen,
+        arguments: email,
+      );
+    }
   }
 
   @override
@@ -59,7 +87,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -121,11 +149,13 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                                     const Spacer(flex: 3),
 
                                     // --------------- Send Code Button ---------------
-                                    CustomButton(
-                                      text: 'Send Code',
-                                      onTap: () {
-                                        NavigationService.navigateTo(
-                                          Routes.forgetPasswordVerifyOtpScreen,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: forgotRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Send Code',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _handleSendCode,
                                         );
                                       },
                                     ),

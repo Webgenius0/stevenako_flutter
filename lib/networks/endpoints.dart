@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names, unnecessary_string_interpolations
 
-const String url = "https://abojude.thesyndicates.team/api";
+const String url = "https://stevenako.thesyndicates.team/api";
 const String imageUrl = "${url}";
 
 final class NetworkConstants {
@@ -23,7 +23,7 @@ final class Endpoints {
   // -------------------Register end-------------------
 
   // -------------------Register Verify email start-----------------
-  static String registerVerifyOtp() => "/v1/verify/otp";
+  static String registerVerifyOtp() => "/user/verify-otp";
   // -------------------Register Verify email end-------------------
 
   // -------------------Get Province List start-----------------
@@ -45,11 +45,11 @@ final class Endpoints {
  
 
   // -------------------Login start-------------------
-  static String login() => "/v1/login";
+  static String login() => "/user/login";
   // -------------------Login end-------------------
 
   // -------------------Logout start-------------------
-  static String logout() => "/v1/auth/logout";
+  static String logout() => "/user/logout";
   // -------------------Logout end-------------------
 
   // -------------------Delete Account start-------------------
@@ -57,11 +57,11 @@ final class Endpoints {
   // -------------------Delete Account end-------------------
 
   // -------------------Forget Password start-------------------
-  static String forgetPassword() => "/v1/forgot-password";
+  static String forgetPassword() => "/user/forget-password";
   // -------------------Forget Password end-------------------
 
   // -------------------Set New Password start-------------------
-  static String setNewPassword() => "/v1/reset-password";
+  static String setNewPassword() => "/user/reset-password";
   // -------------------Set New Password end-------------------
 
   // -------------------Change Password start-------------------
@@ -69,7 +69,7 @@ final class Endpoints {
   // -------------------Change Password end-------------------
 
   // -------------------Forget Password verify otp start-------------------
-  static String forgetPasswordVerifyOtp() => "/v1/verify/otp";
+  static String forgetPasswordVerifyOtp() => "/user/verify-otp";
   // -------------------Forget Password verify otp end-------------------
 
   // -------------------Guest User start-------------------

@@ -7,9 +7,16 @@ import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ForgetPasswordOtpVerifyScreen extends StatefulWidget {
-  const ForgetPasswordOtpVerifyScreen({super.key});
+  final String? email;
+
+  const ForgetPasswordOtpVerifyScreen({
+    super.key,
+    this.email,
+  });
 
   @override
   State<ForgetPasswordOtpVerifyScreen> createState() =>
@@ -49,6 +56,59 @@ class _ForgetPasswordOtpVerifyScreenState
     }
   }
 
+  Future<void> _handleVerifyOtp() async {
+    KeyboardUtil.hideKeyboard(context);
+    final otp = _controllers.map((c) => c.text.trim()).join();
+
+    if (otp.length < 4) {
+      ToastUtil.showShortToast('Please enter the complete 4-digit OTP');
+      return;
+    }
+
+    String email = widget.email?.trim() ?? '';
+    if (email.isEmpty) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is String) {
+        email = routeArgs.trim();
+      } else if (routeArgs is Map<String, dynamic>) {
+        email = routeArgs['email']?.toString().trim() ?? '';
+      }
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Email is required. Please re-enter email.');
+      return;
+    }
+
+    final response = await verifyOtpRxObj.verifyOtpFun(
+      email: email,
+      otp: otp,
+    );
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      String? resetToken;
+      final rawData = response.data;
+      if (rawData is Map) {
+        resetToken = rawData['reset_token']?.toString() ??
+            rawData['token']?.toString() ??
+            rawData['resetToken']?.toString();
+      } else if (rawData is String && rawData.trim().isNotEmpty) {
+        resetToken = rawData.trim();
+      }
+      resetToken = (resetToken != null && resetToken.trim().isNotEmpty) ? resetToken.trim() : otp;
+
+      NavigationService.navigateTo(
+        Routes.setNewPassword,
+        arguments: {
+          'email': email,
+          'reset_token': resetToken,
+          'otp': otp,
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -83,7 +143,7 @@ class _ForgetPasswordOtpVerifyScreenState
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -188,11 +248,13 @@ class _ForgetPasswordOtpVerifyScreenState
                                     const Spacer(flex: 3),
 
                                     // --------------- Verify Button ---------------
-                                    CustomButton(
-                                      text: 'Verify',
-                                      onTap: () {
-                                        NavigationService.navigateTo(
-                                          Routes.setNewPassword,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: verifyOtpRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Verify',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _handleVerifyOtp,
                                         );
                                       },
                                     ),
