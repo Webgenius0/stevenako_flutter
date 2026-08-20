@@ -1,5 +1,7 @@
 
+import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
 
 import '../features/auth/log_out/data/rx.dart';
 import '../features/auth/login/data/rx.dart';
@@ -7,8 +9,10 @@ import '../features/auth/login/model/login_model.dart';
 import '../features/auth/register/data/rx.dart';
 import '../features/auth/register/model/forgort_model.dart';
 import '../features/auth/register/model/post_verify_otp_model.dart';
+import '../features/auth/register/model/register_model.dart';
 import '../features/auth/set_new_password/data/rx.dart';
 import '../features/auth/set_new_password/model/set_new_passwrod_model.dart';
+import '../features/home/data/rx.dart';
 
 
 //
@@ -63,17 +67,27 @@ SetNewPasswordRx setNewPasswordRxObj = SetNewPasswordRx(
   dataFetcher: BehaviorSubject<PostSetNewPasswordModel>(),
 );
 
-//
-// GetProfileRx getProfileRxObj = GetProfileRx(
-//   empty: UserInfoModel(
-//     success: false,
-//     code: 0,
-//     message: '',
-//     data: null,
-//     timestamp: '',
-//   ),
-//   dataFetcher: BehaviorSubject<UserInfoModel>(),
-// );
+RegisterRx registerRxObj = RegisterRx(
+  empty: RegisterModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<RegisterModel>(),
+);
+
+
+final GetReelsRx getReelsRxObj = GetReelsRx(
+  empty: const GetReelsListModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetReelsListModel>(),
+);
+
 //
 //
 // OtpVerifyRx otpVerifyRxObj = OtpVerifyRx(

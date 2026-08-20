@@ -56,6 +56,26 @@ class _ForgetPasswordOtpVerifyScreenState
     }
   }
 
+  Future<void> _handleResendOtp() async {
+    KeyboardUtil.hideKeyboard(context);
+    String email = widget.email?.trim() ?? '';
+    if (email.isEmpty) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is String) {
+        email = routeArgs.trim();
+      } else if (routeArgs is Map) {
+        email = routeArgs['email']?.toString().trim() ?? '';
+      }
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Email is required to resend OTP.');
+      return;
+    }
+
+    await forgotRxObj.forgotFun(email: email);
+  }
+
   Future<void> _handleVerifyOtp() async {
     KeyboardUtil.hideKeyboard(context);
     final otp = _controllers.map((c) => c.text.trim()).join();
@@ -70,7 +90,7 @@ class _ForgetPasswordOtpVerifyScreenState
       final routeArgs = ModalRoute.of(context)?.settings.arguments;
       if (routeArgs is String) {
         email = routeArgs.trim();
-      } else if (routeArgs is Map<String, dynamic>) {
+      } else if (routeArgs is Map) {
         email = routeArgs['email']?.toString().trim() ?? '';
       }
     }
@@ -243,6 +263,37 @@ class _ForgetPasswordOtpVerifyScreenState
                                           ),
                                         );
                                       }),
+                                    ),
+                                    SizedBox(height: 24.h),
+
+                                    // --------------- Resend OTP ---------------
+                                    Center(
+                                      child: ValueListenableBuilder<bool>(
+                                        valueListenable: forgotRxObj.isLoading,
+                                        builder: (context, isResending, child) {
+                                          return GestureDetector(
+                                            onTap: isResending ? null : _handleResendOtp,
+                                            child: RichText(
+                                              text: TextSpan(
+                                                text: "Didn't receive the code? ",
+                                                style: GoogleFonts.inter(
+                                                  color: const Color(0xFF9CA3AF),
+                                                  fontSize: 14.sp,
+                                                ),
+                                                children: [
+                                                  TextSpan(
+                                                    text: isResending ? 'Sending...' : 'Resend OTP',
+                                                    style: GoogleFonts.inter(
+                                                      color: const Color(0xFF8B5CF6),
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
 
                                     const Spacer(flex: 3),

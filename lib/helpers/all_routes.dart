@@ -374,13 +374,21 @@ final class RouteGenerator {
             : CupertinoPageRoute(builder: (context) => const SignUpScreen());
 
       case Routes.signUpVerifyOtpScreen:
+        final args = settings.arguments;
+        String? email;
+        if (args is String) {
+          email = args;
+        } else if (args is Map) {
+          email = args['email']?.toString();
+        }
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: const SignUpVerifyOtpScreen(),
+                widget: SignUpVerifyOtpScreen(email: email),
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => const SignUpVerifyOtpScreen(),
+                builder: (context) => SignUpVerifyOtpScreen(email: email),
+                settings: settings,
               );
 
       case Routes.profileSetupScreen:

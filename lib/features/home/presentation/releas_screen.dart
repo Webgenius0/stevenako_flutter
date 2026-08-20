@@ -5,13 +5,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:preload_page_view/preload_page_view.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ReelsSubScreen extends StatefulWidget {
   final bool isActive;
+  final String? mentorId;
 
-  const ReelsSubScreen({super.key, this.isActive = true});
+  const ReelsSubScreen({
+    super.key,
+    this.isActive = true,
+    this.mentorId,
+  });
 
   @override
   State<ReelsSubScreen> createState() => _ReelsSubScreenState();
@@ -21,12 +28,15 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   final PreloadPageController _pageController = PreloadPageController();
   int _currentPage = 0;
   bool _isVisible = true;
+  bool _isLoading = true;
 
   final Map<int, VideoPlayerController> _controllers = {};
   final Map<int, bool> _initializedStates = {};
   final Map<int, bool> _errorStates = {};
 
-  final List<Map<String, dynamic>> _reelsData = [
+  List<Map<String, dynamic>> _reelsData = [];
+
+  static const List<Map<String, dynamic>> _defaultFallbackReels = [
     {
       'userName': 'Frances Swann',
       'userHandle': '@frances',
@@ -71,9 +81,74 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-initialize video 0 and next video 1 immediately for instant playback
-    _initControllerForIndex(0);
-    _initControllerForIndex(1);
+    _fetchReels();
+  }
+
+  Future<void> _fetchReels() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    final GetReelsListModel? response =
+        await getReelsRxObj.getReels(widget.mentorId);
+
+    if (mounted) {
+      final posts = response?.data?.posts ?? [];
+      final converted = _convertPostsToReels(posts);
+      setState(() {
+        _reelsData = converted;
+        _isLoading = false;
+      });
+
+      if (_reelsData.isNotEmpty) {
+        _initControllerForIndex(0);
+        _initControllerForIndex(1);
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _convertPostsToReels(List<Post> posts) {
+    if (posts.isEmpty) {
+      return _defaultFallbackReels;
+    }
+
+    return posts.map((post) {
+      String videoUrl = '';
+      if (post.media.isNotEmpty &&
+          post.media.first.mediaUrl != null &&
+          post.media.first.mediaUrl!.isNotEmpty) {
+        videoUrl = post.media.first.mediaUrl!;
+      } else if (post.mediaUrl != null && post.mediaUrl!.isNotEmpty) {
+        videoUrl = post.mediaUrl!;
+      }
+
+      if (videoUrl.isEmpty) {
+        videoUrl =
+            'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4';
+      }
+
+      final String userName = post.user?.name ?? 'Anonymous';
+      final String userHandle = '@${post.user?.username ?? 'user'}';
+      final String avatar = post.user?.avatar ??
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
+      final String caption = post.caption ?? post.title ?? '';
+
+      return {
+        'id': post.id,
+        'userName': userName,
+        'userHandle': userHandle,
+        'caption': caption,
+        'avatar': avatar,
+        'likes': post.likesCount ?? 0,
+        'comments': post.commentsCount ?? 0,
+        'videoUrl': videoUrl,
+        'isNetwork': true,
+        'musicTitle': 'Original Sound - $userName',
+        'isLiked': post.isLiked ?? false,
+        'isFollow': post.user?.isFollow ?? false,
+      };
+    }).toList();
   }
 
   @override
@@ -185,6 +260,10 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading && _reelsData.isEmpty) {
+      return const ReelsSkeletonLoader();
+    }
+
     return VisibilityDetector(
       key: const Key('reels-sub-screen-visibility-key'),
       onVisibilityChanged: (info) {
@@ -200,22 +279,27 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
           }
         }
       },
-      child: PreloadPageView.builder(
-        controller: _pageController,
-        scrollDirection: Axis.vertical,
-        preloadPagesCount: 1,
-        itemCount: _reelsData.length,
-        onPageChanged: _onPageChanged,
-        itemBuilder: (context, index) {
-          return ReelPageItem(
-            data: _reelsData[index],
-            isActive: index == _currentPage && widget.isActive && _isVisible,
-            videoController: _controllers[index],
-            isVideoInitialized: _initializedStates[index] ?? false,
-            hasError: _errorStates[index] ?? false,
-            onRetry: () => _initControllerForIndex(index),
-          );
-        },
+      child: RefreshIndicator(
+        color: const Color(0xFF8B5CF6),
+        backgroundColor: Colors.black,
+        onRefresh: _fetchReels,
+        child: PreloadPageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          preloadPagesCount: 1,
+          itemCount: _reelsData.length,
+          onPageChanged: _onPageChanged,
+          itemBuilder: (context, index) {
+            return ReelPageItem(
+              data: _reelsData[index],
+              isActive: index == _currentPage && widget.isActive && _isVisible,
+              videoController: _controllers[index],
+              isVideoInitialized: _initializedStates[index] ?? false,
+              hasError: _errorStates[index] ?? false,
+              onRetry: () => _initControllerForIndex(index),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1497,6 +1581,161 @@ class _ReelPageItemState extends State<ReelPageItem>
           ],
         ],
       ),
+    );
+  }
+}
+
+class ReelsSkeletonLoader extends StatefulWidget {
+  const ReelsSkeletonLoader({super.key});
+
+  @override
+  State<ReelsSkeletonLoader> createState() => _ReelsSkeletonLoaderState();
+}
+
+class _ReelsSkeletonLoaderState extends State<ReelsSkeletonLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _shimmerController,
+      builder: (context, child) {
+        final opacity = 0.2 + (_shimmerController.value * 0.3);
+        final shimmerColor = Colors.white.withValues(alpha: opacity);
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              // Bottom User Profile Skeleton
+              Positioned(
+                left: 16.w,
+                bottom: 40.h,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 44.r,
+                          height: 44.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: shimmerColor,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 120.w,
+                              height: 14.h,
+                              decoration: BoxDecoration(
+                                color: shimmerColor,
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                            ),
+                            SizedBox(height: 6.h),
+                            Container(
+                              width: 80.w,
+                              height: 10.h,
+                              decoration: BoxDecoration(
+                                color: shimmerColor,
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                    Container(
+                      width: 220.w,
+                      height: 12.h,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      width: 160.w,
+                      height: 12.h,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Right Action Buttons Skeleton
+              Positioned(
+                right: 16.w,
+                bottom: 60.h,
+                child: Column(
+                  children: List.generate(4, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 24.h),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 42.r,
+                            height: 42.r,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: shimmerColor,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Container(
+                            width: 24.w,
+                            height: 8.h,
+                            decoration: BoxDecoration(
+                              color: shimmerColor,
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              // Centered subtle spinner
+              const Center(
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Color(0xFF8B5CF6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

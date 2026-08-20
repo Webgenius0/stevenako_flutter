@@ -11,6 +11,8 @@ import 'package:stevenako_flutter/features/auth/login/widgets/social_login_butto
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -20,13 +22,14 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _fullNameController = TextEditingController(text: 'Alex Tass');
+  final _fullNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -36,6 +39,68 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSignUp() async {
+    KeyboardUtil.hideKeyboard(context);
+
+    final name = _fullNameController.text.trim();
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (name.isEmpty) {
+      ToastUtil.showShortToast('Please enter your full name');
+      return;
+    }
+
+    if (username.isEmpty) {
+      ToastUtil.showShortToast('Please enter a username');
+      return;
+    }
+
+    if (email.isEmpty) {
+      ToastUtil.showShortToast('Please enter your email address');
+      return;
+    }
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ToastUtil.showShortToast('Please enter a valid email address');
+      return;
+    }
+
+    if (password.isEmpty) {
+      ToastUtil.showShortToast('Please enter a password');
+      return;
+    }
+
+    if (password.length < 6) {
+      ToastUtil.showShortToast('Password must be at least 6 characters');
+      return;
+    }
+
+    if (confirmPassword != password) {
+      ToastUtil.showShortToast('Passwords do not match');
+      return;
+    }
+
+    final response = await registerRxObj.registerFun(
+      name: name,
+      username: username,
+      email: email,
+      password: password,
+      passwordConfirmation: confirmPassword,
+    );
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      NavigationService.navigateTo(
+        Routes.signUpVerifyOtpScreen,
+        arguments: {'email': email},
+      );
+    }
   }
 
   @override
@@ -72,7 +137,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -169,10 +234,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       labelText: 'Confirm Password',
                                       hintText: 'Enter confirm password',
                                       isPassword: true,
-                                      obscureText: _obscurePassword,
+                                      obscureText: _obscureConfirmPassword,
                                       onToggleObscure: () {
                                         setState(() {
-                                          _obscurePassword = !_obscurePassword;
+                                          _obscureConfirmPassword = !_obscureConfirmPassword;
                                         });
                                       },
                                     ),
@@ -181,11 +246,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     SizedBox(height: 24.h),
 
                                     // --------------- Sign Up Button ---------------
-                                    CustomButton(
-                                      text: 'Sign Up',
-                                      onTap: () {
-                                        NavigationService.navigateTo(
-                                          Routes.signUpVerifyOtpScreen,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: registerRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Sign Up',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _handleSignUp,
                                         );
                                       },
                                     ),

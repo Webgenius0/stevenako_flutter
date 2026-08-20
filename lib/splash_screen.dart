@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/networks/dio/dio.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -43,8 +46,17 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
 
     // --------------- Navigate to next Screen ---------------
-    Future.delayed(const Duration(seconds: 3), () {
-      NavigationService.navigateToReplacement(Routes.onboardingScreenOne);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      final String? token = appData.read(kKeyAccessToken);
+      final bool isLoggedIn = appData.read(kKeyIsLoggedIn) ?? false;
+
+      if (token != null && token.toString().trim().isNotEmpty && isLoggedIn) {
+        DioSingleton.instance.update(token.toString().trim());
+        NavigationService.navigateToReplacement(Routes.navigationMenu);
+      } else {
+        NavigationService.navigateToReplacement(Routes.onboardingScreenOne);
+      }
     });
   }
 

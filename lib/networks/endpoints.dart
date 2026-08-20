@@ -19,7 +19,7 @@ final class Endpoints {
   Endpoints._();
 
   // -------------------Register start-------------------
-  static String register() => "/v1/sign-up";
+  static String register() => "/user/register";
   // -------------------Register end-------------------
 
   // -------------------Register Verify email start-----------------
@@ -153,9 +153,14 @@ final class Endpoints {
   // static String opportunityDetails(String opportunityId) => "/api/opportunities/$opportunityId";
   // // -------------------Opportunity Details end-------------------
 
-  // // ------------------- Mentors details start-------------------
-  // static String mentorsDetails(String mentorId) => "/api/opportunities/mentors/$mentorId";
-  // // ------------------- Mentors details end-------------------
+  // ------------------- Mentors details start-------------------
+  static String getRealsVideoAll([String? mentorId]) {
+    if (mentorId != null && mentorId.isNotEmpty) {
+      return "/user/posts-videos?mentor_id=$mentorId";
+    }
+    return "/user/posts-videos";
+  }
+  // ------------------- Mentors details end-------------------
 
   // // ------------------- Filter List start-------------------
   // static String filterList() => "/api/opportunities/fillter-list";
