@@ -1,18 +1,26 @@
 
 import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/home/data/post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
+import 'package:stevenako_flutter/features/message/data/rx.dart';
 
 import '../features/auth/log_out/data/rx.dart';
 import '../features/auth/login/data/rx.dart';
 import '../features/auth/login/model/login_model.dart';
+import '../features/auth/profile_setup/data/rx.dart';
+import '../features/auth/profile_setup/model/sing_up_profiel_satep_model.dart';
 import '../features/auth/register/data/rx.dart';
 import '../features/auth/register/model/forgort_model.dart';
 import '../features/auth/register/model/post_verify_otp_model.dart';
 import '../features/auth/register/model/register_model.dart';
 import '../features/auth/set_new_password/data/rx.dart';
 import '../features/auth/set_new_password/model/set_new_passwrod_model.dart';
+import '../features/home/data/get_all_photo_api/rx.dart';
 import '../features/home/data/rx.dart';
+import '../features/home/model/get_all_post_model.dart';
+import '../features/message/model/get_all_messae_model.dart';
 
 
 //
@@ -101,52 +109,50 @@ final GetReelsRx getReelsRxObj = GetReelsRx(
 //   dataFetcher: BehaviorSubject<OtpVerifyModel>(),
 // );
 //
-// PostSentMessgAIRx postSentMessgAIRxObj = PostSentMessgAIRx(
-//   empty: PostSentMessageAiModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<PostSentMessageAiModel>(),
-// );
-//
-// PostStartChatRx postStartChatRxObj = PostStartChatRx(
-//   empty: PostStartChatModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<PostStartChatModel>(),
-// );
-//
+final GetAllPostRx getAllPostRxObj = GetAllPostRx(
+  empty:   GetAllPostModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetAllPostModel>(),
+);
+
+final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
+  empty: GetAllPhotoModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetAllPhotoModel>(),
+);
+
 //
 //
 //
-// GetMessageRespsnRx getMessageRespsnRxObj = GetMessageRespsnRx(
-//   empty: GetMessageResponseModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<GetMessageResponseModel>(),
-// );
 //
-// PutProfielImageUpdageRx profielImageUpdageRxObj = PutProfielImageUpdageRx(
-//   empty: UserProfileIImagenfoUpdateModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<UserProfileIImagenfoUpdateModel>(),
-// );
+final GetAllMessageListRx getAllMessageListRxObj =
+GetAllMessageListRx(
+  empty:   GetAllMesageListModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetAllMesageListModel>(),
+);
+//
+PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(
+  empty: PostSingUpProfielSatipModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<PostSingUpProfielSatipModel>(),
+);
 //
 // PutProfielUpdageRx profielUpdageRxObj = PutProfielUpdageRx(
 //   empty: UserProfileInfoUpdateModel(

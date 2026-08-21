@@ -11,6 +11,8 @@ import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -20,13 +22,73 @@ class ProfileSetupScreen extends StatefulWidget {
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
-  final _fullNameController = TextEditingController(text: 'Alex Tass');
-  final _usernameController = TextEditingController(text: '@alextass');
   final _dobController = TextEditingController();
   final _bioController = TextEditingController();
   String? _selectedGender;
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000, 1, 1),
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF8B5CF6),
+              onPrimary: Colors.white,
+              surface: Color(0xFF0F172A),
+              onSurface: Colors.white,
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Color(0xFF0F172A),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final String formattedDate =
+          "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      setState(() {
+        _dobController.text = formattedDate;
+      });
+    }
+  }
+
+  Future<void> _onSubmitProfile() async {
+    KeyboardUtil.hideKeyboard(context);
+
+    final String dob = _dobController.text.trim();
+    final String bio = _bioController.text.trim();
+
+    if (_selectedGender == null || _selectedGender!.isEmpty) {
+      ToastUtil.showShortToast('Please select your gender');
+      return;
+    }
+
+    if (dob.isEmpty) {
+      ToastUtil.showShortToast('Please select your date of birth');
+      return;
+    }
+
+    final File? avatarFile = _imageFile != null ? File(_imageFile!.path) : null;
+
+    final result = await postSetProfileRxObj.setProfile(
+      bio: bio,
+      gender: _selectedGender!,
+      dateOfBirth: dob,
+      avatar: avatarFile,
+    );
+
+    if (result != null && (result.success == true || result.code == 200)) {
+      NavigationService.navigateToReplacement(Routes.navigationMenu);
+    }
+  }
 
   Future<void> _pickImage() async {
     showModalBottomSheet(
@@ -83,8 +145,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
-    _usernameController.dispose();
     _dobController.dispose();
     _bioController.dispose();
     super.dispose();
@@ -124,7 +184,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         center: const Alignment(0.0, -1.0),
                         radius: 1.2,
                         colors: [
-                          const Color(0xFF8B5CF6).withOpacity(0.18),
+                          const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -226,19 +286,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     ),
                                     SizedBox(height: 28.h),
 
-                                    // --------------- Full Name Field ---------------
-                                    CustomTextField(
-                                      controller: _fullNameController,
-                                      labelText: 'Full name',
-                                    ),
-                                    SizedBox(height: 14.h),
 
-                                    // --------------- Username Field ---------------
-                                    CustomTextField(
-                                      controller: _usernameController,
-                                      labelText: 'username',
-                                    ),
-                                    SizedBox(height: 14.h),
 
                                     // --------------- Gender Dropdown (Custom styled container) ---------------
                                     Container(
@@ -300,10 +348,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     SizedBox(height: 14.h),
 
                                     // --------------- Date of Birth Field ---------------
-                                    CustomTextField(
-                                      controller: _dobController,
-                                      labelText: 'Date of Birth',
-                                      hintText: 'YYYY-MM-DD',
+                                    GestureDetector(
+                                      onTap: _selectDate,
+                                      child: AbsorbPointer(
+                                        child: CustomTextField(
+                                          controller: _dobController,
+                                          labelText: 'Date of Birth',
+                                          hintText: 'YYYY-MM-DD',
+                                        ),
+                                      ),
                                     ),
                                     SizedBox(height: 14.h),
 
@@ -354,12 +407,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     SizedBox(height: 24.h),
 
                                     // --------------- Get Started Button ---------------
-                                    CustomButton(
-                                      text: 'Get Started',
-                                      onTap: () {
-                                        // Navigate to Home/Dashboard
-                                        NavigationService.navigateToReplacement(
-                                          Routes.navigationMenu,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: postSetProfileRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return CustomButton(
+                                          text: 'Get Started',
+                                          isLoading: isLoading,
+                                          onTap: isLoading ? null : _onSubmitProfile,
                                         );
                                       },
                                     ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shimmer/shimmer.dart';
+
 class ChatListItem extends StatelessWidget {
   final String avatarUrl;
   final String name;
@@ -21,8 +23,22 @@ class ChatListItem extends StatelessWidget {
     this.onTap,
   });
 
+  String _buildFullImageUrl(String url) {
+    if (url.isEmpty) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const String baseUrl = 'https://stevenako.thesyndicates.team';
+    if (url.startsWith('/')) {
+      return '$baseUrl$url';
+    }
+    return '$baseUrl/$url';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String fullAvatarUrl = _buildFullImageUrl(avatarUrl);
+
     return InkWell(
       onTap: onTap,
       splashColor: Colors.white.withValues(alpha: 0.05),
@@ -40,25 +56,44 @@ class ChatListItem extends StatelessWidget {
                   decoration: const BoxDecoration(shape: BoxShape.circle),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(28.r),
-                    child: CachedNetworkImage(
-                      imageUrl: avatarUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[800],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                    child: fullAvatarUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: fullAvatarUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Shimmer.fromColors(
+                              baseColor: const Color(0xFF2A2A3C),
+                              highlightColor: const Color(0xFF3F3F56),
+                              child: Container(
+                                color: const Color(0xFF2A2A3C),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: const Color(0xFF2A2A3C),
+                              child: Center(
+                                child: Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: const Color(0xFF2A2A3C),
+                            child: Center(
+                              child: Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20.sp,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.person, color: Colors.white70),
-                      ),
-                    ),
                   ),
                 ),
                 if (isActive)

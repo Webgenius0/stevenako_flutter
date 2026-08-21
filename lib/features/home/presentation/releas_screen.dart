@@ -29,6 +29,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   int _currentPage = 0;
   bool _isVisible = true;
   bool _isLoading = true;
+  bool _hasUserStartedPlayback = false;
 
   final Map<int, VideoPlayerController> _controllers = {};
   final Map<int, bool> _initializedStates = {};
@@ -155,7 +156,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   void didUpdateWidget(covariant ReelsSubScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive != oldWidget.isActive) {
-      if (widget.isActive && _isVisible) {
+      if (widget.isActive && _isVisible && _hasUserStartedPlayback) {
         _controllers[_currentPage]?.play();
       } else {
         _controllers[_currentPage]?.pause();
@@ -187,7 +188,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
               _initializedStates[index] = true;
               _errorStates[index] = false;
             });
-            if (index == _currentPage && widget.isActive && _isVisible) {
+            if (index == _currentPage && widget.isActive && _isVisible && _hasUserStartedPlayback) {
               controller.play();
             }
           })
@@ -206,6 +207,11 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   }
 
   void _onPageChanged(int newIndex) {
+    // Scrolling to a new page enables auto playback for all subsequent scrolling!
+    if (!_hasUserStartedPlayback) {
+      _hasUserStartedPlayback = true;
+    }
+
     // Pause previous video
     _controllers[_currentPage]?.pause();
 
@@ -213,7 +219,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       _currentPage = newIndex;
     });
 
-    // Play current video
+    // Play current video if auto playback is active
     final currentController = _controllers[newIndex];
     if (currentController != null &&
         _initializedStates[newIndex] == true &&
@@ -272,7 +278,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
           setState(() {
             _isVisible = isVisibleNow;
           });
-          if (_isVisible && widget.isActive) {
+          if (_isVisible && widget.isActive && _hasUserStartedPlayback) {
             _controllers[_currentPage]?.play();
           } else {
             _controllers[_currentPage]?.pause();
@@ -297,6 +303,13 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
               isVideoInitialized: _initializedStates[index] ?? false,
               hasError: _errorStates[index] ?? false,
               onRetry: () => _initControllerForIndex(index),
+              onStartPlayback: () {
+                if (!_hasUserStartedPlayback) {
+                  setState(() {
+                    _hasUserStartedPlayback = true;
+                  });
+                }
+              },
             );
           },
         ),
@@ -312,6 +325,7 @@ class ReelPageItem extends StatefulWidget {
   final bool isVideoInitialized;
   final bool hasError;
   final VoidCallback onRetry;
+  final VoidCallback? onStartPlayback;
 
   const ReelPageItem({
     super.key,
@@ -321,6 +335,7 @@ class ReelPageItem extends StatefulWidget {
     this.isVideoInitialized = false,
     this.hasError = false,
     required this.onRetry,
+    this.onStartPlayback,
   });
 
   @override
@@ -373,6 +388,9 @@ class _ReelPageItemState extends State<ReelPageItem>
   void _togglePlayPause() {
     final controller = widget.videoController;
     if (controller == null || !widget.isVideoInitialized) return;
+    if (widget.onStartPlayback != null) {
+      widget.onStartPlayback!();
+    }
     setState(() {
       if (controller.value.isPlaying) {
         controller.pause();
@@ -1231,13 +1249,24 @@ class _ReelPageItemState extends State<ReelPageItem>
             ),
           ),
 
-          // Center pause icon (shows briefly when user taps to pause)
-          if (_showPauseIcon)
-            const Center(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white70,
-                size: 88,
+          // Center play icon (shows when paused or on initial load)
+          if (_showPauseIcon ||
+              (widget.videoController != null &&
+                  widget.isVideoInitialized &&
+                  !widget.videoController!.value.isPlaying))
+            Center(
+              child: Container(
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white38, width: 1.5),
+                ),
+                child: Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 54.r,
+                ),
               ),
             ),
 

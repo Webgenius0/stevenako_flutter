@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late final SigninRx _signinRx;
 
   final _emailController = TextEditingController(
-    text: 'email',
+
   );
 
   final _passwordController = TextEditingController();

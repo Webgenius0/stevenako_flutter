@@ -84,12 +84,12 @@ class _NavigationMenuState extends State<NavigationMenu> {
   int _currentIndex = 0;
   bool _isMenuOpen = false;
 
-  final List<Widget> screens = [
-    const HomeScreen(),
-    const PostsSubScreen(),
-    const AllChatScreen(),
-    const ProfileScreen(),
-  ];
+  List<Widget> get _screens => [
+        HomeScreen(isActive: _currentIndex == 0),
+        const PostsSubScreenTwo(),
+        const AllChatScreen(),
+        const ProfileScreen(),
+      ];
 
   void _onTabTapped(int index) {
     setState(() {
@@ -157,6 +157,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
 
     return Scaffold(
       extendBody: true,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Background Gradient
@@ -169,7 +170,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
               ),
             ),
           ),
-          IndexedStack(index: _currentIndex, children: screens),
+          IndexedStack(index: _currentIndex, children: _screens),
           // Backdrop blur/dim when FAB menu is open
           IgnorePointer(
             ignoring: !_isMenuOpen,
@@ -251,7 +252,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                       });
                     },
                     child: _buildMenuButton(
-                      'assets/images/postcreat.png',
+                      'assets/icons/psotOne.png',
                       'Create a Post',
                     ),
                   ),
@@ -422,7 +423,7 @@ class CustomBottomNavBar extends StatelessWidget {
               children: [
                 // Left nav items
                 _buildNavItem(0, 'Home'),
-                _buildNavItem(1, 'Live'),
+                _buildNavItem(1, 'Post'),
 
                 // Spacer for the center cutout
                 const SizedBox(width: 64),
@@ -463,7 +464,7 @@ class CustomBottomNavBar extends StatelessWidget {
         break;
       case 1:
         iconWidget = Image.asset(
-          'assets/images/post.png',
+          'assets/icons/psotOne.png',
           width: 24,
           height: 24,
           color: color,
