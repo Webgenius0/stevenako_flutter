@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
+import 'package:stevenako_flutter/features/setting/model/faqs_model.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -14,33 +17,11 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  final List<Map<String, String>> _faqs = [
-    {
-      'question': 'How do I secure my wallet?',
-      'answer':
-          'To ensure maximum wallet security, please use a strong password, enable biometrics if available, and never share your QR codes, private keys, or wallet credentials with anyone else.',
-    },
-    {
-      'question': 'How can I get more coins?',
-      'answer':
-          'Navigate to the "My Wallet" section under settings, and tap the "Get Coins" button. You can select your preferred payment provider to complete the purchase.',
-    },
-    {
-      'question': 'How can I block or report a user?',
-      'answer':
-          'Go to the user\'s profile or chat settings, tap the top-right options icon, and select "Block this Contact" or "Report User" from the actions menu.',
-    },
-    {
-      'question': 'Is my personal data encrypted?',
-      'answer':
-          'Yes, we use advanced end-to-end encryption protocols (AES-256) to secure all private chat messaging, document exchanges, and wallet transactions.',
-    },
-    {
-      'question': 'Why is my file upload failing?',
-      'answer':
-          'Please ensure that your internet connection is active, and check that the document format (e.g. PDF, DOCX, TXT) and file size are within allowed platform limits.',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    getFaqsRxObj.getFaqs();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,62 +68,113 @@ class _HelpScreenState extends State<HelpScreen> {
                               ),
                               SizedBox(height: 16.h),
 
-                              // FAQ Accordion items
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _faqs.length,
-                                separatorBuilder: (context, index) =>
-                                    SizedBox(height: 12.h),
-                                itemBuilder: (context, index) {
-                                  final faq = _faqs[index];
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF27273A,
-                                      ).withValues(alpha: 0.3),
-                                      borderRadius: BorderRadius.circular(16.r),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.05,
+                              // FAQ Accordion items from API
+                              ValueListenableBuilder<bool>(
+                                valueListenable: getFaqsRxObj.isLoading,
+                                builder: (context, isLoading, child) {
+                                  if (isLoading) {
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 40.h,
+                                      ),
+                                      child: const Center(
+                                        child: CupertinoActivityIndicator(
+                                          color: Colors.white,
+                                          radius: 14,
                                         ),
-                                        width: 1,
                                       ),
-                                    ),
-                                    child: Theme(
-                                      data: Theme.of(context).copyWith(
-                                        dividerColor: Colors.transparent,
-                                      ),
-                                      child: ExpansionTile(
-                                        iconColor: const Color(0xFF9F75FF),
-                                        collapsedIconColor: Colors.white,
-                                        title: Text(
-                                          faq['question']!,
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white,
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w600,
+                                    );
+                                  }
+
+                                  return StreamBuilder<FaqsModel>(
+                                    stream: getFaqsRxObj.stream,
+                                    builder: (context, snapshot) {
+                                      final faqs =
+                                          snapshot.data?.data?.faqs ?? [];
+
+                                      if (faqs.isEmpty) {
+                                        return Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 40.h,
                                           ),
-                                        ),
-                                        childrenPadding: EdgeInsets.only(
-                                          left: 16.w,
-                                          right: 16.w,
-                                          bottom: 16.h,
-                                        ),
-                                        children: [
-                                          Text(
-                                            faq['answer']!,
-                                            style: GoogleFonts.inter(
-                                              color: const Color(
-                                                0xFF94A3B8,
-                                              ), // slate-400
-                                              fontSize: 13.sp,
-                                              height: 1.5,
+                                          child: Center(
+                                            child: Text(
+                                              'No FAQs available.',
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0xFF94A3B8),
+                                                fontSize: 14.sp,
+                                              ),
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
+                                        );
+                                      }
+
+                                      return ListView.separated(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: faqs.length,
+                                        separatorBuilder: (context, index) =>
+                                            SizedBox(height: 12.h),
+                                        itemBuilder: (context, index) {
+                                          final faq = faqs[index];
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(
+                                                0xFF27273A,
+                                              ).withValues(alpha: 0.3),
+                                              borderRadius:
+                                                  BorderRadius.circular(16.r),
+                                              border: Border.all(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Theme(
+                                              data: Theme.of(context).copyWith(
+                                                dividerColor:
+                                                    Colors.transparent,
+                                              ),
+                                              child: ExpansionTile(
+                                                iconColor: const Color(
+                                                  0xFF9F75FF,
+                                                ),
+                                                collapsedIconColor:
+                                                    Colors.white,
+                                                title: Text(
+                                                  faq.question ?? '',
+                                                  style: GoogleFonts.inter(
+                                                    color: Colors.white,
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                childrenPadding:
+                                                    EdgeInsets.only(
+                                                      left: 16.w,
+                                                      right: 16.w,
+                                                      bottom: 16.h,
+                                                    ),
+                                                children: [
+                                                  Text(
+                                                    faq.answer ?? '',
+                                                    style: GoogleFonts.inter(
+                                                      color: const Color(
+                                                        0xFF94A3B8,
+                                                      ), // slate-400
+                                                      fontSize: 13.sp,
+                                                      height: 1.5,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
                                   );
                                 },
                               ),

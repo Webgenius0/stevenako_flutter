@@ -9,7 +9,7 @@ import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/assets_helper/app_icons.dart';
 import 'package:stevenako_flutter/common_widgets/custom_button.dart';
 import 'package:stevenako_flutter/features/auth/login/model/login_model.dart';
- import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
+import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/remember_me_check_box_widget.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/social_login_button.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
@@ -29,9 +29,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final SigninRx _signinRx;
 
-  final _emailController = TextEditingController(
-    text: 'email',
-  );
+  final _emailController = TextEditingController(text: '');
 
   final _passwordController = TextEditingController();
 
@@ -73,9 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'Please enter your email address';
     }
 
-    final emailRegex = RegExp(
-      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-    );
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailRegex.hasMatch(email)) {
       return 'Please enter a valid email address';
@@ -120,9 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
     KeyboardUtil.hideKeyboard(context);
 
     // Validate email
-    final emailError = _validateEmail(
-      _emailController.text,
-    );
+    final emailError = _validateEmail(_emailController.text);
 
     if (emailError != null) {
       _showValidationError(emailError);
@@ -130,9 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     // Validate password
-    final passwordError = _validatePassword(
-      _passwordController.text,
-    );
+    final passwordError = _validatePassword(_passwordController.text);
 
     if (passwordError != null) {
       _showValidationError(passwordError);
@@ -154,16 +146,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (result.success == true) {
-        NavigationService.navigateToReplacement(
-          Routes.navigationMenu,
-        );
+        NavigationService.navigateToReplacement(Routes.navigationMenu);
       }
     } catch (e) {
       if (!mounted) return;
 
-      ToastUtil.showShortToast(
-        'Unable to sign in. Please try again.',
-      );
+      ToastUtil.showShortToast('Unable to sign in. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -182,9 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     KeyboardUtil.hideKeyboard(context);
 
-    NavigationService.navigateTo(
-      Routes.forgetPasswordScreen,
-    );
+    NavigationService.navigateTo(Routes.forgetPasswordScreen);
   }
 
   // ---------------------------------------------------------------------------
@@ -196,9 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     KeyboardUtil.hideKeyboard(context);
 
-    NavigationService.navigateTo(
-      Routes.signUpScreen,
-    );
+    NavigationService.navigateTo(Routes.signUpScreen);
   }
 
   // ---------------------------------------------------------------------------
@@ -227,18 +211,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ----------------------------------------------------------------
                 // BACKGROUND IMAGE
                 // ----------------------------------------------------------------
-
                 Positioned.fill(
-                  child: Image.asset(
-                    AppImages.loginBg,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset(AppImages.loginBg, fit: BoxFit.cover),
                 ),
 
                 // ----------------------------------------------------------------
                 // TOP GLOW
                 // ----------------------------------------------------------------
-
                 Positioned(
                   top: 0,
                   left: 0,
@@ -261,7 +240,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ----------------------------------------------------------------
                 // CONTENT
                 // ----------------------------------------------------------------
-
                 Positioned.fill(
                   child: SafeArea(
                     child: LayoutBuilder(
@@ -269,26 +247,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         return SingleChildScrollView(
                           physics: const ClampingScrollPhysics(),
                           keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
                               minHeight: constraints.maxHeight,
                             ),
                             child: IntrinsicHeight(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w,
-                                ),
+                                padding: EdgeInsets.symmetric(horizontal: 24.w),
                                 child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     SizedBox(height: 72.h),
 
                                     // ------------------------------------------------
                                     // TITLE
                                     // ------------------------------------------------
-
                                     Text(
                                       'Welcome Back',
                                       style: GoogleFonts.inter(
@@ -304,7 +278,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // SUBTITLE
                                     // ------------------------------------------------
-
                                     Text(
                                       'Pick up right where the scroll left off.',
                                       style: GoogleFonts.inter(
@@ -319,13 +292,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // EMAIL
                                     // ------------------------------------------------
-
                                     CustomTextField(
                                       controller: _emailController,
                                       labelText: 'Email address',
                                       hintText: 'Enter email address',
-                                      keyboardType:
-                                      TextInputType.emailAddress,
+                                      keyboardType: TextInputType.emailAddress,
                                     ),
 
                                     SizedBox(height: 16.h),
@@ -333,7 +304,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // PASSWORD
                                     // ------------------------------------------------
-
                                     CustomTextField(
                                       controller: _passwordController,
                                       labelText: 'Password',
@@ -343,8 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         if (_isLoading) return;
 
                                         setState(() {
-                                          _obscurePassword =
-                                          !_obscurePassword;
+                                          _obscurePassword = !_obscurePassword;
                                         });
                                       },
                                     ),
@@ -354,10 +323,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // REMEMBER + FORGOT
                                     // ------------------------------------------------
-
                                     Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         RememberMeCheckbox(
                                           value: _rememberMe,
@@ -371,16 +339,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
 
                                         GestureDetector(
-                                          onTap:
-                                          _handleForgotPassword,
+                                          onTap: _handleForgotPassword,
                                           child: Text(
                                             'Forgot password?',
                                             style: GoogleFonts.inter(
-                                              color:
-                                              const Color(0xFF9CA3AF),
+                                              color: const Color(0xFF9CA3AF),
                                               fontSize: 14.sp,
-                                              fontWeight:
-                                              FontWeight.w500,
+                                              fontWeight: FontWeight.w500,
                                             ),
                                           ),
                                         ),
@@ -392,14 +357,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // LOGIN BUTTON
                                     // ------------------------------------------------
-
                                     CustomButton(
                                       text: _isLoading
                                           ? 'Signing in...'
                                           : 'Login',
-                                      onTap: _isLoading
-                                          ? () {}
-                                          : _handleLogin,
+                                      onTap: _isLoading ? () {} : _handleLogin,
                                     ),
 
                                     SizedBox(height: 24.h),
@@ -407,7 +369,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // DIVIDER
                                     // ------------------------------------------------
-
                                     Row(
                                       children: [
                                         const Expanded(
@@ -417,15 +378,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         Padding(
-                                          padding:
-                                          EdgeInsets.symmetric(
+                                          padding: EdgeInsets.symmetric(
                                             horizontal: 12.w,
                                           ),
                                           child: Text(
                                             'or',
                                             style: GoogleFonts.inter(
-                                              color:
-                                              const Color(0xFF9CA3AF),
+                                              color: const Color(0xFF9CA3AF),
                                               fontSize: 14.sp,
                                             ),
                                           ),
@@ -444,18 +403,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // SOCIAL LOGIN
                                     // ------------------------------------------------
-
                                     Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                          MainAxisAlignment.center,
                                       children: [
                                         SocialLoginButton(
                                           iconPath: AppIcons.google,
                                           onTap: _isLoading
                                               ? () {}
                                               : () {
-                                            // Google Login
-                                          },
+                                                  // Google Login
+                                                },
                                         ),
 
                                         SizedBox(width: 16.w),
@@ -465,8 +423,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           onTap: _isLoading
                                               ? () {}
                                               : () {
-                                            // Apple Login
-                                          },
+                                                  // Apple Login
+                                                },
                                         ),
                                       ],
                                     ),
@@ -476,32 +434,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ------------------------------------------------
                                     // SIGN UP
                                     // ------------------------------------------------
-
                                     Center(
                                       child: RichText(
                                         text: TextSpan(
-                                          text:
-                                          'Don’t have an account? ',
+                                          text: 'Don’t have an account? ',
                                           style: GoogleFonts.inter(
-                                            color:
-                                            const Color(0xFF9CA3AF),
+                                            color: const Color(0xFF9CA3AF),
                                             fontSize: 14.sp,
                                           ),
                                           children: [
                                             TextSpan(
                                               text: 'Sign up',
                                               style: GoogleFonts.inter(
-                                                color:
-                                                const Color(
-                                                  0xFF8B5CF6,
-                                                ),
-                                                fontWeight:
-                                                FontWeight.w600,
+                                                color: const Color(0xFF8B5CF6),
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                              recognizer:
-                                              TapGestureRecognizer()
-                                                ..onTap =
-                                                    _handleSignUp,
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = _handleSignUp,
                                             ),
                                           ],
                                         ),
@@ -523,7 +472,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ----------------------------------------------------------------
                 // FULL SCREEN LOADING OVERLAY
                 // ----------------------------------------------------------------
-
                 if (_isLoading)
                   Positioned.fill(
                     child: Container(
@@ -536,11 +484,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF111111),
-                            borderRadius:
-                            BorderRadius.circular(16.r),
-                            border: Border.all(
-                              color: const Color(0xFF2A2A2A),
-                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: const Color(0xFF2A2A2A)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -548,11 +493,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               SizedBox(
                                 width: 22.w,
                                 height: 22.w,
-                                child:
-                                const CircularProgressIndicator(
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2.2,
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
                                     Color(0xFF8B5CF6),
                                   ),
                                 ),
