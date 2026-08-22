@@ -1,10 +1,8 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
-import '../../../../constants/app_constants.dart';
 import '../../../../helpers/di.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/dio/dio.dart';
@@ -38,10 +36,7 @@ class LogoutRx extends RxResponseInt<Map<String, dynamic>> {
     String message =
         data["message"] ?? data["vendor_message"] ?? "Logged out successfully";
 
-    await appData.write(kKeyIsLoggedIn, false);
-    await appData.remove(kKeyAccessToken);
-    await appData.remove('user_id');
-    await appData.write(kKeyIsExploring, false);
+    await appData.erase();
 
     DioSingleton.instance.update('');
 
@@ -56,7 +51,8 @@ class LogoutRx extends RxResponseInt<Map<String, dynamic>> {
 
     if (error is DioException) {
       if (error.response?.data is Map) {
-        errorMessage = error.response?.data["message"] ??
+        errorMessage =
+            error.response?.data["message"] ??
             error.response?.data["vendor_message"] ??
             errorMessage;
       }

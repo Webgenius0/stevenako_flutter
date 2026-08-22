@@ -5,7 +5,6 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 
 import 'package:stevenako_flutter/features/home/presentation/photo_scree.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_navtaiosn_screeen.dart';
-import 'package:stevenako_flutter/features/home/presentation/post_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/releas_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/search_scren.dart';
 
@@ -58,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final screens = [
       ReelsSubScreen(isActive: widget.isActive && _activeSubTab == 0),
       const PhotosSubScreen(),
-        PostsSubScreenTwo(),
+      PostsSubScreenTwo(),
     ];
 
     return Stack(
@@ -104,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   // Sliding Tab Selector Container
                   Container(
                     height: 40.h,
-                    padding:   EdgeInsets.all(3.0.sp),
+                    padding: EdgeInsets.all(3.0.sp),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(20.r),
@@ -125,18 +124,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     children: [
                       _buildTopActionButton(
                         'assets/images/search-normal.png',
-                            () {
+                        () {
                           // Your onTap code here
-                              Get.to(SearchScren());
+                          Get.to(SearchScren());
                         },
                       ),
 
-                        SizedBox(width: 30.w),
+                      SizedBox(width: 30.w),
                       _buildTopActionButton(
                         'assets/images/Settings.png',
-                            () {
-
-                        },
+                        () {},
                       ),
                     ],
                   ),
@@ -160,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        padding:   EdgeInsets.symmetric(horizontal: 18.w, vertical: 6.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 6.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(17.r),
           gradient: isActive
