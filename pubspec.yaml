@@ -42,6 +42,9 @@ dependencies:
   get: ^4.6.6
   # -------- Get Storage --------
   get_storage: ^2.1.1
+  # -------- Hive Storage --------
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   # -------- Http Request --------
   dio: ^5.7.0
    # -------- DateTime --------

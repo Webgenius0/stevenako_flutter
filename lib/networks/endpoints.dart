@@ -42,7 +42,6 @@ final class Endpoints {
   // -------------------Guest user location start-----------------
   static String guestUserLocation() => "/v1/guest/location";
   // -------------------Guest user location end-------------------
- 
 
   // -------------------Login start-------------------
   static String login() => "/user/login";
@@ -64,10 +63,6 @@ final class Endpoints {
   static String setNewPassword() => "/user/reset-password";
   // -------------------Set New Password end-------------------
 
-  // -------------------Change Password start-------------------
-  static String changePassword() => "/v1/auth/change-password";
-  // -------------------Change Password end-------------------
-
   // -------------------Forget Password verify otp start-------------------
   static String forgetPasswordVerifyOtp() => "/user/verify-otp";
   // -------------------Forget Password verify otp end-------------------
@@ -77,7 +72,7 @@ final class Endpoints {
   static String resendOtp() => "/v1/resend-otp";
   // -------------------Resend Otp end-------------------
 
-    // ------------------- GetCategoryList start-------------------
+  // ------------------- GetCategoryList start-------------------
   static String getCategoryList() => "/v1/categories";
   // -------------------GetCategoryList end-------------------
 
@@ -85,13 +80,20 @@ final class Endpoints {
   static String getRecentPostList() => "/v1/posts/recent";
   // -------------------GetRecentPostList end-------------------
 
-  // ------------------- GetProfile start-------------------
+  // ------------------- GetProfile start------------------- 
   static String getProfile() => "/v1/auth/profile";
+ 
   static String setProfile() => "/user/account/update";
   // -------------------GetProfile end-------------------
   static String getPostList() => "/user/posts";
   static String getPhotoList() => "/user/posts-photos";
   static String getMessageList() => "/user/conversations";
+ 
+  static String changePassword() => "/user/change-password";   
+  static String userFaqs() => "/user/faqs"; 
+  static String msgNotification() => "/my-notifications"; 
+  static String notificationSettings() => "/notification-settings"; 
+ 
 
   // ------------------- Mentors details start-------------------
   static String getRealsVideoAll([String? mentorId]) {
@@ -99,5 +101,9 @@ final class Endpoints {
       return "/user/posts-videos?mentor_id=$mentorId";
     }
     return "/user/posts-videos";
+ 
   }   //   // -------------------delete farmer end-------------------
+ 
+  }
+ 
 }

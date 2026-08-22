@@ -8,8 +8,10 @@ import 'package:stevenako_flutter/assets_helper/app_colors.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/message/model/get_all_messae_model.dart';
 import 'package:stevenako_flutter/features/message/presentation/conversation_screen.dart';
+ 
 import 'package:stevenako_flutter/features/message/widgets/chat_list_item.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
+ 
 
 class AllChatScreen extends StatefulWidget {
   const AllChatScreen({super.key});
@@ -376,23 +378,28 @@ class _AllChatScreenState extends State<AllChatScreen> {
                               children: [
                                 SizedBox(width: 8.w),
                                 // Notification Bell Icon with Subtle Circular Background
-                                Container(
-                                  width: 42.w,
-                                  height: 42.h,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.08),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.05,
+                                GestureDetector(
+                                  onTap: () {
+                                    NavigationService.navigateTo(Routes.messageNotificationScreen);
+                                  },
+                                  child: Container(
+                                    width: 42.w,
+                                    height: 42.h,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.08),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                        width: 1,
                                       ),
-                                      width: 1,
                                     ),
-                                  ),
-                                  child: Icon(
-                                    Icons.notifications_none_rounded,
-                                    color: Colors.white,
-                                    size: 22.sp,
+                                    child: Icon(
+                                      Icons.notifications_none_rounded,
+                                      color: Colors.white,
+                                      size: 22.sp,
+                                    ),
                                   ),
                                 ),
                               ],
