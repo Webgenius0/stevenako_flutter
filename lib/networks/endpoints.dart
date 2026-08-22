@@ -67,7 +67,6 @@ final class Endpoints {
   static String forgetPasswordVerifyOtp() => "/user/verify-otp";
   // -------------------Forget Password verify otp end-------------------
 
-
   // -------------------Resend Otp start-------------------
   static String resendOtp() => "/v1/resend-otp";
   // -------------------Resend Otp end-------------------
@@ -80,20 +79,20 @@ final class Endpoints {
   static String getRecentPostList() => "/v1/posts/recent";
   // -------------------GetRecentPostList end-------------------
 
-  // ------------------- GetProfile start------------------- 
+  // ------------------- GetProfile start-------------------
   static String getProfile() => "/v1/auth/profile";
- 
+
   static String setProfile() => "/user/account/update";
   // -------------------GetProfile end-------------------
   static String getPostList() => "/user/posts";
   static String getPhotoList() => "/user/posts-photos";
-  static String getMessageList() => "/user/conversations"; 
- 
-  static String changePassword() => "/user/change-password";   
-  static String userFaqs() => "/user/faqs"; 
-  static String msgNotification() => "/my-notifications"; 
-  static String notificationSettings() => "/notification-settings"; 
- 
+  static String getMessageList() => "/user/conversations";
+  static String changePassword() => "/user/change-password";
+  static String userFaqs() => "/user/faqs";
+  static String msgNotification() => "/my-notifications";
+  static String notificationSettings() => "/notification-settings";
+  static String deleteUser() => "/user/delete/user";
+  static String userProfile() => "/user/me";
 
   // ------------------- Mentors details start-------------------
   static String getRealsVideoAll([String? mentorId]) {
@@ -101,9 +100,5 @@ final class Endpoints {
       return "/user/posts-videos?mentor_id=$mentorId";
     }
     return "/user/posts-videos";
- 
-  }   //   // -------------------delete farmer end-------------------
- 
-  }
- 
-
+  } //   // -------------------delete farmer end-------------------
+}

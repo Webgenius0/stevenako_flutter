@@ -24,6 +24,9 @@ import '../features/home/model/get_all_post_model.dart';
 import '../features/message/model/get_all_messae_model.dart';
 
 import '../features/setting/data/rx_change_pass/rx.dart';
+import '../features/setting/data/rx_delete_user/rx.dart';
+import '../features/setting/data/rx_get_user_profile/rx.dart';
+import '../features/setting/model/user_profile_model.dart';
 import '../features/setting/data/rx_get_faqs/rx.dart';
 import '../features/setting/model/faqs_model.dart';
 import '../features/message/data/rx_get_msg_notification/rx.dart';
@@ -236,9 +239,14 @@ PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(
 //   ),
 //   dataFetcher: BehaviorSubject<GetCompanyModelListModel>(),
 // );
-//
-//
-//
+DeleteUserRx deleteUserRxObj = DeleteUserRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
 
+final GetUserProfileRx getUserProfileRxObj = GetUserProfileRx(
+  empty: UserProfileModel(),
+  dataFetcher: BehaviorSubject<UserProfileModel>(),
+);
 
 
