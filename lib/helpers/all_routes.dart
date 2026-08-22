@@ -11,6 +11,7 @@ import 'package:stevenako_flutter/features/auth/set_new_password/presentation/su
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_screen.dart';
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_verify_otp_screen.dart';
 import 'package:stevenako_flutter/features/auth/profile_setup/presentation/profile_setup_screen.dart';
+import 'package:stevenako_flutter/features/message/presentation/message_notification_screen.dart';
 import 'package:stevenako_flutter/features/profile/presentation/edit_profile_screen.dart';
 import 'package:stevenako_flutter/features/profile/presentation/dashboard_screen.dart';
 import 'package:stevenako_flutter/navigation_menu.dart';
@@ -70,56 +71,11 @@ final class Routes {
   static const String helpScreen = '/helpScreen';
   static const String termsScreen = '/termsScreen';
   static const String privacyPolicyScreen = '/privacyPolicyScreen';
-  static const String notificationsActivityScreen = '/notificationsActivityScreen';
+  static const String notificationsActivityScreen =
+      '/notificationsActivityScreen';
   static const String editProfileScreen = '/editProfileScreen';
   static const String dashboardScreen = '/dashboardScreen';
-
-  //---------------- Register Screen Start----------------
-  // static const String registerScreen = '/registerScreen';
-  // static const String registerVerifyScreen = '/registerVerifyScreen';
-  // static const String selectLocationScreen = '/selectLocationScreen';
-  // static const String homeScreen = '/homeScreen';
-
-  // static const String forgetPasswordScreen = '/forgetPasswordScreen';
-  // static const String forgetPasswordVerifyOtpScreen =
-  //     '/forgetPasswordVerifyOtpScreen';
-  // static const String setNewPassword = '/setNewPassword';
-
-  // static const String continueAsGuest = '/continueAsGuest';
-
-  // static const String buySellStep1Photos = '/buySellStep1Photos';
-  // static const String buySellStep2Details = '/buySellStep2Details';
-  // static const String buySellStep3Location = '/buySellStep3Location';
-  // static const String buySellStep4Contact = '/buySellStep4Contact';
-  // static const String buySellStep5Review = '/buySellStep5Review';
-  // static const String buySellDetails = '/buySellDetails';
-  // static const String buySellSuccess = '/buySellSuccess';
-
-  // static const String businessStep1Photos = '/businessStep1Photos';
-  // static const String businessStep2Info = '/businessStep2Info';
-  // static const String businessHoursSetter = '/businessHoursSetter';
-  // static const String businessStep3Gallery = '/businessStep3Gallery';
-  // static const String businessStep4Location = '/businessStep4Location';
-  // static const String businessStep5Contact = '/businessStep5Contact';
-  // static const String businessStep6Review = '/businessStep6Review';
-  // static const String businessDetails = '/businessDetails';
-  // static const String businessSuccess = '/businessSuccess';
-
-  // static const String jobStep1Photos = '/jobStep1Photos';
-  // static const String jobStep2Info = '/jobStep2Info';
-  // static const String jobStep3Location = '/jobStep3Location';
-  // static const String jobStep4Contact = '/jobStep4Contact';
-  // static const String jobStep5Review = '/jobStep5Review';
-  // static const String jobDetails = '/jobDetails';
-  // static const String jobSuccess = '/jobSuccess';
-
-  // static const String serviceStep1Photos = '/serviceStep1Photos';
-  // static const String serviceStep2Info = '/serviceStep2Info';
-  // static const String serviceStep3Location = '/serviceStep3Location';
-  // static const String serviceStep4Contact = '/serviceStep4Contact';
-  // static const String serviceStep5Review = '/serviceStep5Review';
-  // static const String serviceDetails = '/serviceDetails';
-  // static const String serviceSuccess = '/serviceSuccess';
+  static const String messageNotificationScreen = '/messageNotificationScreen';
 }
 
 final class RouteGenerator {
@@ -331,7 +287,8 @@ final class RouteGenerator {
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => ForgetPasswordOtpVerifyScreen(email: email),
+                builder: (context) =>
+                    ForgetPasswordOtpVerifyScreen(email: email),
                 settings: settings,
               );
 
@@ -344,16 +301,29 @@ final class RouteGenerator {
           resetToken = args;
         } else if (args is Map) {
           email = args['email']?.toString();
-          resetToken = (args['reset_token'] ?? args['resetToken'] ?? args['token'] ?? args['otp'])?.toString();
+          resetToken =
+              (args['reset_token'] ??
+                      args['resetToken'] ??
+                      args['token'] ??
+                      args['otp'])
+                  ?.toString();
           otp = args['otp']?.toString();
         }
         return Platform.isAndroid
             ? _FadedTransitionRoute(
-                widget: SetNewPasswordScreen(email: email, resetToken: resetToken, otp: otp),
+                widget: SetNewPasswordScreen(
+                  email: email,
+                  resetToken: resetToken,
+                  otp: otp,
+                ),
                 settings: settings,
               )
             : CupertinoPageRoute(
-                builder: (context) => SetNewPasswordScreen(email: email, resetToken: resetToken, otp: otp),
+                builder: (context) => SetNewPasswordScreen(
+                  email: email,
+                  resetToken: resetToken,
+                  otp: otp,
+                ),
                 settings: settings,
               );
 
@@ -399,6 +369,16 @@ final class RouteGenerator {
               )
             : CupertinoPageRoute(
                 builder: (context) => const ProfileSetupScreen(),
+              );
+
+      case Routes.messageNotificationScreen:
+        return Platform.isAndroid
+            ? _FadedTransitionRoute(
+                widget: const MessageNotificationScreen(),
+                settings: settings,
+              )
+            : CupertinoPageRoute(
+                builder: (context) => const MessageNotificationScreen(),
               );
 
       case Routes.editProfileScreen:

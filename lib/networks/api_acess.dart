@@ -1,5 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
 
-import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
 
@@ -13,7 +13,15 @@ import '../features/auth/register/model/register_model.dart';
 import '../features/auth/set_new_password/data/rx.dart';
 import '../features/auth/set_new_password/model/set_new_passwrod_model.dart';
 import '../features/home/data/rx.dart';
-
+import '../features/setting/data/rx_change_pass/rx.dart';
+import '../features/setting/data/rx_get_faqs/rx.dart';
+import '../features/setting/model/faqs_model.dart';
+import '../features/message/data/rx_get_msg_notification/rx.dart';
+import '../features/message/model/msg_notification_model.dart';
+import '../features/setting/data/rx_get_notification_settings/rx.dart';
+import '../features/setting/data/rx_post_all_notification/rx.dart';
+import '../features/setting/data/rx_post_notification_settings/rx.dart';
+import '../features/setting/model/notification_settings_model.dart';
 
 //
 // SignupRx signupRxObj = SignupRx(
@@ -28,32 +36,17 @@ import '../features/home/data/rx.dart';
 // );
 
 SigninRx signinRxObj = SigninRx(
-  empty: const PostLoginModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: const PostLoginModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<PostLoginModel>(),
 );
 
 ForgotRx forgotRxObj = ForgotRx(
-  empty:   PostForgotModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: PostForgotModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<PostForgotModel>(),
 );
 
 VerifyOtpRx verifyOtpRxObj = VerifyOtpRx(
-  empty: PostVerifyOtpModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: PostVerifyOtpModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<PostVerifyOtpModel>(),
 );
 
@@ -68,15 +61,9 @@ SetNewPasswordRx setNewPasswordRxObj = SetNewPasswordRx(
 );
 
 RegisterRx registerRxObj = RegisterRx(
-  empty: RegisterModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: RegisterModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<RegisterModel>(),
 );
-
 
 final GetReelsRx getReelsRxObj = GetReelsRx(
   empty: const GetReelsListModel(
@@ -88,139 +75,66 @@ final GetReelsRx getReelsRxObj = GetReelsRx(
   dataFetcher: BehaviorSubject<GetReelsListModel>(),
 );
 
-//
-//
-// OtpVerifyRx otpVerifyRxObj = OtpVerifyRx(
-//   empty: OtpVerifyModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<OtpVerifyModel>(),
-// );
-//
-// PostSentMessgAIRx postSentMessgAIRxObj = PostSentMessgAIRx(
-//   empty: PostSentMessageAiModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<PostSentMessageAiModel>(),
-// );
-//
-// PostStartChatRx postStartChatRxObj = PostStartChatRx(
-//   empty: PostStartChatModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<PostStartChatModel>(),
-// );
-//
-//
-//
-//
-// GetMessageRespsnRx getMessageRespsnRxObj = GetMessageRespsnRx(
-//   empty: GetMessageResponseModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<GetMessageResponseModel>(),
-// );
-//
-// PutProfielImageUpdageRx profielImageUpdageRxObj = PutProfielImageUpdageRx(
-//   empty: UserProfileIImagenfoUpdateModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<UserProfileIImagenfoUpdateModel>(),
-// );
-//
-// PutProfielUpdageRx profielUpdageRxObj = PutProfielUpdageRx(
-//   empty: UserProfileInfoUpdateModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<UserProfileInfoUpdateModel>(),
-// );
-//
-//
-// GetModelDetailsRx getModelDetailsRxObj = GetModelDetailsRx(
-//   empty: GetModelDetailsModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<GetModelDetailsModel>(),
-// );
-//
-//
-//
-
-
-
-
-//
-//
-// GetBrandsRcesRx getBrandsRcesRxObj = GetBrandsRcesRx(
-//   empty: BrandsRceosModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<BrandsRceosModel>(),
-// );
-//
-// GetModelListRx getModelListRxObj = GetModelListRx(
-//   empty: GetCompanyModelListModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<GetCompanyModelListModel>(),
-// );
-//
-//
-//
 LogoutRx logoutRxObj = LogoutRx(
   empty: <String, dynamic>{},
   dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
 );
 
-// DeleteAccountRx deleteAccountRxObj = DeleteAccountRx(
-//   empty: <String, dynamic>{},
-//   dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
-// );
-//
-// GetRecentChatsRx getRecentChatsRxObj = GetRecentChatsRx(
-//   empty: RcentChasModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<RcentChasModel>(),
-// );
-//
+ChangePasswordRx changePasswordRxObj = ChangePasswordRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+final GetFaqsRx getFaqsRxObj = GetFaqsRx(
+  empty: FaqsModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<FaqsModel>(),
+);
+
+final GetMsgNotificationRx getMsgNotificationRxObj = GetMsgNotificationRx(
+  empty: MsgNotificationModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<MsgNotificationModel>(),
+);
+
+final GetNotificationSettingsRx getNotificationSettingsRxObj =
+    GetNotificationSettingsRx(
+  empty: NotificationSettingsModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+);
+
+final PostNotificationSettingsRx postNotificationSettingsRxObj =
+    PostNotificationSettingsRx(
+  empty: NotificationSettingsModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+);
+
+final PostAllNotificationRx postAllNotificationRxObj = PostAllNotificationRx(
+  empty: NotificationSettingsModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+);
+
+
