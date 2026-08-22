@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class CustomLogoutDialog extends StatefulWidget {
@@ -28,6 +29,7 @@ class _CustomLogoutDialogState extends State<CustomLogoutDialog> {
     if (!mounted) return;
 
     if (success) {
+      await appData.erase();
       Navigator.pop(context);
       Get.offAll(() => const LoginScreen());
     } else {

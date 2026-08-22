@@ -8,10 +8,11 @@ import 'package:stevenako_flutter/assets_helper/app_colors.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/message/model/get_all_messae_model.dart';
 import 'package:stevenako_flutter/features/message/presentation/conversation_screen.dart';
- 
+
 import 'package:stevenako_flutter/features/message/widgets/chat_list_item.dart';
+import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/navigation_service.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
- 
 
 class AllChatScreen extends StatefulWidget {
   const AllChatScreen({super.key});
@@ -380,13 +381,17 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                 // Notification Bell Icon with Subtle Circular Background
                                 GestureDetector(
                                   onTap: () {
-                                    NavigationService.navigateTo(Routes.messageNotificationScreen);
+                                    NavigationService.navigateTo(
+                                      Routes.messageNotificationScreen,
+                                    );
                                   },
                                   child: Container(
                                     width: 42.w,
                                     height: 42.h,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.08),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.08,
+                                      ),
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.white.withValues(
@@ -549,8 +554,9 @@ class _AllChatScreenState extends State<AllChatScreen> {
                               return _buildEmptyState();
                             }
 
-                            final searchQuery =
-                                _searchController.text.trim().toLowerCase();
+                            final searchQuery = _searchController.text
+                                .trim()
+                                .toLowerCase();
                             final filtered = conversations.where((
                               conversation,
                             ) {

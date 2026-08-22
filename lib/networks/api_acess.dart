@@ -19,11 +19,10 @@ import '../features/auth/set_new_password/data/rx.dart';
 import '../features/auth/set_new_password/model/set_new_passwrod_model.dart';
 import '../features/home/data/get_all_photo_api/rx.dart';
 import '../features/home/data/rx.dart';
- 
+
 import '../features/home/model/get_all_post_model.dart';
 import '../features/message/model/get_all_messae_model.dart';
 
- 
 import '../features/setting/data/rx_change_pass/rx.dart';
 import '../features/setting/data/rx_get_faqs/rx.dart';
 import '../features/setting/model/faqs_model.dart';
@@ -33,7 +32,6 @@ import '../features/setting/data/rx_get_notification_settings/rx.dart';
 import '../features/setting/data/rx_post_all_notification/rx.dart';
 import '../features/setting/data/rx_post_notification_settings/rx.dart';
 import '../features/setting/model/notification_settings_model.dart';
- 
 
 //
 // SignupRx signupRxObj = SignupRx(
@@ -98,48 +96,37 @@ ChangePasswordRx changePasswordRxObj = ChangePasswordRx(
 );
 
 final GetFaqsRx getFaqsRxObj = GetFaqsRx(
-  empty: FaqsModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: FaqsModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<FaqsModel>(),
 );
 
 final GetMsgNotificationRx getMsgNotificationRxObj = GetMsgNotificationRx(
-  empty: MsgNotificationModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
+  empty: MsgNotificationModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<MsgNotificationModel>(),
 );
 
 final GetNotificationSettingsRx getNotificationSettingsRxObj =
     GetNotificationSettingsRx(
-  empty: NotificationSettingsModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
-  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
-);
+      empty: NotificationSettingsModel(
+        success: false,
+        code: 0,
+        message: '',
+        data: null,
+      ),
+      dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+    );
 
 final PostNotificationSettingsRx postNotificationSettingsRxObj =
     PostNotificationSettingsRx(
-  empty: NotificationSettingsModel(
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
-  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
-);
+      empty: NotificationSettingsModel(
+        success: false,
+        code: 0,
+        message: '',
+        data: null,
+      ),
+      dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+    );
 
- 
 //
 //
 // OtpVerifyRx otpVerifyRxObj = OtpVerifyRx(
@@ -154,27 +141,22 @@ final PostNotificationSettingsRx postNotificationSettingsRxObj =
 // );
 //
 final GetAllPostRx getAllPostRxObj = GetAllPostRx(
-  empty:   GetAllPostModel(
- 
-final PostAllNotificationRx postAllNotificationRxObj = PostAllNotificationRx(
-  empty: NotificationSettingsModel(
- 
-    success: false,
-    code: 0,
-    message: '',
-    data: null,
-  ),
- 
+  empty: GetAllPostModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<GetAllPostModel>(),
 );
 
-final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
-  empty: GetAllPhotoModel(
+final PostAllNotificationRx postAllNotificationRxObj = PostAllNotificationRx(
+  empty: NotificationSettingsModel(
     success: false,
     code: 0,
     message: '',
     data: null,
   ),
+  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+);
+
+final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
+  empty: GetAllPhotoModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<GetAllPhotoModel>(),
 );
 
@@ -182,9 +164,8 @@ final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
 //
 //
 //
-final GetAllMessageListRx getAllMessageListRxObj =
-GetAllMessageListRx(
-  empty:   GetAllMesageListModel(
+final GetAllMessageListRx getAllMessageListRxObj = GetAllMessageListRx(
+  empty: GetAllMesageListModel(
     success: false,
     code: 0,
     message: '',
@@ -258,12 +239,6 @@ PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(
 //
 //
 //
-LogoutRx logoutRxObj = LogoutRx(
-  empty: <String, dynamic>{},
-  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
- 
-  dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
- 
-);
+
 
 

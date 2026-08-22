@@ -87,7 +87,7 @@ final class Endpoints {
   // -------------------GetProfile end-------------------
   static String getPostList() => "/user/posts";
   static String getPhotoList() => "/user/posts-photos";
-  static String getMessageList() => "/user/conversations";
+  static String getMessageList() => "/user/conversations"; 
  
   static String changePassword() => "/user/change-password";   
   static String userFaqs() => "/user/faqs"; 
@@ -106,4 +106,4 @@ final class Endpoints {
  
   }
  
-}
+
