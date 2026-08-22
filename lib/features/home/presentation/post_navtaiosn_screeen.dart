@@ -1,59 +1,31 @@
-// ==========================================
-// 3. POSTS SUB-SCREEN (Posts Tab)
-// ==========================================
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/helpers/ui_helpers.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
-class PostsSubScreen extends StatefulWidget {
-  const PostsSubScreen({super.key});
+class PostsSubScreenTwo extends StatefulWidget {
+  const PostsSubScreenTwo({super.key});
 
   @override
-  State<PostsSubScreen> createState() => _PostsSubScreenState();
+  State<PostsSubScreenTwo> createState() => _PostsSubScreenTwoState();
 }
 
-class _PostsSubScreenState extends State<PostsSubScreen> {
-  final List<Map<String, dynamic>> _posts = [
-    {
-      'userName': 'Courtney Henry',
-      'avatar':
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      'time': '2 hours ago',
-      'text':
-          'Just completed my design exploration on custom Flutter Beziers! Feels amazing to draw paths from scratch. 💻✨',
-      'likes': 142,
-      'comments': <Map<String, String>>[
-        {
-          'userName': 'Alex Turner',
-          'avatar':
-              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-          'text': 'This looks amazing! 🔥',
-        },
-        {
-          'userName': 'Priya Shah',
-          'avatar':
-              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
-          'text': 'Bezier curves are so satisfying to build.',
-        },
-      ],
-    },
-    {
-      'userName': 'Michael Brown',
-      'avatar':
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      'time': '5 hours ago',
-      'text':
-          'Who is up for a sunset hike tomorrow at Sentinel Rock? The skies are clear! ⛰️🥾',
-      'likes': 89,
-      'comments': <Map<String, String>>[
-        {
-          'userName': 'David Miller',
-          'avatar':
-              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          'text': 'Count me in!',
-        },
-      ],
-    },
-  ];
+class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
+  final Set<int> _likedPostIds = {};
+  final Map<int, int> _extraLikes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    getAllPostRxObj.getAllPosts();
+  }
+
+  Future<void> _refreshPosts() async {
+    await getAllPostRxObj.getAllPosts();
+  }
 
   void _showPostOptions(BuildContext context, int index) {
     showModalBottomSheet(
@@ -95,26 +67,6 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Edit coming soon!')),
                   );
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.share_outlined,
-                label: 'Share post',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Share link copied!')),
-                  );
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.visibility_off_outlined,
-                label: 'Hide post',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Post hidden')));
                 },
               ),
               const Divider(color: Colors.white12, height: 8),
@@ -164,12 +116,9 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                setState(() {
-                  _posts.removeAt(index);
-                });
                 ScaffoldMessenger.of(
                   context,
-                ).showSnackBar(const SnackBar(content: Text('Post deleted')));
+                ).showSnackBar(const SnackBar(content: Text('Post action executed.')));
               },
               child: const Text(
                 'Delete',
@@ -183,7 +132,7 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
   }
 
   // ---------- Comments bottom sheet ----------
-  void _showCommentsSheet(int postIndex) {
+  void _showCommentsSheet(Map<String, dynamic> postData) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -193,10 +142,10 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
       ),
       builder: (sheetContext) {
         return _CommentsSheet(
-          post: _posts[postIndex],
+          post: postData,
           onCommentsChanged: (updatedComments) {
             setState(() {
-              _posts[postIndex]['comments'] = updatedComments;
+              postData['comments'] = updatedComments;
             });
           },
         );
@@ -218,121 +167,522 @@ class _PostsSubScreenState extends State<PostsSubScreen> {
     );
   }
 
+  Widget _buildAvatarImage(String? url) {
+    if (url == null || url.isEmpty) {
+      return const CircleAvatar(
+        radius: 18,
+        backgroundColor: Color(0xFF2A2A3A),
+        child: Icon(Icons.person, color: Colors.white54, size: 20),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        width: 36,
+        height: 36,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: const Color(0xFF2A2A3A),
+          child: const Icon(Icons.person, color: Colors.white54, size: 20),
+        ),
+      ),
+    );
+  }
+
+  String _resolveFullMediaUrl(String? mediaPath) {
+    if (mediaPath == null || mediaPath.trim().isEmpty) return '';
+    final trimmed = mediaPath.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return 'https://stevenako.thesyndicates.team$trimmed';
+    }
+    return 'https://stevenako.thesyndicates.team/$trimmed';
+  }
+
+  bool _isVideoUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    final cleanUrl = url.trim().toLowerCase();
+    return cleanUrl.endsWith('.mp4') ||
+        cleanUrl.endsWith('.mov') ||
+        cleanUrl.endsWith('.avi') ||
+        cleanUrl.endsWith('.webm') ||
+        cleanUrl.endsWith('.m3u8') ||
+        cleanUrl.endsWith('.mkv') ||
+        cleanUrl.contains('/posts-videos');
+  }
+
+  bool _isDisplayableImageUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    final fullUrl = _resolveFullMediaUrl(url);
+    if (_isVideoUrl(fullUrl)) return false;
+
+    final cleanUrl = fullUrl.toLowerCase();
+    return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
+  }
+
+  Widget _buildPostMediaImage(String? rawUrl) {
+    final fullUrl = _resolveFullMediaUrl(rawUrl);
+    if (!_isDisplayableImageUrl(fullUrl)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: EdgeInsets.only(top: 10.h),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.r),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: 360.h,
+            minHeight: 120.h,
+          ),
+          child: CachedNetworkImage(
+            imageUrl: fullUrl,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              height: 140.h,
+              color: Colors.white.withValues(alpha: 0.05),
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF8B5CF6),
+                  ),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF0F0E17),
-      padding: const EdgeInsets.only(top: 64, left: 16, right: 16),
-      child: ListView.separated(
-        itemCount: _posts.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          final commentCount = (post['comments'] as List).length;
-          return Container(
-            padding: const EdgeInsets.all(16),
+      child: SafeArea(
+        child: StreamBuilder<GetAllPostModel>(
+          stream: getAllPostRxObj.dataFetcher.stream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return const PostsShimmerLoader();
+            }
+
+            final livePosts = snapshot.data?.data?.posts ?? [];
+
+            if (livePosts.isEmpty) {
+              return RefreshIndicator(
+                color: const Color(0xFF8B5CF6),
+                backgroundColor: Colors.black,
+                onRefresh: _refreshPosts,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 120.h),
+                  children: [
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(20.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E2C),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white10),
+                            ),
+                            child: Icon(
+                              Icons.dynamic_feed_rounded,
+                              color: const Color(0xFF8B5CF6),
+                              size: 42.r,
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No Posts Yet',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Be the first to share something with the community!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 13.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              color: const Color(0xFF8B5CF6),
+              backgroundColor: Colors.black,
+              onRefresh: _refreshPosts,
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                itemCount: livePosts.length,
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemBuilder: (context, index) {
+                  final Post postModel = livePosts[index];
+                  final int postId = postModel.id ?? index;
+                  final bool isLiked = _likedPostIds.contains(postId) || (postModel.isLiked == true);
+                  final int likesCount = (postModel.likesCount ?? 0) + (_extraLikes[postId] ?? 0);
+                  final int commentsCount = postModel.commentsCount ?? 0;
+
+                  String? mediaUrl = postModel.mediaUrl;
+                  if ((mediaUrl == null || mediaUrl.isEmpty) &&
+                      postModel.media != null &&
+                      postModel.media!.isNotEmpty) {
+                    mediaUrl = postModel.media!.first.mediaUrl;
+                  }
+
+                  final String avatarUrl = postModel.user?.avatar ?? '';
+                  final String userName = postModel.user?.name ?? postModel.user?.username ?? 'Stevenako User';
+                  final String timeText = postModel.createdAt != null
+                      ? '${postModel.createdAt!.hour}:${postModel.createdAt!.minute} '
+                      : 'Just now';
+                  final String captionText = postModel.caption ?? postModel.title ?? '';
+
+                  final Map<String, dynamic> postDataForSheet = {
+                    'userName': userName,
+                    'avatar': avatarUrl,
+                    'text': captionText,
+                    'comments': <Map<String, String>>[],
+                  };
+
+                  return _buildSinglePostCard(
+                    index: index,
+                    postId: postId,
+                    avatarUrl: avatarUrl,
+                    userName: userName,
+                    timeText: timeText,
+                    captionText: captionText,
+                    mediaUrl: mediaUrl,
+                    isLiked: isLiked,
+                    likesCount: likesCount,
+                    commentsCount: commentsCount,
+                    postDataForSheet: postDataForSheet,
+                    onLikeTap: () {
+                      setState(() {
+                        if (_likedPostIds.contains(postId)) {
+                          _likedPostIds.remove(postId);
+                          _extraLikes[postId] = (_extraLikes[postId] ?? 0) - 1;
+                        } else {
+                          _likedPostIds.add(postId);
+                          _extraLikes[postId] = (_extraLikes[postId] ?? 0) + 1;
+                        }
+                      });
+                    },
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSinglePostCard({
+    required int index,
+    required int postId,
+    required String avatarUrl,
+    required String userName,
+    required String timeText,
+    required String captionText,
+    required String? mediaUrl,
+    required bool isLiked,
+    required int likesCount,
+    required int commentsCount,
+    required Map<String, dynamic> postDataForSheet,
+    required VoidCallback onLikeTap,
+  }) {
+    final String resolvedMediaUrl = _resolveFullMediaUrl(mediaUrl);
+    final bool hasImage = _isDisplayableImageUrl(resolvedMediaUrl);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14.w,
+        vertical: hasImage ? 14.h : 10.h,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E2C),
+        borderRadius: BorderRadius.circular(hasImage ? 16.r : 12.r),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Ensures tight fitting around text for text-only posts
+        children: [
+          // Header
+          Row(
+            children: [
+              _buildAvatarImage(_resolveFullMediaUrl(avatarUrl)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                    Text(
+                      timeText,
+                      style: const TextStyle(
+                        color: Colors.white30,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showPostOptions(context, index),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.more_horiz, color: Colors.white54),
+                ),
+              ),
+            ],
+          ),
+
+          // Caption Text
+          if (captionText.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              captionText,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.35,
+              ),
+            ),
+          ],
+
+          // Media Content (ONLY rendered if valid image exists, NO dummy boxes)
+          if (hasImage) ...[
+            _buildPostMediaImage(resolvedMediaUrl),
+          ],
+
+          SizedBox(height: hasImage ? 12.h : 8.h),
+
+          // Action Bar
+          Row(
+            children: [
+              GestureDetector(
+                onTap: onLikeTap,
+                child: Row(
+                  children: [
+                    Icon(
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: isLiked ? const Color(0xFFFF3F55) : Colors.white70,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$likesCount',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              GestureDetector(
+                onTap: () => _showCommentsSheet(postDataForSheet),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/mesagenva.png',
+                      height: 17.w,
+                      width: 17.w,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$commentsCount',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              UIHelper.horizontalSpace(16.w),
+              GestureDetector(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: captionText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Post copied to clipboard!')),
+                  );
+                },
+                child: Image.asset(
+                  'assets/icons/sheee.png',
+                  height: 17.w,
+                  width: 17.w,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.share_outlined,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PostsShimmerLoader extends StatefulWidget {
+  const PostsShimmerLoader({super.key});
+
+  @override
+  State<PostsShimmerLoader> createState() => _PostsShimmerLoaderState();
+}
+
+class _PostsShimmerLoaderState extends State<PostsShimmerLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final opacity = 0.15 + (_controller.value * 0.25);
+        final color = Colors.white.withValues(alpha: opacity);
+
+        return ListView.separated(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.only(top: 64.h, left: 16.w, right: 16.w, bottom: 24.h),
+          itemCount: 3,
+          separatorBuilder: (context, index) => SizedBox(height: 16.h),
+          itemBuilder: (context, index) => Container(
+            padding: EdgeInsets.all(16.r),
             decoration: BoxDecoration(
               color: const Color(0xFF1E1E2C),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundImage: NetworkImage(post['avatar']),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            post['userName'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.5,
-                            ),
-                          ),
-                          Text(
-                            post['time'],
-                            style: const TextStyle(
-                              color: Colors.white30,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
+                    Container(
+                      width: 40.r,
+                      height: 40.r,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => _showPostOptions(context, index),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(Icons.more_horiz, color: Colors.white54),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Text
-                Text(
-                  post['text'],
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                // Actions row
-                Row(
-                  children: [
-                    Row(
+                    SizedBox(width: 12.w),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.favorite,
-                          color: Color(0xFFFF3F55),
-                          size: 18,
+                        Container(
+                          width: 120.w,
+                          height: 14.h,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${post['likes']}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12.5,
+                        SizedBox(height: 6.h),
+                        Container(
+                          width: 70.w,
+                          height: 10.h,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4.r),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 24),
-                    GestureDetector(
-                      onTap: () => _showCommentsSheet(index),
-                      child: Row(
-                        children: [
-                          Image.asset(
-                            'assets/images/mesagenva.png',
-                            height: 17.w,
-                            width: 17.w,
-                          ),
-
-                          const SizedBox(width: 6),
-                          Text(
-                            '$commentCount',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
+                ),
+                SizedBox(height: 16.h),
+                Container(
+                  width: double.infinity,
+                  height: 12.h,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: 200.w,
+                  height: 12.h,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Container(
+                  width: double.infinity,
+                  height: 180.h,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -444,8 +794,6 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
   // Bottom sheet with Reply / Edit / Delete options for a comment
   void _showCommentOptions(int index) {
-    final isOwnComment = _comments[index]['userName'] == _currentUserName;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E1E2C),
@@ -478,37 +826,53 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   _startReply(index);
                 },
               ),
-              if (isOwnComment) ...[
-                ListTile(
-                  leading: const Icon(
-                    Icons.edit_outlined,
-                    color: Colors.white70,
-                  ),
-                  title: const Text(
-                    'Edit',
-                    style: TextStyle(color: Colors.white, fontSize: 14.5),
-                  ),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _startEdit(index);
-                  },
+              ListTile(
+                leading: const Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white70,
                 ),
-                const Divider(color: Colors.white12, height: 8),
-                ListTile(
-                  leading: const Icon(
-                    Icons.delete_outline,
-                    color: Color(0xFFFF3F55),
-                  ),
-                  title: const Text(
-                    'Delete',
-                    style: TextStyle(color: Color(0xFFFF3F55), fontSize: 14.5),
-                  ),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _confirmDeleteComment(index);
-                  },
+                title: const Text(
+                  'Edit',
+                  style: TextStyle(color: Colors.white, fontSize: 14.5),
                 ),
-              ],
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _startEdit(index);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.copy_rounded,
+                  color: Colors.white70,
+                ),
+                title: const Text(
+                  'Copy text',
+                  style: TextStyle(color: Colors.white, fontSize: 14.5),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  final text = _comments[index]['text'] ?? '';
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comment copied to clipboard!')),
+                  );
+                },
+              ),
+              const Divider(color: Colors.white12, height: 8),
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFFFF3F55),
+                ),
+                title: const Text(
+                  'Delete',
+                  style: TextStyle(color: Color(0xFFFF3F55), fontSize: 14.5),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmDeleteComment(index);
+                },
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -674,33 +1038,57 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
-                                          children: [
-                                            if (wasEdited)
-                                              const Padding(
-                                                padding: EdgeInsets.only(
-                                                  right: 10,
-                                                ),
-                                                child: Text(
-                                                  'edited',
-                                                  style: TextStyle(
-                                                    color: Colors.white30,
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
-                                              ),
-                                            GestureDetector(
-                                              onTap: () => _startReply(index),
-                                              child: const Text(
-                                                'Reply',
-                                                style: TextStyle(
-                                                  color: Colors.white54,
-                                                  fontSize: 11.5,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                           children: [
+                                             if (wasEdited)
+                                               const Padding(
+                                                 padding: EdgeInsets.only(
+                                                   right: 10,
+                                                 ),
+                                                 child: Text(
+                                                   'edited',
+                                                   style: TextStyle(
+                                                     color: Colors.white30,
+                                                     fontSize: 11,
+                                                   ),
+                                                 ),
+                                               ),
+                                             GestureDetector(
+                                               onTap: () => _startReply(index),
+                                               child: const Text(
+                                                 'Reply',
+                                                 style: TextStyle(
+                                                   color: Colors.white54,
+                                                   fontSize: 11.5,
+                                                   fontWeight: FontWeight.w600,
+                                                 ),
+                                               ),
+                                             ),
+                                             const SizedBox(width: 14),
+                                             GestureDetector(
+                                               onTap: () => _startEdit(index),
+                                               child: const Text(
+                                                 'Edit',
+                                                 style: TextStyle(
+                                                   color: Colors.white54,
+                                                   fontSize: 11.5,
+                                                   fontWeight: FontWeight.w600,
+                                                 ),
+                                               ),
+                                             ),
+                                             const SizedBox(width: 14),
+                                             GestureDetector(
+                                               onTap: () => _confirmDeleteComment(index),
+                                               child: const Text(
+                                                 'Delete',
+                                                 style: TextStyle(
+                                                   color: Color(0xFFFF3F55),
+                                                   fontSize: 11.5,
+                                                   fontWeight: FontWeight.w600,
+                                                 ),
+                                               ),
+                                             ),
+                                           ],
+                                         ),
                                       ],
                                     ),
                                   ),

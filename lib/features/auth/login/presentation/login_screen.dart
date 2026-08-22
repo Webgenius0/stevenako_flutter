@@ -29,8 +29,11 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final SigninRx _signinRx;
 
-  final _emailController = TextEditingController(text: '');
+ 
+  final _emailController = TextEditingController(
 
+  );
+ 
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;

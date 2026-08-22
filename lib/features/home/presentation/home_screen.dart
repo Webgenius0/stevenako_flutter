@@ -4,12 +4,14 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
 import 'package:stevenako_flutter/features/home/presentation/photo_scree.dart';
+import 'package:stevenako_flutter/features/home/presentation/post_navtaiosn_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/releas_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/search_scren.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool isActive;
+  const HomeScreen({super.key, this.isActive = true});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -54,9 +56,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      ReelsSubScreen(isActive: _activeSubTab == 0),
+      ReelsSubScreen(isActive: widget.isActive && _activeSubTab == 0),
       const PhotosSubScreen(),
-      const PostsSubScreen(),
+        PostsSubScreenTwo(),
     ];
 
     return Stack(

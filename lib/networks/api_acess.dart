@@ -1,18 +1,29 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/home/data/post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
+import 'package:stevenako_flutter/features/message/data/rx.dart';
 
 import '../features/auth/log_out/data/rx.dart';
 import '../features/auth/login/data/rx.dart';
 import '../features/auth/login/model/login_model.dart';
+import '../features/auth/profile_setup/data/rx.dart';
+import '../features/auth/profile_setup/model/sing_up_profiel_satep_model.dart';
 import '../features/auth/register/data/rx.dart';
 import '../features/auth/register/model/forgort_model.dart';
 import '../features/auth/register/model/post_verify_otp_model.dart';
 import '../features/auth/register/model/register_model.dart';
 import '../features/auth/set_new_password/data/rx.dart';
 import '../features/auth/set_new_password/model/set_new_passwrod_model.dart';
+import '../features/home/data/get_all_photo_api/rx.dart';
 import '../features/home/data/rx.dart';
+ 
+import '../features/home/model/get_all_post_model.dart';
+import '../features/message/model/get_all_messae_model.dart';
+
+ 
 import '../features/setting/data/rx_change_pass/rx.dart';
 import '../features/setting/data/rx_get_faqs/rx.dart';
 import '../features/setting/model/faqs_model.dart';
@@ -22,6 +33,7 @@ import '../features/setting/data/rx_get_notification_settings/rx.dart';
 import '../features/setting/data/rx_post_all_notification/rx.dart';
 import '../features/setting/data/rx_post_notification_settings/rx.dart';
 import '../features/setting/model/notification_settings_model.dart';
+ 
 
 //
 // SignupRx signupRxObj = SignupRx(
@@ -127,14 +139,131 @@ final PostNotificationSettingsRx postNotificationSettingsRxObj =
   dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
 );
 
+ 
+//
+//
+// OtpVerifyRx otpVerifyRxObj = OtpVerifyRx(
+//   empty: OtpVerifyModel(
+//     success: false,
+//     code: 0,
+//     message: "",
+//     data: null,
+//     timestamp: "",
+//   ),
+//   dataFetcher: BehaviorSubject<OtpVerifyModel>(),
+// );
+//
+final GetAllPostRx getAllPostRxObj = GetAllPostRx(
+  empty:   GetAllPostModel(
+ 
 final PostAllNotificationRx postAllNotificationRxObj = PostAllNotificationRx(
   empty: NotificationSettingsModel(
+ 
     success: false,
     code: 0,
     message: '',
     data: null,
   ),
+ 
+  dataFetcher: BehaviorSubject<GetAllPostModel>(),
+);
+
+final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
+  empty: GetAllPhotoModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetAllPhotoModel>(),
+);
+
+//
+//
+//
+//
+final GetAllMessageListRx getAllMessageListRxObj =
+GetAllMessageListRx(
+  empty:   GetAllMesageListModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetAllMesageListModel>(),
+);
+//
+PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(
+  empty: PostSingUpProfielSatipModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<PostSingUpProfielSatipModel>(),
+);
+//
+// PutProfielUpdageRx profielUpdageRxObj = PutProfielUpdageRx(
+//   empty: UserProfileInfoUpdateModel(
+//     success: false,
+//     code: 0,
+//     message: "",
+//     data: null,
+//     timestamp: "",
+//   ),
+//   dataFetcher: BehaviorSubject<UserProfileInfoUpdateModel>(),
+// );
+//
+//
+// GetModelDetailsRx getModelDetailsRxObj = GetModelDetailsRx(
+//   empty: GetModelDetailsModel(
+//     success: false,
+//     code: 0,
+//     message: "",
+//     data: null,
+//     timestamp: "",
+//   ),
+//   dataFetcher: BehaviorSubject<GetModelDetailsModel>(),
+// );
+//
+//
+//
+
+
+
+
+//
+//
+// GetBrandsRcesRx getBrandsRcesRxObj = GetBrandsRcesRx(
+//   empty: BrandsRceosModel(
+//     success: false,
+//     code: 0,
+//     message: "",
+//     data: null,
+//     timestamp: "",
+//   ),
+//   dataFetcher: BehaviorSubject<BrandsRceosModel>(),
+// );
+//
+// GetModelListRx getModelListRxObj = GetModelListRx(
+//   empty: GetCompanyModelListModel(
+//     success: false,
+//     code: 0,
+//     message: "",
+//     data: null,
+//     timestamp: "",
+//   ),
+//   dataFetcher: BehaviorSubject<GetCompanyModelListModel>(),
+// );
+//
+//
+//
+LogoutRx logoutRxObj = LogoutRx(
+  empty: <String, dynamic>{},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+ 
   dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
+ 
 );
 
 

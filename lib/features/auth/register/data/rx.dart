@@ -4,7 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
+import '../../../../constants/app_constants.dart';
+import '../../../../helpers/di.dart';
 import '../../../../helpers/toast.dart';
+import '../../../../networks/dio/dio.dart';
 import '../../../../networks/rx_base.dart';
 import '../model/forgort_model.dart';
 import '../model/post_verify_otp_model.dart';
@@ -137,6 +140,25 @@ final class VerifyOtpRx extends RxResponseInt<PostVerifyOtpModel> {
     if (message.isNotEmpty) {
       ToastUtil.showShortToast(message);
     }
+
+    final resData = data.data;
+    if (resData is Map<String, dynamic>) {
+      final String token = resData['token']?.toString() ?? '';
+      final user = resData['user'];
+      final String? userId =
+          (user is Map<String, dynamic>) ? user['id']?.toString() : null;
+
+      if (token.isNotEmpty) {
+        appData.write(kKeyIsLoggedIn, true);
+        appData.write(kKeyAccessToken, token);
+        appData.write('is_guest', false);
+        if (userId != null && userId.isNotEmpty) {
+          appData.write('user_id', userId);
+        }
+        DioSingleton.instance.update(token);
+      }
+    }
+
     dataFetcher.sink.add(data);
     return data;
   }
