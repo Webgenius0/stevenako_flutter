@@ -6,15 +6,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
 import 'package:stevenako_flutter/features/setting/widgets/settings_action_card.dart';
+import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class BlockedUserDetailScreen extends StatefulWidget {
   final String name;
   final String avatarUrl;
+  final String? userId;
 
   const BlockedUserDetailScreen({
     super.key,
     required this.name,
     required this.avatarUrl,
+    this.userId,
   });
 
   @override
@@ -134,10 +140,41 @@ class _BlockedUserDetailScreenState extends State<BlockedUserDetailScreen> {
                                 child: Column(
                                   children: [
                                     // Action: Unblock User
-                                    SettingsActionCard(
-                                      label: 'Unblock User',
-                                      icon: Icons.person_add_outlined,
-                                      onTap: () {},
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          blockOrUnblockUserRxObj.isLoading,
+                                      builder: (context, isLoading, child) {
+                                        return SettingsActionCard(
+                                          label: isLoading
+                                              ? 'Processing...'
+                                              : 'Unblock User',
+                                          icon: Icons.person_add_outlined,
+                                          onTap: isLoading
+                                              ? () {}
+                                              : () async {
+                                                  if (widget.userId != null &&
+                                                      widget
+                                                          .userId!
+                                                          .isNotEmpty) {
+                                                    final res =
+                                                        await blockOrUnblockUserRxObj
+                                                            .blockOrUnblockUser(
+                                                              widget.userId!,
+                                                            );
+                                                    if (res != null &&
+                                                        context.mounted) {
+                                                      getMyBlockedUsersRxObj
+                                                          .getMyBlockedUsers();
+                                                      NavigationService.goBack();
+                                                    }
+                                                  } else {
+                                                    ToastUtil.showShortToast(
+                                                      'User ID not found',
+                                                    );
+                                                  }
+                                                },
+                                        );
+                                      },
                                     ),
                                     SizedBox(height: 16.h),
 
@@ -146,7 +183,22 @@ class _BlockedUserDetailScreenState extends State<BlockedUserDetailScreen> {
                                       label: 'Report User',
                                       icon: Icons.person_off_outlined,
                                       isDangerous: true,
-                                      onTap: () {},
+                                      onTap: () {
+                                        if (widget.userId != null &&
+                                            widget.userId!.isNotEmpty) {
+                                          NavigationService.navigateTo(
+                                            Routes.reportUserScreen,
+                                            arguments: {
+                                              'userId': widget.userId,
+                                              'name': widget.name,
+                                            },
+                                          );
+                                        } else {
+                                          ToastUtil.showShortToast(
+                                            'User ID not found',
+                                          );
+                                        }
+                                      },
                                     ),
                                   ],
                                 ),

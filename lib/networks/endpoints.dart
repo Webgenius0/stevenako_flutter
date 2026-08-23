@@ -93,6 +93,9 @@ final class Endpoints {
   static String notificationSettings() => "/notification-settings";
   static String deleteUser() => "/user/delete/user";
   static String userProfile() => "/user/me";
+  static String myBlockedUsers() => "/user/my-blocked";
+  static String blockOrUnblockUser(String userId) => "/user/block/$userId";
+  static String reportUser(String userId) => "/user/report/$userId";
 
   // ------------------- Mentors details start-------------------
   static String getRealsVideoAll([String? mentorId]) {

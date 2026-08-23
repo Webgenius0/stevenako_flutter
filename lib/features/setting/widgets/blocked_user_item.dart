@@ -2,15 +2,28 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:stevenako_flutter/features/setting/model/my_blocked_users_model.dart';
+import 'package:stevenako_flutter/networks/endpoints.dart';
 
 class BlockedUserItem extends StatelessWidget {
-  final Map<String, String> user;
+  final User user;
   final VoidCallback onTap;
 
   const BlockedUserItem({super.key, required this.user, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    String avatarUrl = user.avatar ?? '';
+    if (avatarUrl.isNotEmpty && !avatarUrl.startsWith('http')) {
+      avatarUrl =
+          '$url/${avatarUrl.startsWith('/') ? avatarUrl.substring(1) : avatarUrl}';
+    }
+
+    final String name = user.name ?? 'Unknown User';
+    final String username = user.username != null && user.username!.isNotEmpty
+        ? (user.username!.startsWith('@') ? user.username! : '@${user.username}')
+        : '';
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF27273A).withValues(alpha: 0.15),
@@ -38,14 +51,25 @@ class BlockedUserItem extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24.r),
-                    child: CachedNetworkImage(
-                      imageUrl: user['avatarUrl']!,
-                      fit: BoxFit.cover,
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.person, color: Colors.white70),
-                      ),
-                    ),
+                    child: avatarUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: avatarUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey[800],
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[800],
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white70,
+                            ),
+                          ),
                   ),
                 ),
                 SizedBox(width: 16.w),
@@ -56,22 +80,24 @@ class BlockedUserItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user['name']!,
+                        name,
                         style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        user['username']!,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF64748B), // slate-500
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
+                      if (username.isNotEmpty) ...[
+                        SizedBox(height: 2.h),
+                        Text(
+                          username,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF64748B), // slate-500
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -80,7 +106,7 @@ class BlockedUserItem extends StatelessWidget {
                   width: 44.r,
                   height: 44.r,
                   decoration: BoxDecoration(
-                    color: Color(0xFF27273A).withValues(alpha: 0.3),
+                    color: const Color(0xFF27273A).withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.3),
@@ -100,3 +126,4 @@ class BlockedUserItem extends StatelessWidget {
     );
   }
 }
+
