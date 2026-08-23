@@ -28,6 +28,7 @@ import 'package:stevenako_flutter/features/setting/presentation/help_screen.dart
 import 'package:stevenako_flutter/features/setting/presentation/terms_screen.dart';
 import 'package:stevenako_flutter/features/setting/presentation/privacy_policy_screen.dart';
 import 'package:stevenako_flutter/features/setting/presentation/notifications_activity_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/report_user_screen.dart';
 import 'package:flutter/cupertino.dart';
 
 final class Routes {
@@ -76,6 +77,7 @@ final class Routes {
   static const String editProfileScreen = '/editProfileScreen';
   static const String dashboardScreen = '/dashboardScreen';
   static const String messageNotificationScreen = '/messageNotificationScreen';
+  static const String reportUserScreen = '/reportUserScreen';
 }
 
 final class RouteGenerator {
@@ -213,17 +215,46 @@ final class RouteGenerator {
           final args = settings.arguments as Map<String, dynamic>?;
           final name = args?['name'] as String? ?? 'Frances Swann';
           final avatarUrl = args?['avatarUrl'] as String? ?? '';
+          final userId =
+              (args?['userId'] ?? args?['id'] ?? args?['user_id'])?.toString();
           return Platform.isAndroid
               ? _FadedTransitionRoute(
                   widget: BlockedUserDetailScreen(
                     name: name,
                     avatarUrl: avatarUrl,
+                    userId: userId,
                   ),
                   settings: settings,
                 )
               : CupertinoPageRoute(
-                  builder: (context) =>
-                      BlockedUserDetailScreen(name: name, avatarUrl: avatarUrl),
+                  builder: (context) => BlockedUserDetailScreen(
+                    name: name,
+                    avatarUrl: avatarUrl,
+                    userId: userId,
+                  ),
+                );
+        }
+
+      case Routes.reportUserScreen:
+        {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final userId =
+              (args?['userId'] ?? args?['id'] ?? args?['user_id'])?.toString() ??
+                  '';
+          final userName = args?['name'] as String?;
+          return Platform.isAndroid
+              ? _FadedTransitionRoute(
+                  widget: ReportUserScreen(
+                    userId: userId,
+                    userName: userName,
+                  ),
+                  settings: settings,
+                )
+              : CupertinoPageRoute(
+                  builder: (context) => ReportUserScreen(
+                    userId: userId,
+                    userName: userName,
+                  ),
                 );
         }
 

@@ -33,6 +33,10 @@ import '../features/message/data/rx_get_msg_notification/rx.dart';
 import '../features/message/model/msg_notification_model.dart';
 import '../features/setting/data/rx_get_notification_settings/rx.dart';
 import '../features/setting/data/rx_post_all_notification/rx.dart';
+import '../features/setting/data/rx_get_my_blocked_users/rx.dart';
+import '../features/setting/data/rx_post_block_or_unblock_user/rx.dart';
+import '../features/setting/data/rx_post_report_user/rx.dart';
+import '../features/setting/model/my_blocked_users_model.dart';
 import '../features/setting/data/rx_post_notification_settings/rx.dart';
 import '../features/setting/model/notification_settings_model.dart';
 
@@ -248,5 +252,23 @@ final GetUserProfileRx getUserProfileRxObj = GetUserProfileRx(
   empty: UserProfileModel(),
   dataFetcher: BehaviorSubject<UserProfileModel>(),
 );
+
+final GetMyBlockedUsersRx getMyBlockedUsersRxObj = GetMyBlockedUsersRx(
+  empty: MyBlockedUsersModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<MyBlockedUsersModel>(),
+);
+
+final BlockOrUnblockUserRx blockOrUnblockUserRxObj = BlockOrUnblockUserRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+final ReportUserRx reportUserRxObj = ReportUserRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+
+
 
 
