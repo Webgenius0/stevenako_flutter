@@ -78,6 +78,7 @@ dependencies:
   curved_labeled_navigation_bar: ^2.0.6
   share_plus: ^12.0.2
   url_launcher: ^6.3.2
+  ffmpeg_kit_flutter_new: ^4.6.2
 
  
   file_picker: ^8.0.0
