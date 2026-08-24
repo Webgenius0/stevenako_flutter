@@ -4,7 +4,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/home/data/post_api/rx.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
-import 'package:stevenako_flutter/features/message/data/rx.dart';
+import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
 
 import '../features/auth/log_out/data/rx.dart';
 import '../features/auth/login/data/rx.dart';
@@ -21,7 +21,11 @@ import '../features/home/data/get_all_photo_api/rx.dart';
 import '../features/home/data/rx.dart';
 
 import '../features/home/model/get_all_post_model.dart';
-import '../features/message/model/get_all_messae_model.dart';
+import '../features/message/data/rx_delete_message/rx.dart';
+import '../features/message/data/rx_get_conversation_messages/rx.dart';
+import '../features/message/data/rx_post_send_message/rx.dart';
+import '../features/message/model/conversation_details_model.dart';
+import '../features/message/model/conversation_list_model.dart';
 
 import '../features/setting/data/rx_change_pass/rx.dart';
 import '../features/setting/data/rx_delete_user/rx.dart';
@@ -171,14 +175,37 @@ final GetAllPhotoRx getAllPhotoRxObj = GetAllPhotoRx(
 //
 //
 //
-final GetAllMessageListRx getAllMessageListRxObj = GetAllMessageListRx(
-  empty: GetAllMesageListModel(
+final GetConversationListRx getConversationListRxObj = GetConversationListRx(
+  empty: ConversationListModel(
     success: false,
     code: 0,
     message: '',
     data: null,
   ),
-  dataFetcher: BehaviorSubject<GetAllMesageListModel>(),
+  dataFetcher: BehaviorSubject<ConversationListModel>(),
+);
+
+final GetConversationListRx getAllMessageListRxObj = getConversationListRxObj;
+
+final GetConversationMessagesRx getConversationMessagesRxObj =
+    GetConversationMessagesRx(
+  empty: ConversationDetailsModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<ConversationDetailsModel>(),
+);
+
+final PostSendMessageRx postSendMessageRxObj = PostSendMessageRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+final DeleteMessageRx deleteMessageRxObj = DeleteMessageRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
 );
 //
 PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(

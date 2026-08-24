@@ -1,24 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
+import 'package:stevenako_flutter/features/message/model/conversation_details_model.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_bubble.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_input_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String name;
   final String avatarUrl;
   final bool isActive;
+  final String? conversationId;
 
   const ConversationScreen({
     super.key,
     required this.name,
     required this.avatarUrl,
     this.isActive = false,
+    this.conversationId,
   });
 
   @override
@@ -26,19 +32,19 @@ class ConversationScreen extends StatefulWidget {
 }
 
 class _ConversationScreenState extends State<ConversationScreen> {
-  // Chat History state containing initial messages shown in the mockup
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'message':
-          'Good, I\'ll see you tonight. Don\'t forget, now, 1:15 a.m., Twin Pines Mall.',
-      'time': '08:23',
-      'isMe': false,
-      'type': 'text',
-    },
-    {'message': 'Right.', 'time': '08:24', 'isMe': true, 'type': 'text'},
-  ];
-
+  final List<Map<String, dynamic>> _sentMessages = [];
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _sentMessages.clear();
+    if (widget.conversationId != null && widget.conversationId!.isNotEmpty) {
+      getConversationMessagesRxObj.getConversationMessages(
+        widget.conversationId!,
+      );
+    }
+  }
 
   void _sendMessage(
     String text, {
@@ -46,17 +52,19 @@ class _ConversationScreenState extends State<ConversationScreen> {
     String? path,
     String? fileName,
     String? fileSize,
-  }) {
+  }) async {
+    final Map<String, dynamic> tempMsg = {
+      'message': text,
+      'time': DateFormat('HH:mm').format(DateTime.now()),
+      'isMe': true,
+      'type': type ?? 'text',
+      'path': path,
+      'fileName': fileName,
+      'fileSize': fileSize,
+    };
+
     setState(() {
-      _messages.add({
-        'message': text,
-        'time': DateFormat('HH:mm').format(DateTime.now()),
-        'isMe': true,
-        'type': type ?? 'text',
-        'path': path,
-        'fileName': fileName,
-        'fileSize': fileSize,
-      });
+      _sentMessages.add(tempMsg);
     });
 
     // Auto scroll to bottom
@@ -69,6 +77,144 @@ class _ConversationScreenState extends State<ConversationScreen> {
         );
       }
     });
+
+    if (widget.conversationId != null && widget.conversationId!.isNotEmpty) {
+      File? file;
+      if (path != null && path.isNotEmpty) {
+        file = File(path);
+      }
+
+      final res = await postSendMessageRxObj.sendMessage(
+        conversationId: widget.conversationId!,
+        message: text,
+        file: file,
+      );
+
+      if (res != null && res['success'] == true) {
+        if (mounted) {
+          setState(() {
+            _sentMessages.remove(tempMsg);
+          });
+        }
+        getConversationMessagesRxObj.getConversationMessages(
+          widget.conversationId!,
+        );
+        getConversationListRxObj.getConversationList();
+      }
+    }
+  }
+
+  void _confirmDeleteMessage(String messageId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            'Delete Message?',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 16.sp,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this message?',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 13.sp,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                // Show loading indicator dialog
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (loadingContext) {
+                    return Dialog(
+                      backgroundColor: const Color(0xFF1E1E2E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.w,
+                          vertical: 20.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 24.w,
+                              height: 24.h,
+                              child: const CircularProgressIndicator(
+                                color: Color(0xFF7C3AED),
+                                strokeWidth: 2.5,
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Text(
+                              'Deleting message...',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  final res = await deleteMessageRxObj.deleteMessage(messageId);
+                  if (res != null && widget.conversationId != null) {
+                    await getConversationMessagesRxObj.getConversationMessages(
+                      widget.conversationId!,
+                    );
+                    getConversationListRxObj.getConversationList();
+                  }
+                } finally {
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                }
+              },
+              child: Text(
+                'Delete',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -81,7 +227,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent, 
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.black,
@@ -223,22 +369,103 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
                       // --------------- Message Bubbles List ---------------
                       Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          physics: const BouncingScrollPhysics(),
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) {
-                            final msg = _messages[index];
-                            return ChatBubble(
-                              message: msg['message'],
-                              time: msg['time'],
-                              isMe: msg['isMe'],
-                              avatarUrl: widget.avatarUrl,
-                              type: msg['type'] ?? 'text',
-                              path: msg['path'],
-                              fileName: msg['fileName'],
-                              fileSize: msg['fileSize'],
+                        child: StreamBuilder<ConversationDetailsModel>(
+                          stream: getConversationMessagesRxObj.stream,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                    ConnectionState.waiting &&
+                                !snapshot.hasData &&
+                                widget.conversationId != null) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF7C3AED),
+                                ),
+                              );
+                            }
+
+                            final model = snapshot.data;
+                            final apiMessages = model?.data?.messages ?? [];
+
+                            final List<Map<String, dynamic>> allMessages = [];
+
+                            final int? currentUserId =
+                                getUserProfileRxObj.dataFetcher.hasValue
+                                ? getUserProfileRxObj
+                                      .dataFetcher
+                                      .value
+                                      .data
+                                      ?.user
+                                      ?.id
+                                : null;
+
+                            final Set<int> seenIds = {};
+                            for (var msg in apiMessages) {
+                              if (msg.id != null) {
+                                if (seenIds.contains(msg.id)) continue;
+                                seenIds.add(msg.id!);
+                              }
+                              final timeStr = msg.createdAt != null
+                                  ? DateFormat('HH:mm').format(msg.createdAt!)
+                                  : '';
+                              bool isMe = false;
+                              if (currentUserId != null &&
+                                  msg.senderId != null) {
+                                isMe = msg.senderId == currentUserId;
+                              } else if (msg.sender?.name != null) {
+                                isMe = msg.sender!.name != widget.name;
+                              }
+
+                              allMessages.add({
+                                'id': msg.id,
+                                'message': msg.message ?? '',
+                                'time': timeStr,
+                                'isMe': isMe,
+                                'type': msg.type ?? 'text',
+                                'path': msg.mediaUrl is String
+                                    ? msg.mediaUrl
+                                    : null,
+                              });
+                            }
+
+                            allMessages.addAll(_sentMessages);
+
+                            if (allMessages.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'No messages yet',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF9CA3AF),
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              itemCount: allMessages.length,
+                              itemBuilder: (context, index) {
+                                final msg = allMessages[index];
+                                final bool isMe = msg['isMe'] == true;
+                                final messageId = msg['id'];
+                                return ChatBubble(
+                                  message: msg['message'],
+                                  time: msg['time'],
+                                  isMe: isMe,
+                                  avatarUrl: widget.avatarUrl,
+                                  type: msg['type'] ?? 'text',
+                                  path: msg['path'],
+                                  fileName: msg['fileName'],
+                                  fileSize: msg['fileSize'],
+                                  onDelete: isMe && messageId != null
+                                      ? () => _confirmDeleteMessage(
+                                          messageId.toString(),
+                                        )
+                                      : null,
+                                );
+                              },
                             );
                           },
                         ),
