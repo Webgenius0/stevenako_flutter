@@ -1,29 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-// ============================================================
-// SoundTrackScreeen — Sound/audio detail page: cover art, sound
-// title, artist link, post count, and a grid of videos using
-// this sound. Matches the provided design 1:1.
-// (Class name kept exactly as given, typo and all, so it stays
-// a drop-in replacement for your existing stub.)
-// ============================================================
-
-class _SoundVideo {
-  final String thumbnailUrl;
-  final String views; // pre-formatted, e.g. "5.6k"
-  final String creatorName;
-  final String creatorAvatarUrl;
-  final bool isVerified;
-
-  const _SoundVideo({
-    required this.thumbnailUrl,
-    required this.views,
-    required this.creatorName,
-    required this.creatorAvatarUrl,
-    this.isVerified = false,
-  });
-}
+import 'package:rxdart/rxdart.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:stevenako_flutter/features/home/data/rx_get_soudn_api/rx.dart';
+import 'package:stevenako_flutter/features/home/model/get_soudn_modle.dart';
 
 class SoundTrackScreeen extends StatefulWidget {
   final String soundTitle;
@@ -33,11 +14,11 @@ class SoundTrackScreeen extends StatefulWidget {
 
   const SoundTrackScreeen({
     super.key,
-    this.soundTitle = 'original sound - axelrosethebullmastiff',
-    this.artistName = 'Axel Rose | Bullmastiff',
+    this.soundTitle = 'Original Sound',
+    this.artistName = 'Artist Name',
     this.coverImageUrl =
         'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
-    this.postCount = 4366,
+    this.postCount = 0,
   });
 
   @override
@@ -48,59 +29,39 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
   static const Color _bgTop = Color(0xFF1E1B2E);
   static const Color _bgBottom = Color(0xFF0F0E17);
   static const Color _hintColor = Color(0xFF9C9AAB);
+  static const Color _purple = Color(0xFF7C3AED);
 
-  bool _isSaved = false;
+  late final GetSoundRx _getSoundRxObj;
+  Sound? _selectedSound;
 
-  final List<_SoundVideo> _videos = const [
-    _SoundVideo(
-      thumbnailUrl:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-      views: '5.6k',
-      creatorName: 'Jerome Bell',
-      creatorAvatarUrl: 'https://i.pravatar.cc/150?img=5',
-      isVerified: true,
-    ),
-    _SoundVideo(
-      thumbnailUrl:
-          'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400',
-      views: '5.6k',
-      creatorName: 'Brooklyn Sim...',
-      creatorAvatarUrl: 'https://i.pravatar.cc/150?img=9',
-      isVerified: true,
-    ),
-    _SoundVideo(
-      thumbnailUrl:
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
-      views: '5.6k',
-      creatorName: 'Alex Rivera',
-      creatorAvatarUrl: 'https://i.pravatar.cc/150?img=15',
-      isVerified: false,
-    ),
-    _SoundVideo(
-      thumbnailUrl:
-          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400',
-      views: '5.6k',
-      creatorName: 'Morgan Lee',
-      creatorAvatarUrl: 'https://i.pravatar.cc/150?img=20',
-      isVerified: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _getSoundRxObj = GetSoundRx(
+      empty: GetuserModel(
+        success: false,
+        code: 0,
+        message: "",
+        data: null,
+      ),
+      dataFetcher: BehaviorSubject<GetuserModel>(),
+    );
+    _getSoundRxObj.fetchSounds();
+  }
+
+  @override
+  void dispose() {
+    _getSoundRxObj.dispose();
+    super.dispose();
+  }
 
   void _onBack() {
     Navigator.of(context).maybePop();
   }
 
-  void _onToggleSave() {
-    setState(() => _isSaved = !_isSaved);
-    // TODO: persist saved/bookmarked sound to backend
-  }
-
-  void _onArtistTap() {
-    // TODO: navigate to the artist's profile
-  }
-
-  void _onVideoTap(_SoundVideo video) {
-    // TODO: open this video in the feed/player
+  void _onSelectSound(Sound sound) {
+    setState(() => _selectedSound = sound);
+    Navigator.of(context).pop(sound);
   }
 
   @override
@@ -117,11 +78,10 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
         child: SafeArea(
           child: Column(
             children: [
-              // ---- Header
+              // ---- Top Header Bar ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
                       onPressed: _onBack,
@@ -131,136 +91,90 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
                         size: 30,
                       ),
                     ),
-                    IconButton(
-                      onPressed: _onToggleSave,
-                      icon: Image.asset(
-                        'assets/images/bookmarkIcon.png',
-                        width: 26,
-                        height: 26,
-                        color: _isSaved ? Colors.red : Colors.white,
+                    const Expanded(
+                      child: Text(
+                        'Select Sound',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 44),
                   ],
                 ),
               ),
 
-              // ---- Sound info + cover art
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Cover art with play overlay
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.network(
-                            widget.coverImageUrl,
-                            width: 152,
-                            height: 152,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  width: 152,
-                                  height: 152,
-                                  color: const Color(0xFF2A2A3A),
-                                ),
-                          ),
-                          Container(
-                            width: 152,
-                            height: 152,
-                            color: Colors.black.withOpacity(0.15),
-                          ),
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.black.withOpacity(0.25),
-                            ),
-                            child: const Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-
-                    // Title, artist, post count
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.soundTitle,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w800,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InkWell(
-                            onTap: _onArtistTap,
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    widget.artistName,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            '${widget.postCount} posts',
-                            style: const TextStyle(
-                              color: _hintColor,
-                              fontSize: 17,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ---- Video grid
+              // ---- Live Sound StreamBuilder ----
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                  itemCount: _videos.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
-                  ),
-                  itemBuilder: (context, index) {
-                    final video = _videos[index];
-                    return _VideoTile(
-                      video: video,
-                      onTap: () => _onVideoTap(video),
+                child: StreamBuilder<GetuserModel>(
+                  stream: _getSoundRxObj.stream,
+                  builder: (context, snapshot) {
+                    final isLoading =
+                        snapshot.connectionState == ConnectionState.waiting &&
+                            !snapshot.hasData;
+
+                    if (isLoading) {
+                      return const _SoundListShimmer();
+                    }
+
+                    final sounds = snapshot.data?.data?.sounds ?? [];
+
+                    if (sounds.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.music_off_outlined,
+                              color: _hintColor,
+                              size: 48,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No sounds available',
+                              style: TextStyle(
+                                color: _hintColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _getSoundRxObj.fetchSounds(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _purple,
+                              ),
+                              child: const Text(
+                                'Retry',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 16.h,
+                      ),
+                      itemCount: sounds.length,
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 14.h),
+                      itemBuilder: (context, index) {
+                        final sound = sounds[index];
+                        final isSelected = _selectedSound?.id == sound.id;
+
+                        return _SoundItemRow(
+                          sound: sound,
+                          isSelected: isSelected,
+                          onTap: () => _onSelectSound(sound),
+                        );
+                      },
                     );
                   },
                 ),
@@ -273,126 +187,233 @@ class _SoundTrackScreeenState extends State<SoundTrackScreeen> {
   }
 }
 
-// ============================================================
-// Reusable grid tile
-// ============================================================
-
-class _VideoTile extends StatelessWidget {
-  final _SoundVideo video;
-  final VoidCallback onTap;
-
-  const _VideoTile({required this.video, required this.onTap});
-
-  static const Color _badgeRed = Color(0xFFEF4444);
+/// Shimmer Skeleton Loading Widget for Sound List
+class _SoundListShimmer extends StatelessWidget {
+  const _SoundListShimmer();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              video.thumbnailUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  Container(color: const Color(0xFF2A2A3A)),
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      itemCount: 6,
+      separatorBuilder: (context, index) => SizedBox(height: 14.h),
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: const Color(0xFF262338),
+          highlightColor: const Color(0xFF3B3654),
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFF161426),
+              borderRadius: BorderRadius.circular(16.r),
             ),
-
-            // Bottom gradient for legible name/avatar overlay
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 70,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.55),
-                      Colors.black.withOpacity(0.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56.w,
+                  height: 56.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 140.w,
+                        height: 14.h,
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: 8.h),
+                      Container(
+                        width: 90.w,
+                        height: 12.h,
+                        color: Colors.white,
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-
-            // View count badge (top-right)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(12.r),
+                Container(
+                  width: 54.w,
+                  height: 28.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Sound Item Card Row Widget with CachedNetworkImage and Fallbacks
+class _SoundItemRow extends StatelessWidget {
+  final Sound sound;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SoundItemRow({
+    required this.sound,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  static const Color _cardBorder = Color(0xFF2E2C3E);
+  static const Color _hintColor = Color(0xFF9C9AAB);
+  static const Color _purple = Color(0xFF7C3AED);
+  static const Color _purpleLight = Color(0xFF9F75FF);
+
+  @override
+  Widget build(BuildContext context) {
+    final title = sound.title ?? 'Original Sound';
+    final artist = sound.artist ?? sound.creator?.name ?? 'Unknown Artist';
+    final postsCount = sound.postsCount ?? 0;
+    final thumbnailUrl = sound.thumbnailUrl ?? '';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.r),
+        child: Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isSelected ? _purple : _cardBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            color: const Color(0xFF161426),
+          ),
+          child: Row(
+            children: [
+              // Cover art thumbnail with CachedNetworkImage & Shimmer
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/palyIcon.png',
-                      height: 11.h,
-                      width: 11.w,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      video.views,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w600,
+                    if (thumbnailUrl.isNotEmpty)
+                      CachedNetworkImage(
+                        imageUrl: thumbnailUrl,
+                        width: 56.w,
+                        height: 56.h,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: const Color(0xFF262338),
+                          highlightColor: const Color(0xFF3B3654),
+                          child: Container(
+                            width: 56.w,
+                            height: 56.h,
+                            color: Colors.white,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: 56.w,
+                          height: 56.h,
+                          color: const Color(0xFF2A2A3E),
+                          child: const Icon(
+                            Icons.music_note,
+                            color: _purpleLight,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 56.w,
+                        height: 56.h,
+                        color: const Color(0xFF2A2A3E),
+                        child: const Icon(
+                          Icons.music_note,
+                          color: _purpleLight,
+                        ),
                       ),
+                    Container(
+                      width: 56.w,
+                      height: 56.h,
+                      color: Colors.black.withValues(alpha: 0.25),
+                    ),
+                    const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 24,
                     ),
                   ],
                 ),
               ),
-            ),
+              SizedBox(width: 14.w),
 
-            // Creator row (bottom-left)
-            Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
-              child: Row(
-                children: [
-                  ClipOval(
-                    child: Image.network(
-                      video.creatorAvatarUrl,
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 24,
-                        height: 24,
-                        color: const Color(0xFF2A2A3A),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      video.creatorName,
+              // Title, artist, posts count
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 13.5,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                  if (video.isVerified) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.verified, color: _badgeRed, size: 14),
+                    SizedBox(height: 3.h),
+                    Text(
+                      artist,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _hintColor,
+                        fontSize: 13.5.sp,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      '$postsCount posts',
+                      style: TextStyle(
+                        color: _purpleLight,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+
+              // Select Action Button
+              GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20.r),
+                    gradient: const LinearGradient(
+                      colors: [_purpleLight, _purple],
+                    ),
+                  ),
+                  child: Text(
+                    'Use',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

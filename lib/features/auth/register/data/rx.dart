@@ -63,31 +63,7 @@ final class ForgotRx extends RxResponseInt<PostForgotModel> {
   PostForgotModel? handleErrorWithReturn(
     dynamic error,
   ) {
-    String message = 'Something went wrong';
-
-    if (error is DioException) {
-      final responseData = error.response?.data;
-
-      if (responseData is Map<String, dynamic>) {
-        final apiMessage = responseData['message'] ?? responseData['vendor_message'];
-
-        if (apiMessage is String && apiMessage.isNotEmpty) {
-          message = apiMessage;
-        }
-      }
-
-      if (message == 'Something went wrong' &&
-          error.message != null &&
-          error.message!.isNotEmpty) {
-        message = error.message!;
-      }
-    } else if (error is Exception) {
-      message = error
-          .toString()
-          .replaceFirst('Exception: ', '');
-    } else if (error is String) {
-      message = error;
-    }
+    String message = _extractAuthErrorMessage(error);
 
     ToastUtil.showShortToast(message);
 
@@ -167,31 +143,7 @@ final class VerifyOtpRx extends RxResponseInt<PostVerifyOtpModel> {
   PostVerifyOtpModel? handleErrorWithReturn(
     dynamic error,
   ) {
-    String message = 'Something went wrong';
-
-    if (error is DioException) {
-      final responseData = error.response?.data;
-
-      if (responseData is Map<String, dynamic>) {
-        final apiMessage = responseData['message'] ?? responseData['vendor_message'];
-
-        if (apiMessage is String && apiMessage.isNotEmpty) {
-          message = apiMessage;
-        }
-      }
-
-      if (message == 'Something went wrong' &&
-          error.message != null &&
-          error.message!.isNotEmpty) {
-        message = error.message!;
-      }
-    } else if (error is Exception) {
-      message = error
-          .toString()
-          .replaceFirst('Exception: ', '');
-    } else if (error is String) {
-      message = error;
-    }
+    String message = _extractAuthErrorMessage(error);
 
     ToastUtil.showShortToast(message);
 
@@ -258,29 +210,7 @@ final class RegisterRx extends RxResponseInt<RegisterModel> {
   RegisterModel? handleErrorWithReturn(
     dynamic error,
   ) {
-    String message = 'Something went wrong';
-
-    if (error is DioException) {
-      final responseData = error.response?.data;
-
-      if (responseData is Map<String, dynamic>) {
-        final apiMessage = responseData['message'] ?? responseData['vendor_message'];
-
-        if (apiMessage is String && apiMessage.isNotEmpty) {
-          message = apiMessage;
-        }
-      }
-
-      if (message == 'Something went wrong' &&
-          error.message != null &&
-          error.message!.isNotEmpty) {
-        message = error.message!;
-      }
-    } else if (error is Exception) {
-      message = error.toString().replaceFirst('Exception: ', '');
-    } else if (error is String) {
-      message = error;
-    }
+    String message = _extractAuthErrorMessage(error);
 
     ToastUtil.showShortToast(message);
 
@@ -288,4 +218,51 @@ final class RegisterRx extends RxResponseInt<RegisterModel> {
 
     return null;
   }
+}
+
+String _extractAuthErrorMessage(dynamic error) {
+  String message = 'Something went wrong';
+
+  if (error is DioException) {
+    final responseData = error.response?.data;
+
+    if (responseData is Map<String, dynamic>) {
+      // 1. Extract specific field error from "errors" map if present
+      if (responseData['errors'] != null && responseData['errors'] is Map) {
+        final errorsMap = responseData['errors'] as Map;
+        if (errorsMap.isNotEmpty) {
+          final firstVal = errorsMap.values.first;
+          if (firstVal is List && firstVal.isNotEmpty) {
+            message = firstVal.first.toString();
+          } else if (firstVal is String && firstVal.isNotEmpty) {
+            message = firstVal;
+          }
+        }
+      }
+
+      // 2. Fallback to message / error / detail / vendor_message if not extracted from errors
+      if (message == 'Something went wrong') {
+        final apiMessage = responseData['message'] ??
+            responseData['error'] ??
+            responseData['detail'] ??
+            responseData['vendor_message'];
+
+        if (apiMessage is String && apiMessage.isNotEmpty) {
+          message = apiMessage;
+        }
+      }
+    }
+
+    if (message == 'Something went wrong' &&
+        error.message != null &&
+        error.message!.isNotEmpty) {
+      message = error.message!;
+    }
+  } else if (error is Exception) {
+    message = error.toString().replaceFirst('Exception: ', '');
+  } else if (error is String) {
+    message = error;
+  }
+
+  return message;
 }

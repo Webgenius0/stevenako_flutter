@@ -77,29 +77,41 @@ final class SigninRx extends RxResponseInt<PostLoginModel> {
   }
 
   PostLoginModel handleError(dynamic error) {
-    String message = 'Something went wrong';
+    String message = 'Invalid email or password. Please try again.';
 
     if (error is DioException) {
       final responseData = error.response?.data;
 
       if (responseData is Map<String, dynamic>) {
-        final apiMessage = responseData['message'];
+        final apiMessage = responseData['message'] ??
+            responseData['error'] ??
+            responseData['detail'] ??
+            responseData['vendor_message'];
 
         if (apiMessage is String && apiMessage.isNotEmpty) {
           message = apiMessage;
+        } else if (responseData['errors'] != null) {
+          final errors = responseData['errors'];
+          if (errors is Map && errors.isNotEmpty) {
+            final firstVal = errors.values.first;
+            if (firstVal is List && firstVal.isNotEmpty) {
+              message = firstVal.first.toString();
+            } else if (firstVal is String) {
+              message = firstVal;
+            }
+          }
         }
-      } else if (error.message != null &&
-          error.message!.isNotEmpty) {
+      } else if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 422 ||
+          error.response?.statusCode == 400) {
+        message = 'Invalid email or password. Please try again.';
+      } else if (error.message != null && error.message!.isNotEmpty) {
         message = error.message!;
       }
     } else if (error is Exception) {
       final errorMessage = error.toString();
-
       if (errorMessage.isNotEmpty) {
-        message = errorMessage.replaceFirst(
-          'Exception: ',
-          '',
-        );
+        message = errorMessage.replaceFirst('Exception: ', '');
       }
     }
 
@@ -111,7 +123,7 @@ final class SigninRx extends RxResponseInt<PostLoginModel> {
 
     return PostLoginModel(
       success: false,
-      code: 0,
+      code: error is DioException ? (error.response?.statusCode ?? 0) : 0,
       message: message,
       data: null,
     );

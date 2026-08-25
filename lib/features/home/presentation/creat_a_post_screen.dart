@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/home/data/rx_user_post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/model/location_option_model.dart';
+import 'package:stevenako_flutter/features/home/model/user_post_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/add_location_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/tag_people_screeen.dart';
-import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/navigation_menu.dart';
 
 class CreatAPostScreeen extends StatefulWidget {
   final String? thumbnailPath; // Optional path to an initial image / thumbnail
@@ -31,6 +36,21 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
   bool _allowComments = true;
   bool _allowGifts = true;
   PrivacyOption _privacy = PrivacyOption.everyone;
+
+  final UserPostRx userPostRxObj = UserPostRx(
+    empty: UserPostModel(
+      success: false,
+      code: 0,
+      message: "",
+      data: null,
+    ),
+    dataFetcher: BehaviorSubject<UserPostModel>(),
+  );
+
+  String? _selectedLocationName;
+  double? _selectedLocationLat;
+  double? _selectedLocationLng;
+  List<int> _taggedUserIds = [];
 
   static const Color _bgTop = Color(0xFF1E1B2E);
   static const Color _bgBottom = Color(0xFF0F0E17);
@@ -60,6 +80,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
   @override
   void dispose() {
     _captionController.dispose();
+    userPostRxObj.dispose();
     super.dispose();
   }
 
@@ -279,12 +300,28 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
     );
   }
 
-  void _onTagPeople() {
-    Get.to(() => const TagPeopleScreeen());
+  Future<void> _onTagPeople() async {
+    final result = await Get.to(
+      () => TagPeopleScreeen(initiallyTaggedIds: _taggedUserIds.toSet()),
+    );
+    if (result != null && mounted && result is List<int>) {
+      setState(() => _taggedUserIds = result);
+    }
   }
 
-  void _onLocation() {
-    Get.to(() => const AddLocationScreen());
+  Future<void> _onLocation() async {
+    final result = await Get.to(() => const AddLocationScreen());
+    if (result != null && mounted) {
+      if (result is LocationOptionModel) {
+        setState(() {
+          _selectedLocationName = result.title;
+          _selectedLocationLat = result.latitude;
+          _selectedLocationLng = result.longitude;
+        });
+      } else if (result is String) {
+        setState(() => _selectedLocationName = result);
+      }
+    }
   }
 
   Future<void> _onPrivacy() async {
@@ -317,32 +354,52 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
     );
   }
 
-  void _onPostNow() {
-    if (_captionController.text.trim().isEmpty && _selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a caption or select at least one photo.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+  Future<void> _onPostNow() async {
+    if (userPostRxObj.isLoading.value) return;
+
+    final String caption = _captionController.text.trim();
+    final File? photoFile = _selectedImages.isNotEmpty ? _selectedImages.first : null;
+
+    if (caption.isEmpty && photoFile == null) {
+      ToastUtil.showShortToast('Please enter text or select a photo first');
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Posting ${_selectedImages.isNotEmpty ? "${_selectedImages.length} image(s)" : "post"}...',
-        ),
-        backgroundColor: _purple,
-        duration: const Duration(seconds: 2),
-      ),
+    final String privacySetting;
+    switch (_privacy) {
+      case PrivacyOption.everyone:
+        privacySetting = 'everyone';
+        break;
+      case PrivacyOption.friends:
+        privacySetting = 'friends';
+        break;
+      case PrivacyOption.followersOnly:
+        privacySetting = 'followersOnly';
+        break;
+      case PrivacyOption.onlyMe:
+        privacySetting = 'onlyMe';
+        break;
+    }
+
+    final response = await userPostRxObj.post(
+      type: 'text', // strictly text type for text post screen (photo is optional)
+      caption: caption,
+      locationName: _selectedLocationName ?? '',
+      locationLat: _selectedLocationLat ?? 0.0,
+      locationLng: _selectedLocationLng ?? 0.0,
+      privacySetting: privacySetting,
+      allowComments: _allowComments ? 1 : 0,
+      allowGifts: _allowGifts ? 1 : 0,
+      taggedUserIds: _taggedUserIds,
+      photo: photoFile,
     );
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) {
-        NavigationService.goBack;
-      }
-    });
+    if (!mounted) return;
+
+    if (response != null &&
+        (response.success == true || response.code == 200 || response.code == 201)) {
+      Get.offAll(() => const NavigationMenu());
+    }
   }
 
   @override
@@ -570,13 +627,15 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
 
                       // Nav Rows for extras (Tag, Location, Privacy, Toggles)
                       _NavRow(
-                        label: 'Tag people',
+                        label: _taggedUserIds.isEmpty
+                            ? 'Tag people'
+                            : 'Tag people (${_taggedUserIds.length})',
                         onTap: _onTagPeople,
                         imagePath: 'assets/images/gift.png',
                       ),
                       SizedBox(height: 12.h),
                       _NavRow(
-                        label: 'Location',
+                        label: _selectedLocationName ?? 'Location',
                         onTap: _onLocation,
                         imagePath: 'assets/images/location.png',
                       ),
@@ -634,41 +693,60 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          gradient: const LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [_purpleLight, _purple],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _purple.withValues(alpha: 0.4),
-                              blurRadius: 14,
-                              offset: const Offset(0, 6),
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: userPostRxObj.isLoading,
+                        builder: (context, isLoading, child) {
+                          return DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: isLoading
+                                    ? [
+                                        _purpleLight.withValues(alpha: 0.5),
+                                        _purple.withValues(alpha: 0.5),
+                                      ]
+                                    : [_purpleLight, _purple],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _purple.withValues(
+                                    alpha: isLoading ? 0.15 : 0.4,
+                                  ),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(30),
-                            onTap: _onPostNow,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Text(
-                                'Post Now',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(30),
+                                onTap: isLoading ? null : _onPostNow,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: isLoading
+                                      ? const Center(
+                                          child: CupertinoActivityIndicator(
+                                            color: Colors.white,
+                                            radius: 11,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Post Now',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                   ],

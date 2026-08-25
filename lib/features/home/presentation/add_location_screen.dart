@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../helpers/toast.dart';
+import '../data/location_service.dart';
+import '../model/location_option_model.dart';
 
-// ============================================================
-// AddLocationScreen — Search + "use current location" + a
-// suggested locations list. Matches the provided design 1:1.
-// ============================================================
-
-class _LocationOption {
-  final String title; // e.g. "New York, USA"
-  final String subtitle; // e.g. "Manhattan, New York"
-
-  const _LocationOption({required this.title, required this.subtitle});
-}
-
+/// AddLocationScreen — Supports user current location fetching via geolocator/geocoding,
+/// top card updates, keyword search filtering, and popular location selection.
 class AddLocationScreen extends StatefulWidget {
   const AddLocationScreen({super.key});
 
@@ -26,19 +19,20 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   static const Color _hintColor = Color(0xFF8B8A99);
 
   final TextEditingController _searchController = TextEditingController();
+  final LocationService _locationService = LocationService.instance;
+
+  late List<LocationOptionModel> _popularLocations;
+  LocationOptionModel? _fetchedCurrentLocation;
+  LocationOptionModel? _selectedLocation;
+
   String _query = '';
-  bool _usingCurrentLocation = false;
+  bool _isLoadingCurrentLocation = false;
 
-  String? _selectedValue;
-
-  final List<_LocationOption> _suggested = const [
-    _LocationOption(title: 'New York, USA', subtitle: 'Manhattan, New York'),
-    _LocationOption(title: 'Los Angeles, USA', subtitle: 'California'),
-    _LocationOption(title: 'London, UK', subtitle: 'England'),
-    _LocationOption(title: 'Tokyo, Japan', subtitle: 'Kanto Region'),
-    _LocationOption(title: 'Paris, France', subtitle: 'Île-de-France'),
-    _LocationOption(title: 'Sydney, Australia', subtitle: 'New South Wales'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _popularLocations = _locationService.getPopularLocations();
+  }
 
   @override
   void dispose() {
@@ -46,49 +40,74 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     super.dispose();
   }
 
-  List<_LocationOption> get _filtered {
-    if (_query.trim().isEmpty) return _suggested;
-    final q = _query.toLowerCase();
-    return _suggested
-        .where(
-          (l) =>
-              l.title.toLowerCase().contains(q) ||
-              l.subtitle.toLowerCase().contains(q),
-        )
-        .toList();
+  /// Filtered locations based on current search query.
+  /// Returns empty list when query is empty (initial state only shows Use Current Location button).
+  List<LocationOptionModel> get _filteredLocations {
+    if (_query.trim().isEmpty) return [];
+    return _locationService.filterLocations(_popularLocations, _query);
+  }
+
+  /// Whether current location card matches the current search query.
+  bool get _currentLocationMatchesQuery {
+    if (_query.trim().isEmpty) return true;
+    if (_fetchedCurrentLocation == null) return false;
+    final q = _query.trim().toLowerCase();
+    return _fetchedCurrentLocation!.title.toLowerCase().contains(q) ||
+        _fetchedCurrentLocation!.subtitle.toLowerCase().contains(q);
   }
 
   void _onBack() {
     Navigator.of(context).maybePop();
   }
 
+  /// Trigger geolocation & reverse geocoding to fetch current location.
   Future<void> _onUseCurrentLocation() async {
-    setState(() => _usingCurrentLocation = true);
+    setState(() => _isLoadingCurrentLocation = true);
 
-    // TODO: hook up real geolocation (e.g. `geolocator` package) + reverse
-    // geocoding here to resolve an actual address/title before marking
-    // this as selected.
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    try {
+      final currentLocation = await _locationService.fetchCurrentLocation();
 
-    if (!mounted) return;
+      if (!mounted) return;
+
+      if (currentLocation != null) {
+        setState(() {
+          _fetchedCurrentLocation = currentLocation;
+          _selectedLocation = currentLocation;
+        });
+        ToastUtil.showShortToast('Location set to: ${currentLocation.title}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      ToastUtil.showShortToast(errorMessage);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingCurrentLocation = false);
+      }
+    }
+  }
+
+  void _onSelectLocation(LocationOptionModel location) {
     setState(() {
-      _usingCurrentLocation = false;
-      _selectedValue = 'current_location';
+      _selectedLocation = location;
     });
   }
 
-  void _onSelectLocation(_LocationOption location) {
-    setState(() => _selectedValue = location.title);
+  void _onContinue() {
+    if (_selectedLocation == null) return;
+    Navigator.of(context).maybePop(_selectedLocation);
   }
 
-  void _onContinue() {
-    if (_selectedValue == null) return;
-    Navigator.of(context).maybePop(_selectedValue);
+  void _onClearSearch() {
+    _searchController.clear();
+    setState(() => _query = '');
   }
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
+    final filteredCards = _filteredLocations;
+    final isSearching = _query.trim().isNotEmpty;
+    final showCurrentLocationCard = !isSearching || _currentLocationMatchesQuery;
 
     return Scaffold(
       body: Container(
@@ -102,7 +121,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // ---- Header
+              // ---- Top Header Bar ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
                 child: Row(
@@ -126,12 +145,12 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 44), // balances the back button
+                    const SizedBox(width: 44),
                   ],
                 ),
               ),
 
-              // ---- Search field
+              // ---- Search Input Bar ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                 child: Container(
@@ -164,6 +183,15 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                           ),
                         ),
                       ),
+                      if (_query.isNotEmpty)
+                        GestureDetector(
+                          onTap: _onClearSearch,
+                          child: const Icon(
+                            Icons.close,
+                            color: _hintColor,
+                            size: 20,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -171,57 +199,69 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
 
               const SizedBox(height: 4),
 
-              // ---- Scrollable list: "use current location" + suggested
+              // ---- Scrollable Content List ----
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   children: [
-                    _UseCurrentLocationRow(
-                      isLoading: _usingCurrentLocation,
-                      isSelected: _selectedValue == 'current_location',
-                      onTap: _onUseCurrentLocation,
-                    ),
-                    const SizedBox(height: 22),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 2, bottom: 12),
-                      child: Text(
-                        'SUGGESTED',
-                        style: TextStyle(
-                          color: _hintColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.1,
-                        ),
+                    // ---- Current Location Top Card ----
+                    if (showCurrentLocationCard) ...[
+                      _UseCurrentLocationCard(
+                        isLoading: _isLoadingCurrentLocation,
+                        fetchedLocation: _fetchedCurrentLocation,
+                        isSelected: _selectedLocation?.id == 'current_location',
+                        onTap: _onUseCurrentLocation,
                       ),
-                    ),
-                    for (int i = 0; i < results.length; i++) ...[
-                      _LocationRow(
-                        option: results[i],
-                        isSelected: _selectedValue == results[i].title,
-                        onTap: () => _onSelectLocation(results[i]),
-                      ),
-                      if (i != results.length - 1) const SizedBox(height: 14),
+                      const SizedBox(height: 22),
                     ],
-                    if (results.isEmpty)
+
+                    // ---- Filtered Location Cards (Shown when searching) ----
+                    for (int i = 0; i < filteredCards.length; i++) ...[
+                      _LocationCardItem(
+                        option: filteredCards[i],
+                        isSelected: _selectedLocation?.id == filteredCards[i].id,
+                        onTap: () => _onSelectLocation(filteredCards[i]),
+                      ),
+                      if (i != filteredCards.length - 1)
+                        const SizedBox(height: 14),
+                    ],
+
+                    // ---- Empty Results State (When user searches but no locations match) ----
+                    if (isSearching && filteredCards.isEmpty && !showCurrentLocationCard) ...[
                       const Padding(
-                        padding: EdgeInsets.only(top: 24),
+                        padding: EdgeInsets.only(top: 40),
                         child: Center(
-                          child: Text(
-                            'No locations found',
-                            style: TextStyle(color: _hintColor, fontSize: 15),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.location_off_outlined,
+                                color: _hintColor,
+                                size: 48,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No locations found',
+                                style: TextStyle(
+                                  color: _hintColor,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ],
                   ],
                 ),
               ),
 
-              // ---- Bottom Continue CTA
+              // ---- Bottom Continue CTA Button ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: _ContinueButton(
                   label: 'Continue',
-                  enabled: _selectedValue != null,
+                  enabled: _selectedLocation != null,
                   onTap: _onContinue,
                 ),
               ),
@@ -234,16 +274,19 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
 }
 
 // ============================================================
-// Reusable rows
+// Modular OOP Sub-Widgets
 // ============================================================
 
-class _UseCurrentLocationRow extends StatelessWidget {
+/// Use Current Location Top Card Widget.
+class _UseCurrentLocationCard extends StatelessWidget {
   final bool isLoading;
+  final LocationOptionModel? fetchedLocation;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _UseCurrentLocationRow({
+  const _UseCurrentLocationCard({
     required this.isLoading,
+    required this.fetchedLocation,
     required this.isSelected,
     required this.onTap,
   });
@@ -251,9 +294,13 @@ class _UseCurrentLocationRow extends StatelessWidget {
   static const Color _cardBorder = Color(0xFF2E2C3E);
   static const Color _purple = Color(0xFF7C3AED);
   static const Color _purpleLight = Color(0xFF9F75FF);
+  static const Color _hintColor = Color(0xFF8B8A99);
 
   @override
   Widget build(BuildContext context) {
+    final titleText = fetchedLocation?.title ?? 'Use current location';
+    final subtitleText = fetchedLocation?.subtitle;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -264,7 +311,7 @@ class _UseCurrentLocationRow extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected ? _purple : _cardBorder,
-              width: isSelected ? 1.4 : 1,
+              width: isSelected ? 1.5 : 1,
             ),
             borderRadius: BorderRadius.circular(18),
           ),
@@ -300,14 +347,30 @@ class _UseCurrentLocationRow extends StatelessWidget {
                       ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
-                child: Text(
-                  'Use current location',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      titleText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (subtitleText != null && subtitleText.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitleText,
+                        style: const TextStyle(
+                          color: _hintColor,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (isSelected)
@@ -320,12 +383,13 @@ class _UseCurrentLocationRow extends StatelessWidget {
   }
 }
 
-class _LocationRow extends StatelessWidget {
-  final _LocationOption option;
+/// Standard Location Item Card Widget.
+class _LocationCardItem extends StatelessWidget {
+  final LocationOptionModel option;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _LocationRow({
+  const _LocationCardItem({
     required this.option,
     required this.isSelected,
     required this.onTap,
@@ -349,7 +413,7 @@ class _LocationRow extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected ? _purple : _cardBorder,
-              width: isSelected ? 1.4 : 1,
+              width: isSelected ? 1.5 : 1,
             ),
             borderRadius: BorderRadius.circular(18),
           ),
@@ -378,14 +442,17 @@ class _LocationRow extends StatelessWidget {
                       option.title,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 17.5,
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       option.subtitle,
-                      style: const TextStyle(color: _hintColor, fontSize: 14.5),
+                      style: const TextStyle(
+                        color: _hintColor,
+                        fontSize: 14.5,
+                      ),
                     ),
                   ],
                 ),
@@ -400,10 +467,7 @@ class _LocationRow extends StatelessWidget {
   }
 }
 
-// ============================================================
-// Continue CTA (same style as your other screens)
-// ============================================================
-
+/// Action Continue Button Widget.
 class _ContinueButton extends StatelessWidget {
   final String label;
   final bool enabled;
@@ -438,7 +502,7 @@ class _ContinueButton extends StatelessWidget {
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF7C3AED).withOpacity(0.4),
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),

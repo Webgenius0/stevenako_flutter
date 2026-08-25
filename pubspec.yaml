@@ -78,8 +78,10 @@ dependencies:
   curved_labeled_navigation_bar: ^2.0.6
   share_plus: ^12.0.2
   url_launcher: ^6.3.2
+  ffmpeg_kit_flutter_new: ^4.6.2
+  path_provider: ^2.1.5
+  audioplayers: ^6.1.0
 
- 
   file_picker: ^8.0.0
   video_trimmer: ^5.0.0
 
@@ -92,6 +94,9 @@ dependencies:
   video_player: ^2.9.2
   image_cropper: ^12.2.1
   webview_flutter: ^4.14.1
+  # -------- Location & Geocoding --------
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
 
  
 dev_dependencies:
