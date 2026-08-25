@@ -1,79 +1,67 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:stevenako_flutter/features/message/model/get_all_messae_model.dart';
 
 import '../../../../helpers/toast.dart';
 import '../../../../networks/rx_base.dart';
 import 'api.dart';
 
-final class GetAllMessageListRx
-    extends RxResponseInt<GetAllMesageListModel> {
-  final GetAllMessageListApi api = GetAllMessageListApi.instance;
+final class DeleteMessageRx extends RxResponseInt<Map<String, dynamic>> {
+  final DeleteMessageApi api = DeleteMessageApi.instance;
+  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
 
-  GetAllMessageListRx({
+  DeleteMessageRx({
     required super.empty,
     required super.dataFetcher,
   });
 
-  ValueStream<GetAllMesageListModel> get stream => dataFetcher.stream;
+  ValueStream<Map<String, dynamic>> get stream => dataFetcher.stream;
 
-  Future<GetAllMesageListModel?> getMessages() async {
+  Future<Map<String, dynamic>?> deleteMessage(String messageId) async {
     try {
-      final GetAllMesageListModel data = await api.getMessages();
-
+      isLoading.value = true;
+      final Map<String, dynamic> data = await api.deleteMessage(messageId);
       return handleSuccessWithReturn(data);
     } catch (error, stackTrace) {
-      log(
-        'Get All Messages Error: $error',
-        stackTrace: stackTrace,
-      );
-
+      log('Delete Message Rx Error: $error', stackTrace: stackTrace);
       return handleErrorWithReturn(error);
+    } finally {
+      isLoading.value = false;
     }
   }
 
   @override
-  GetAllMesageListModel handleSuccessWithReturn(
-      GetAllMesageListModel data,
-      ) {
+  Map<String, dynamic> handleSuccessWithReturn(Map<String, dynamic> data) {
     dataFetcher.sink.add(data);
     return data;
   }
 
   @override
-  GetAllMesageListModel? handleErrorWithReturn(
-      dynamic error,
-      ) {
-    String message = 'Something went wrong. Please try again.';
+  Map<String, dynamic>? handleErrorWithReturn(dynamic error) {
+    String message = 'Failed to delete message.';
 
     if (error is DioException) {
       final dynamic responseData = error.response?.data;
-
       if (responseData is Map<String, dynamic>) {
         final dynamic apiMessage = responseData['message'];
-
         if (apiMessage is String && apiMessage.isNotEmpty) {
           message = apiMessage;
         }
       }
-
-      if (message == 'Something went wrong. Please try again.' &&
+      if (message == 'Failed to delete message.' &&
           error.message != null &&
           error.message!.isNotEmpty) {
         message = error.message!;
       }
     } else if (error is Exception) {
-      message = error
-          .toString()
-          .replaceFirst('Exception: ', '');
+      message = error.toString().replaceFirst('Exception: ', '');
     }
 
     ToastUtil.showShortToast(message);
-
-    dataFetcher.sink.addError(message);
-
     return null;
   }
 }

@@ -13,6 +13,7 @@ class ChatBubble extends StatelessWidget {
   final String? path;
   final String? fileName;
   final String? fileSize;
+  final VoidCallback? onDelete;
 
   const ChatBubble({
     super.key,
@@ -24,7 +25,59 @@ class ChatBubble extends StatelessWidget {
     this.path,
     this.fileName,
     this.fileSize,
+    this.onDelete,
   });
+
+  void _showDeleteOption(BuildContext context) {
+    if (!isMe || onDelete == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Color(0xFFEF4444),
+                  ),
+                  title: Text(
+                    'Delete Message',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFEF4444),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15.sp,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onDelete!();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +115,12 @@ class ChatBubble extends StatelessWidget {
           ],
 
           // Bubble Container
-          Flexible(child: _buildBubbleContent(context)),
+          Flexible(
+            child: GestureDetector(
+              onLongPress: () => _showDeleteOption(context),
+              child: _buildBubbleContent(context),
+            ),
+          ),
         ],
       ),
     );

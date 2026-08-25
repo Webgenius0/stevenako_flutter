@@ -96,6 +96,11 @@ final class Endpoints {
   static String myBlockedUsers() => "/user/my-blocked";
   static String blockOrUnblockUser(String userId) => "/user/block/$userId";
   static String reportUser(String userId) => "/user/report/$userId";
+  static String conversationList() => "/user/conversations";
+  static String conversationMessages(String cId) =>
+      "/user/conversations/$cId/messages";
+  static String deleteMessage(String messageId) =>
+      "/user/conversations/messages/$messageId";
 
   // ------------------- Mentors details start-------------------
   static String getRealsVideoAll([String? mentorId]) {

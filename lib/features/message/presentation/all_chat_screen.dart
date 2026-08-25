@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/assets_helper/app_colors.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
-import 'package:stevenako_flutter/features/message/model/get_all_messae_model.dart';
+import 'package:stevenako_flutter/features/message/model/conversation_list_model.dart';
 import 'package:stevenako_flutter/features/message/presentation/conversation_screen.dart';
 
 import 'package:stevenako_flutter/features/message/widgets/chat_list_item.dart';
@@ -523,7 +523,7 @@ class _AllChatScreenState extends State<AllChatScreen> {
 
                       // --------------- Live Chat Threads Stream ---------------
                       Expanded(
-                        child: StreamBuilder<GetAllMesageListModel>(
+                        child: StreamBuilder<ConversationListModel>(
                           stream: getAllMessageListRxObj.stream,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -624,6 +624,8 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                                 name: name,
                                                 avatarUrl: avatarUrl,
                                                 isActive: true,
+                                                conversationId:
+                                                    conversation.id?.toString(),
                                               ),
                                         ),
                                       );
