@@ -25,12 +25,20 @@ final class DioSingleton {
       InterceptorsWrapper(
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            // Clean dynamic/static data
-            await totalDataClean();
-            await appData.remove(kKeyAccessToken);
+            final requestPath = e.requestOptions.path;
+            final isAuthRequest = requestPath.contains(Endpoints.login()) ||
+                requestPath.contains(Endpoints.register()) ||
+                requestPath.contains('login') ||
+                requestPath.contains('register');
 
-            // Redirect to welcome screen
-            NavigationService.navigateToUntilReplacement(Routes.welcomeScreen);
+            if (!isAuthRequest) {
+              // Clean dynamic/static data
+              await totalDataClean();
+              await appData.remove(kKeyAccessToken);
+
+              // Redirect to welcome screen
+              NavigationService.navigateToUntilReplacement(Routes.welcomeScreen);
+            }
           }
           return handler.next(e);
         },

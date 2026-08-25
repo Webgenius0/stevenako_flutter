@@ -53,24 +53,9 @@ class CustomButton extends StatelessWidget {
           onTap: isButtonDisabled ? null : onTap,
           child: Center(
             child: isLoading
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CupertinoActivityIndicator(
-                        color: Colors.white,
-                        radius: 11,
-                      ),
-                      SizedBox(width: 10.w),
-                      Text(
-                        'Sending...',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
+                ? const CupertinoActivityIndicator(
+                    color: Colors.white,
+                    radius: 12,
                   )
                 : Text(
                     text,

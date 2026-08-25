@@ -93,6 +93,10 @@ final class Endpoints {
   static String notificationSettings() => "/notification-settings";
   static String deleteUser() => "/user/delete/user";
   static String userProfile() => "/user/me";
+  static String tagPeople(String query) =>
+      "/user/search?query=${Uri.encodeQueryComponent(query)}";
+  static String userPost() => "/user/posts";
+  static String getSound() => "/user/sounds";
   static String myBlockedUsers() => "/user/my-blocked";
   static String blockOrUnblockUser(String userId) => "/user/block/$userId";
   static String reportUser(String userId) => "/user/report/$userId";

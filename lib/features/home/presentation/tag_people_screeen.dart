@@ -1,30 +1,19 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:shimmer/shimmer.dart';
 
-// ============================================================
-// TagPeopleScreeen — Search + multi-select list of people to tag.
-// Matches the provided design 1:1.
-// (Class name kept exactly as given, typo and all, so it stays
-// a drop-in replacement for your existing stub.)
-// ============================================================
-
-class _Person {
-  final String id;
-  final String name;
-  final String handle;
-  final List<Color> avatarGradient;
-
-  const _Person({
-    required this.id,
-    required this.name,
-    required this.handle,
-    required this.avatarGradient,
-  });
-}
+import 'package:stevenako_flutter/features/home/data/rx_add_tag_people/rx.dart';
+import 'package:stevenako_flutter/features/home/model/get_tag_people_model.dart';
 
 class TagPeopleScreeen extends StatefulWidget {
-  final Set<String> initiallyTaggedIds;
+  final Set<int> initiallyTaggedIds;
 
-  const TagPeopleScreeen({super.key, this.initiallyTaggedIds = const {}});
+  const TagPeopleScreeen({
+    super.key,
+    this.initiallyTaggedIds = const {},
+  });
 
   @override
   State<TagPeopleScreeen> createState() => _TagPeopleScreeenState();
@@ -37,103 +26,52 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
   static const Color _hintColor = Color(0xFF8B8A99);
 
   final TextEditingController _searchController = TextEditingController();
-  late Set<String> _selectedIds;
-  String _query = '';
-
-  final List<_Person> _people = const [
-    _Person(
-      id: 'alexm',
-      name: 'Alex Morgan',
-      handle: '@alexm',
-      avatarGradient: [Color(0xFFB16CFF), Color(0xFF7C3AED)],
-    ),
-    _Person(
-      id: 'jordanl',
-      name: 'Jordan Lee',
-      handle: '@jordanl',
-      avatarGradient: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-    ),
-    _Person(
-      id: 'samr',
-      name: 'Sam Rivera',
-      handle: '@samr',
-      avatarGradient: [Color(0xFF7C6CFF), Color(0xFF4C3AED)],
-    ),
-    _Person(
-      id: 'taylork',
-      name: 'Taylor Kim',
-      handle: '@taylork',
-      avatarGradient: [Color(0xFFEC4899), Color(0xFFBE185D)],
-    ),
-    _Person(
-      id: 'caseyc',
-      name: 'Casey Chen',
-      handle: '@caseyc',
-      avatarGradient: [Color(0xFFD946EF), Color(0xFF9333EA)],
-    ),
-    _Person(
-      id: 'rileyp',
-      name: 'Riley Park',
-      handle: '@rileyp',
-      avatarGradient: [Color(0xFF9F5CFF), Color(0xFF6D28D9)],
-    ),
-    _Person(
-      id: 'morganw',
-      name: 'Morgan West',
-      handle: '@morganw',
-      avatarGradient: [Color(0xFF7C6CFF), Color(0xFF5B21B6)],
-    ),
-  ];
+  late final TagPeopleRx _tagPeopleRxObj;
+  late final Set<int> _selectedUserIds;
 
   @override
   void initState() {
     super.initState();
-    _selectedIds = {...widget.initiallyTaggedIds};
+    _selectedUserIds = {...widget.initiallyTaggedIds};
+    _tagPeopleRxObj = TagPeopleRx(
+      empty: GetTapPeopleModel(
+        success: false,
+        code: 0,
+        message: "",
+        data: null,
+      ),
+      dataFetcher: BehaviorSubject<GetTapPeopleModel>(),
+    );
+    _tagPeopleRxObj.fetchTagPeople('');
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _tagPeopleRxObj.dispose();
     super.dispose();
   }
 
-  List<_Person> get _filteredPeople {
-    if (_query.trim().isEmpty) return _people;
-    final q = _query.toLowerCase();
-    return _people
-        .where(
-          (p) =>
-              p.name.toLowerCase().contains(q) ||
-              p.handle.toLowerCase().contains(q),
-        )
-        .toList();
-  }
-
-  void _toggle(String id) {
+  void _toggle(int id) {
     setState(() {
-      if (_selectedIds.contains(id)) {
-        _selectedIds.remove(id);
+      if (_selectedUserIds.contains(id)) {
+        _selectedUserIds.remove(id);
       } else {
-        _selectedIds.add(id);
+        _selectedUserIds.add(id);
       }
     });
   }
 
   void _onBack() {
-    // Back arrow just closes without confirming a new selection.
     Navigator.of(context).maybePop();
   }
 
   void _onContinue() {
-    // Continue confirms the current selection and returns it to the caller
-    // (e.g. the Post screen), so it can show "3 people tagged" etc.
-    Navigator.of(context).maybePop(_selectedIds);
+    Navigator.of(context).maybePop(_selectedUserIds.toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    final people = _filteredPeople;
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -146,7 +84,7 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
         child: SafeArea(
           child: Column(
             children: [
-              // ---- Header
+              // ---- Header ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
                 child: Row(
@@ -170,20 +108,20 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 44), // balances the back button
+                    const SizedBox(width: 44),
                   ],
                 ),
               ),
 
-              // ---- Search field
+              // ---- Search input field ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                 child: Container(
-                  height: 52,
+                  height: 52.h,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     border: Border.all(color: _cardBorder),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16.r),
                   ),
                   child: Row(
                     children: [
@@ -192,7 +130,8 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
-                          onChanged: (v) => setState(() => _query = v),
+                          onChanged: (v) =>
+                              _tagPeopleRxObj.fetchTagPeople(v.trim()),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -208,6 +147,18 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
                           ),
                         ),
                       ),
+                      if (_searchController.text.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            _tagPeopleRxObj.fetchTagPeople('');
+                          },
+                          child: const Icon(
+                            Icons.close,
+                            color: _hintColor,
+                            size: 18,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -215,31 +166,79 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
 
               const SizedBox(height: 8),
 
-              // ---- People list
+              // ---- StreamBuilder User List ----
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                  itemCount: people.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final person = people[index];
-                    final isSelected = _selectedIds.contains(person.id);
-                    return _PersonRow(
-                      person: person,
-                      isSelected: isSelected,
-                      onTap: () => _toggle(person.id),
+                child: StreamBuilder<GetTapPeopleModel>(
+                  stream: _tagPeopleRxObj.stream,
+                  builder: (context, snapshot) {
+                    final isLoading =
+                        snapshot.connectionState == ConnectionState.waiting &&
+                            !snapshot.hasData;
+
+                    if (isLoading) {
+                      return const _PeopleListShimmer();
+                    }
+
+                    final users = snapshot.data?.data?.users ?? [];
+
+                    if (users.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.person_off_outlined,
+                              color: _hintColor,
+                              size: 44,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'No people found'
+                                  : 'No matches for "${_searchController.text}"',
+                              style: const TextStyle(
+                                color: _hintColor,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                      itemCount: users.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 14),
+                      itemBuilder: (context, index) {
+                        final user = users[index];
+                        final isSelected = user.id != null &&
+                            _selectedUserIds.contains(user.id);
+
+                        return _UserRow(
+                          user: user,
+                          isSelected: isSelected,
+                          onTap: () {
+                            if (user.id != null) {
+                              _toggle(user.id!);
+                            }
+                          },
+                        );
+                      },
                     );
                   },
                 ),
               ),
 
-              // ---- Bottom Continue CTA
+              // ---- Bottom Continue CTA Button ----
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: _ContinueButton(
-                  label: _selectedIds.isEmpty
+                  label: _selectedUserIds.isEmpty
                       ? 'Continue'
-                      : 'Continue (${_selectedIds.length})',
+                      : 'Continue (${_selectedUserIds.length})',
                   onTap: _onContinue,
                 ),
               ),
@@ -251,17 +250,80 @@ class _TagPeopleScreeenState extends State<TagPeopleScreeen> {
   }
 }
 
-// ============================================================
-// Reusable row
-// ============================================================
+/// Shimmer Skeleton Loading Widget for Tag People List
+class _PeopleListShimmer extends StatelessWidget {
+  const _PeopleListShimmer();
 
-class _PersonRow extends StatelessWidget {
-  final _Person person;
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+      itemCount: 6,
+      separatorBuilder: (context, index) => const SizedBox(height: 14),
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: const Color(0xFF262338),
+          highlightColor: const Color(0xFF3B3654),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF161426),
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 52.w,
+                  height: 52.h,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 120.w,
+                        height: 14.h,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 80.w,
+                        height: 12.h,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 26.w,
+                  height: 26.h,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// User item row widget with CachedNetworkImage and selection checkbox
+class _UserRow extends StatelessWidget {
+  final User user;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _PersonRow({
-    required this.person,
+  const _UserRow({
+    required this.user,
     required this.isSelected,
     required this.onTap,
   });
@@ -272,61 +334,73 @@ class _PersonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = user.name ?? 'User';
+    final username = user.username != null && user.username!.isNotEmpty
+        ? '@${user.username}'
+        : '';
+    final avatarUrl = user.avatar ?? '';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.r),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            border: Border.all(color: _cardBorder),
-            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? _purple : _cardBorder,
+              width: isSelected ? 1.5 : 1.0,
+            ),
+            borderRadius: BorderRadius.circular(18.r),
+            color: const Color(0xFF161426),
           ),
           child: Row(
             children: [
-              // Avatar
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: person.avatarGradient,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  person.name.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              // Avatar with CachedNetworkImage
+              ClipOval(
+                child: avatarUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: avatarUrl,
+                        width: 52.w,
+                        height: 52.h,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: const Color(0xFF262338),
+                          highlightColor: const Color(0xFF3B3654),
+                          child: Container(
+                            width: 52.w,
+                            height: 52.h,
+                            color: Colors.white,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => _buildFallbackAvatar(name),
+                      )
+                    : _buildFallbackAvatar(name),
               ),
               const SizedBox(width: 16),
 
-              // Name + handle
+              // Name + username
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      person.name,
+                      name,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      person.handle,
-                      style: const TextStyle(color: _hintColor, fontSize: 14.5),
-                    ),
+                    if (username.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        username,
+                        style:
+                            const TextStyle(color: _hintColor, fontSize: 14),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -334,8 +408,8 @@ class _PersonRow extends StatelessWidget {
               // Selection indicator
               AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                width: 26,
-                height: 26,
+                width: 26.w,
+                height: 26.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected ? _purple : Colors.transparent,
@@ -347,8 +421,8 @@ class _PersonRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: isSelected
                     ? Container(
-                        width: 11,
-                        height: 11,
+                        width: 11.w,
+                        height: 11.h,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white,
@@ -362,11 +436,32 @@ class _PersonRow extends StatelessWidget {
       ),
     );
   }
-}
 
-// ============================================================
-// Continue CTA (same style as the video upload / trim screens)
-// ============================================================
+  Widget _buildFallbackAvatar(String name) {
+    final initial = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U';
+    return Container(
+      width: 52.w,
+      height: 52.h,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
 
 class _ContinueButton extends StatelessWidget {
   final String label;
@@ -380,13 +475,13 @@ class _ContinueButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.r),
         child: Container(
           width: double.infinity,
-          height: 54,
+          height: 54.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(30.r),
             gradient: const LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
@@ -394,7 +489,7 @@ class _ContinueButton extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7C3AED).withOpacity(0.4),
+                color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
