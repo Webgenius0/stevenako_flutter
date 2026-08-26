@@ -4,8 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:get/get.dart';
-// ignore: depend_on_referenced_packages
+
 import 'package:vector_math/vector_math_64.dart' as vector;
+import 'package:stevenako_flutter/features/home/model/get_soudn_modle.dart';
 import 'package:stevenako_flutter/features/home/presentation/sound_track_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/upload_post_screen.dart';
 
@@ -26,6 +27,9 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
   bool _isCropping = false;
   PhotoAspectRatio _selectedAspectRatio = PhotoAspectRatio.original;
   bool _showAspectRatioBar = false;
+
+  int? _selectedSoundId;
+  Sound? _selectedSound;
 
   final TransformationController _transformationController = TransformationController();
   late AnimationController _animationController;
@@ -270,8 +274,20 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
     Navigator.of(context).maybePop();
   }
 
-  void _onMusicTap() {
-    Get.to(() => const SoundTrackScreeen());
+  Future<void> _onMusicTap() async {
+    final result = await Get.to(() => const SoundTrackScreeen());
+    if (result != null && mounted) {
+      if (result is Sound) {
+        setState(() {
+          _selectedSound = result;
+          _selectedSoundId = result.id;
+        });
+      } else if (result is int) {
+        setState(() {
+          _selectedSoundId = result;
+        });
+      }
+    }
   }
 
   void _onCropTap() {
@@ -292,7 +308,11 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
       _showImageSourcePicker();
       return;
     }
-    Get.to(() => UploadPostScreen(thumbnailPath: displayImage.path));
+    Get.to(() => UploadPostScreen(
+          photoFile: displayImage,
+          thumbnailPath: displayImage.path,
+          soundId: _selectedSoundId,
+        ));
   }
 
   double? _getAspectRatioValue() {
@@ -479,6 +499,66 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
                   ),
                 ),
 
+                if (_selectedSound != null) ...[
+                  SizedBox(height: 8.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    margin: EdgeInsets.symmetric(horizontal: 32.w),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      borderRadius: BorderRadius.circular(24.r),
+                      border: Border.all(
+                        color: const Color(0xFF9F75FF).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.music_note,
+                          color: Color(0xFF9F75FF),
+                          size: 16,
+                        ),
+                        SizedBox(width: 8.w),
+                        Flexible(
+                          child: Text(
+                            '${_selectedSound?.title ?? ''} • ${_selectedSound?.artist ?? ''}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedSound = null;
+                              _selectedSoundId = null;
+                            });
+                          },
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            size: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 SizedBox(height: 16.h),
 
                 // Side Actions (Music, Crop, Reset Zoom)
@@ -490,7 +570,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         _PillButton(
-                          label: 'Music',
+                          label: _selectedSound != null ? 'Music ✓' : 'Music',
                           iconData: Icons.music_note_rounded,
                           onTap: _onMusicTap,
                         ),

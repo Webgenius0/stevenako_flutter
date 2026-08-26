@@ -2,9 +2,15 @@
 
 import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/home/data/post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_user_post_api/rx.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
+
 import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
+
+import 'package:stevenako_flutter/features/home/model/user_post_model.dart';
+
+
 
 import '../features/auth/log_out/data/rx.dart';
 import '../features/auth/login/data/rx.dart';
@@ -255,17 +261,16 @@ PostSetProfileRx postSetProfileRxObj = PostSetProfileRx(
 
 //
 //
-// GetBrandsRcesRx getBrandsRcesRxObj = GetBrandsRcesRx(
-//   empty: BrandsRceosModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<BrandsRceosModel>(),
-// );
-//
+final UserPostRx userPostRxObj = UserPostRx(
+  empty: UserPostModel(
+    success: false,
+    code: 0,
+    message: "",
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<UserPostModel>(),
+);
+
 // GetModelListRx getModelListRxObj = GetModelListRx(
 //   empty: GetCompanyModelListModel(
 //     success: false,
