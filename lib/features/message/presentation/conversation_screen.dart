@@ -1,14 +1,19 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
+import 'package:dart_pusher_channels/dart_pusher_channels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/message/model/conversation_details_model.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_bubble.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_input_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
@@ -38,6 +43,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isBlocked = false;
 
+  PusherChannelsClient? _pusherClient;
+  StreamSubscription? _pusherSubscription;
+  StreamSubscription? _connectionSubscription;
+  PrivateChannel? _myPrivateChannel;
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +57,79 @@ class _ConversationScreenState extends State<ConversationScreen> {
       getConversationMessagesRxObj.getConversationMessages(
         widget.conversationId!,
       );
+      _initPusher();
+    }
+  }
+
+  Future<void> _initPusher() async {
+    if (widget.conversationId == null || widget.conversationId!.isEmpty) return;
+
+    final String channelName = "private-chat.${widget.conversationId}";
+    final String? token = appData.read(kKeyAccessToken);
+
+    try {
+      // 1. Define options
+      final options = PusherChannelsOptions.fromHost(
+        scheme: 'ws',
+        host: 'stevenako.thesyndicates.team',
+        key: 'stevenakoappkey12345',
+        port: 8090,
+        metadata: PusherChannelsOptionsMetadata.byDefault(),
+      );
+
+      // 2. Create client
+      _pusherClient = PusherChannelsClient.websocket(
+        options: options,
+        connectionErrorHandler: (exception, trace, refresh) {
+          log("Pusher connection error: $exception");
+          refresh(); // auto reconnect
+        },
+      );
+
+      log('Conversation id: ${widget.conversationId}');
+
+      // 3. Create a private channel
+      _myPrivateChannel = _pusherClient?.privateChannel(
+        channelName,
+        authorizationDelegate:
+            EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
+              authorizationEndpoint: Uri.parse(
+                "https://stevenako.thesyndicates.team/api/user/broadcasting/auth",
+              ),
+              headers: {
+                "Authorization": "Bearer ${token ?? ''}",
+                "Accept": "application/json",
+              },
+            ),
+      );
+
+      // 4. Bind to event
+      _pusherSubscription = _myPrivateChannel?.bind('message.sent').listen((
+        event,
+      ) {
+        log("Message received: ${event.data}");
+        if (mounted &&
+            widget.conversationId != null &&
+            widget.conversationId!.isNotEmpty) {
+          getConversationMessagesRxObj.getConversationMessages(
+            widget.conversationId!,
+          );
+        }
+      });
+
+      // 5. Connect client
+      _pusherClient?.connect();
+
+      // 6. Auto-subscribe after connection established
+      _connectionSubscription = _pusherClient?.onConnectionEstablished.listen((
+        _,
+      ) {
+        log("Connection Established");
+        _myPrivateChannel?.subscribeIfNotUnsubscribed();
+        log("Successfully subscribed to private channel");
+      });
+    } catch (e, stack) {
+      log("Pusher Initialization Error: $e", stackTrace: stack);
     }
   }
 
@@ -395,8 +478,20 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   @override
   void dispose() {
+    _disconnectPusher();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _disconnectPusher() async {
+    try {
+      await _pusherSubscription?.cancel();
+      await _connectionSubscription?.cancel();
+      _myPrivateChannel?.unsubscribe();
+      await _pusherClient?.disconnect();
+    } catch (e) {
+      log("Pusher disconnect error: $e");
+    }
   }
 
   @override
