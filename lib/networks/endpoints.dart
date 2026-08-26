@@ -105,6 +105,7 @@ final class Endpoints {
       "/user/conversations/$cId/messages";
   static String deleteMessage(String messageId) =>
       "/user/conversations/messages/$messageId";
+  static String blockUser(String userId) => "/user/block/$userId";
 
   // ------------------- Mentors details start-------------------
   static String getRealsVideoAll([String? mentorId]) {

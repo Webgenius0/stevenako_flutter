@@ -30,6 +30,7 @@ import '../features/home/model/get_all_post_model.dart';
 import '../features/message/data/rx_delete_message/rx.dart';
 import '../features/message/data/rx_get_conversation_messages/rx.dart';
 import '../features/message/data/rx_post_send_message/rx.dart';
+import '../features/message/data/rx_post_block_user/rx.dart';
 import '../features/message/model/conversation_details_model.dart';
 import '../features/message/model/conversation_list_model.dart';
 
@@ -210,6 +211,11 @@ final PostSendMessageRx postSendMessageRxObj = PostSendMessageRx(
 );
 
 final DeleteMessageRx deleteMessageRxObj = DeleteMessageRx(
+  empty: {},
+  dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+final BlockUserRx postBlockUserRxObj = BlockUserRx(
   empty: {},
   dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
 );
