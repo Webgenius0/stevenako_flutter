@@ -7,7 +7,7 @@ String get url =>
 String get imageUrl => url;
 
 final class NetworkConstants {
-  NetworkConstants._();
+  NetworkConstants._(); 
   static const ACCEPT = "Accept";
   static const APP_KEY = "App-Key";
   static const ACCEPT_LANGUAGE = "Accept-Language";
