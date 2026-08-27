@@ -90,54 +90,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         // Custom Top Navigation Tab Bar Overlay (animates in on load)
         Positioned(
-          top: MediaQuery.of(context).padding.top + 12,
-          left: 16,
-          right: 16,
-          child: FadeTransition(
-            opacity: _entranceFade,
-            child: SlideTransition(
-              position: _entranceSlide,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Sliding Tab Selector Container
-                  Container(
-                    height: 40.h,
-                    padding: EdgeInsets.all(3.0.sp),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: Colors.white24, width: 1.0.w),
+          top: MediaQuery.of(context).padding.top + 8.h,
+          left: 16.w,
+          right: 16.w,
+          child: SafeArea(
+            bottom: false,
+            child: FadeTransition(
+              opacity: _entranceFade,
+              child: SlideTransition(
+                position: _entranceSlide,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Sliding Tab Selector Container
+                    Container(
+                      height: 40.h,
+                      padding: EdgeInsets.all(3.0.sp),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: Colors.white24, width: 1.0.w),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildSubTabButton(0, 'Video'),
+                          _buildSubTabButton(1, 'Photos'),
+                          _buildSubTabButton(2, 'Posts'),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+
+                    // Search & Filter Actions
+                    Row(
                       children: [
-                        _buildSubTabButton(0, 'Video'),
-                        _buildSubTabButton(1, 'Photos'),
-                        _buildSubTabButton(2, 'Posts'),
+                        _buildTopActionButton(
+                          'assets/images/search-normal.png',
+                          () {
+                            Get.to(SearchScren());
+                          },
+                        ),
+                        SizedBox(width: 24.w),
+                        _buildTopActionButton(
+                          'assets/images/Settings.png',
+                          () {},
+                        ),
                       ],
                     ),
-                  ),
-
-                  // Search & Filter Actions
-                  Row(
-                    children: [
-                      _buildTopActionButton(
-                        'assets/images/search-normal.png',
-                        () {
-                          // Your onTap code here
-                          Get.to(SearchScren());
-                        },
-                      ),
-
-                      SizedBox(width: 30.w),
-                      _buildTopActionButton(
-                        'assets/images/Settings.png',
-                        () {},
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

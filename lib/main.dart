@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:stevenako_flutter/services/internet_checker_service.dart';
 import 'package:stevenako_flutter/splash_screen.dart';
 import '/helpers/all_routes.dart';
 import 'helpers/di.dart';
@@ -18,6 +19,7 @@ import 'networks/dio/dio.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -26,8 +28,48 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('msg_notification_box');
   diSetup();
-  // initiInternetChecker();
+  await InternetCheckerService.init();
   DioSingleton.instance.create();
+
+  // Override global ErrorWidget.builder to prevent red screen of death
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Container(
+      color: const Color(0xFF0F0E17),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(
+            Icons.wifi_off_rounded,
+            color: Colors.white54,
+            size: 42,
+          ),
+          SizedBox(height: 14),
+          Text(
+            'Unable to load content',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.none,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Please check your network connection and try again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 13,
+              fontWeight: FontWeight.normal,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
+    );
+  };
 
   // Set status bar color
   SystemChrome.setSystemUIOverlayStyle(

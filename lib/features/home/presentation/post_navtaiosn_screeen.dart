@@ -1,8 +1,11 @@
+import 'package:auto_animated/auto_animated.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/helpers/ui_helpers.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
@@ -182,8 +185,17 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
         width: 36,
         height: 36,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: Colors.white.withValues(alpha: 0.1),
+        placeholder: (context, url) => Shimmer.fromColors(
+          baseColor: const Color(0xFF1E1E2C),
+          highlightColor: const Color(0xFF2E2E42),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF1E1E2C),
+            ),
+          ),
         ),
         errorWidget: (context, url, error) => Container(
           color: const Color(0xFF2A2A3A),
@@ -244,17 +256,14 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
             imageUrl: fullUrl,
             width: double.infinity,
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              height: 140.h,
-              color: Colors.white.withValues(alpha: 0.05),
-              child: const Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF8B5CF6),
-                  ),
+            placeholder: (context, url) => Shimmer.fromColors(
+              baseColor: const Color(0xFF1E1E2C),
+              highlightColor: const Color(0xFF2E2E42),
+              child: Container(
+                height: 180.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E2C),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
             ),
@@ -276,6 +285,68 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return const PostsShimmerLoader();
+            }
+
+            if (snapshot.hasError) {
+              final String cleanError =
+                  ToastUtil.cleanErrorMessage(snapshot.error);
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Container(
+                    padding: EdgeInsets.all(24.r),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.wifi_off_rounded,
+                          color: const Color(0xFFEF4444),
+                          size: 44.r,
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          'Unable to load posts',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          cleanError,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13.sp,
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        ElevatedButton.icon(
+                          onPressed: _refreshPosts,
+                          icon: Icon(Icons.refresh_rounded, size: 18.r),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B5CF6),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             }
 
             final livePosts = snapshot.data?.data?.posts ?? [];
@@ -336,12 +407,19 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
               color: const Color(0xFF8B5CF6),
               backgroundColor: Colors.black,
               onRefresh: _refreshPosts,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
+              child: LiveList.options(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                options: const LiveOptions(
+                  delay: Duration(milliseconds: 40),
+                  showItemInterval: Duration(milliseconds: 80),
+                  showItemDuration: Duration(milliseconds: 250),
+                  visibleFraction: 0.05,
+                ),
                 itemCount: livePosts.length,
-                separatorBuilder: (context, index) => SizedBox(height: 16.h),
-                itemBuilder: (context, index) {
+                itemBuilder: (context, index, animation) {
                   final Post postModel = livePosts[index];
                   final int postId = postModel.id ?? index;
                   final bool isLiked = _likedPostIds.contains(postId) || (postModel.isLiked == true);
@@ -356,7 +434,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                   }
 
                   final String avatarUrl = postModel.user?.avatar ?? '';
-                  final String userName = postModel.user?.name ?? postModel.user?.username ?? 'Stevenako User';
+                  final String userName = postModel.user?.name ?? postModel.user?.username ?? 'Community Member';
                   final String timeText = postModel.createdAt != null
                       ? '${postModel.createdAt!.hour}:${postModel.createdAt!.minute} '
                       : 'Just now';
@@ -369,29 +447,41 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                     'comments': <Map<String, String>>[],
                   };
 
-                  return _buildSinglePostCard(
-                    index: index,
-                    postId: postId,
-                    avatarUrl: avatarUrl,
-                    userName: userName,
-                    timeText: timeText,
-                    captionText: captionText,
-                    mediaUrl: mediaUrl,
-                    isLiked: isLiked,
-                    likesCount: likesCount,
-                    commentsCount: commentsCount,
-                    postDataForSheet: postDataForSheet,
-                    onLikeTap: () {
-                      setState(() {
-                        if (_likedPostIds.contains(postId)) {
-                          _likedPostIds.remove(postId);
-                          _extraLikes[postId] = (_extraLikes[postId] ?? 0) - 1;
-                        } else {
-                          _likedPostIds.add(postId);
-                          _extraLikes[postId] = (_extraLikes[postId] ?? 0) + 1;
-                        }
-                      });
-                    },
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.1),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 16.h),
+                        child: _buildSinglePostCard(
+                          index: index,
+                          postId: postId,
+                          avatarUrl: avatarUrl,
+                          userName: userName,
+                          timeText: timeText,
+                          captionText: captionText,
+                          mediaUrl: mediaUrl,
+                          isLiked: isLiked,
+                          likesCount: likesCount,
+                          commentsCount: commentsCount,
+                          postDataForSheet: postDataForSheet,
+                          onLikeTap: () {
+                            setState(() {
+                              if (_likedPostIds.contains(postId)) {
+                                _likedPostIds.remove(postId);
+                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) - 1;
+                              } else {
+                                _likedPostIds.add(postId);
+                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) + 1;
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),

@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../model/get_payment_dashboard_model.dart';
 
 class DashboardStatsGrid extends StatelessWidget {
-  const DashboardStatsGrid({super.key});
+  final DashboardStats? stats;
+
+  const DashboardStatsGrid({super.key, this.stats});
 
   @override
   Widget build(BuildContext context) {
+    final String totalViewsVal =
+        stats?.totalViews?.formatted ?? stats?.totalViews?.value?.toString() ?? '0';
+    final String totalViewsTrend =
+        stats?.totalViews?.changePercentage ?? '+0%';
+
+    final String peakViewersVal =
+        stats?.peakViewers?.formatted ?? stats?.peakViewers?.value?.toString() ?? '0';
+    final String peakViewersTrend =
+        stats?.peakViewers?.changePercentage ?? '+0%';
+
+    final String durationVal =
+        stats?.duration?.value?.toString() ?? stats?.duration?.formatted ?? '0h 0m';
+    final String durationTrend =
+        stats?.duration?.changePercentage ?? '+0%';
+
+    final String newFollowersVal =
+        stats?.newFollowers?.formatted ?? stats?.newFollowers?.value?.toString() ?? '0';
+    final String newFollowersTrend =
+        stats?.newFollowers?.changePercentage ?? '+0%';
+
     return Column(
       children: [
         Row(
@@ -15,8 +38,8 @@ class DashboardStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 imagePath: 'assets/images/totall_view.png',
                 label: 'Total Views',
-                value: '15.4K',
-                trend: '12%',
+                value: totalViewsVal,
+                trend: totalViewsTrend,
               ),
             ),
             SizedBox(width: 12.w),
@@ -24,8 +47,8 @@ class DashboardStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 imagePath: 'assets/images/peak_viewer.png',
                 label: 'Peak Viewers',
-                value: '2.1K',
-                trend: '12%',
+                value: peakViewersVal,
+                trend: peakViewersTrend,
               ),
             ),
           ],
@@ -37,8 +60,8 @@ class DashboardStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 imagePath: 'assets/images/duration.png',
                 label: 'Duration',
-                value: '1h 30m',
-                trend: '12%',
+                value: durationVal,
+                trend: durationTrend,
               ),
             ),
             SizedBox(width: 12.w),
@@ -46,8 +69,8 @@ class DashboardStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 imagePath: 'assets/images/new_follwer.png',
                 label: 'New Followers',
-                value: '+245',
-                trend: '12%',
+                value: newFollowersVal,
+                trend: newFollowersTrend,
               ),
             ),
           ],
@@ -81,14 +104,23 @@ class DashboardStatsGrid extends StatelessWidget {
                 width: 16.w,
                 height: 16.h,
                 fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white70,
+                  size: 16.sp,
+                ),
               ),
               SizedBox(width: 6.w),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  color: Colors.white54,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w400,
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: Colors.white54,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
             ],
@@ -98,12 +130,16 @@ class DashboardStatsGrid extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                value,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Row(

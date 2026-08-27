@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 // ==========================================
@@ -302,6 +303,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
   late bool _isLiked;
   late bool _isPressed;
   late bool _isFollowing;
+  bool _isFollowLoading = false;
   late int _likeCount;
 
   // Staggered grid entrance
@@ -496,10 +498,34 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
     );
   }
 
-  void _toggleFollow() {
+  void _toggleFollow() async {
+    final int? targetUserId = widget.post.user?.id;
+    if (targetUserId == null) return;
+    if (_isFollowLoading) return;
+
+    final bool previousState = _isFollowing;
+
     setState(() {
       _isFollowing = !_isFollowing;
+      _isFollowLoading = true;
     });
+
+    try {
+      await postFlowRxObj.post(userId: targetUserId);
+      if (mounted) {
+        setState(() {
+          _isFollowLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isFollowing = previousState;
+          _isFollowLoading = false;
+        });
+        ToastUtil.showShortToast(e.toString());
+      }
+    }
   }
 
   @override
@@ -590,56 +616,58 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                               ),
                             ),
 
-                          // Follow badge, top-right — fades/scales out once tapped
+                          // Follow / Following badge, top-right — toggleable button, never hidden!
                           Positioned(
                             top: 10.r,
                             right: 10.r,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 220),
-                              transitionBuilder: (child, anim) =>
-                                  ScaleTransition(
-                                scale: anim,
-                                child: FadeTransition(
-                                  opacity: anim,
-                                  child: child,
+                            child: GestureDetector(
+                              onTap: _toggleFollow,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 4.h,
                                 ),
-                              ),
-                              child: _isFollowing
-                                  ? const SizedBox.shrink(
-                                      key: ValueKey('hidden'),
-                                    )
-                                  : GestureDetector(
-                                      key: const ValueKey('badge'),
-                                      onTap: _toggleFollow,
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 10.w,
-                                          vertical: 4.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFF3F55),
-                                          borderRadius: BorderRadius.circular(
-                                            14.r,
+                                decoration: BoxDecoration(
+                                  color: _isFollowing
+                                      ? Colors.black.withValues(alpha: 0.55)
+                                      : const Color(0xFFFF3F55),
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  border: Border.all(
+                                    color: _isFollowing
+                                        ? Colors.white.withValues(alpha: 0.3)
+                                        : Colors.transparent,
+                                    width: 1,
+                                  ),
+                                  boxShadow: _isFollowing
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: const Color(0xFFFF3F55)
+                                                .withValues(alpha: 0.4),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
                                           ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFFFF3F55)
-                                                  .withValues(alpha: 0.4),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
+                                        ],
+                                ),
+                                child: _isFollowLoading
+                                    ? SizedBox(
+                                        width: 10.w,
+                                        height: 10.h,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: Colors.white,
                                         ),
-                                        child: Text(
-                                          'follow',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10.sp,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      )
+                                    : Text(
+                                        _isFollowing ? 'Following' : 'Follow',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
 

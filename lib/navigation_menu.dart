@@ -1,5 +1,7 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
@@ -50,7 +52,7 @@ class _TactileFABState extends State<TactileFAB> {
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7C3AED).withOpacity(0.4),
+                color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -120,7 +122,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -151,122 +153,178 @@ class _NavigationMenuState extends State<NavigationMenu> {
     );
   }
 
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text(
+            'Exit App?',
+            style: TextStyle(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: Text(
+              'Are you sure you want to exit the app?',
+              style: TextStyle(
+                fontSize: 13.sp,
+              ),
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Exit'),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      extendBody: true,
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF1E1B2E), Color(0xFF0F0E17)],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        if (_isMenuOpen) {
+          setState(() {
+            _isMenuOpen = false;
+          });
+          return;
+        }
+
+        final bool shouldExit = await _showExitConfirmationDialog(context);
+        if (shouldExit) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        extendBody: true,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            // Background Gradient
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1E1B2E), Color(0xFF0F0E17)],
+                ),
               ),
             ),
-          ),
-          IndexedStack(index: _currentIndex, children: _screens),
-          // Backdrop blur/dim when FAB menu is open
-          IgnorePointer(
-            ignoring: !_isMenuOpen,
-            child: AnimatedOpacity(
-              opacity: _isMenuOpen ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isMenuOpen = false;
-                  });
-                },
-                child: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-                    child: Container(color: Colors.black.withOpacity(0.4)),
+            IndexedStack(index: _currentIndex, children: _screens),
+            // Backdrop blur/dim when FAB menu is open
+            IgnorePointer(
+              ignoring: !_isMenuOpen,
+              child: AnimatedOpacity(
+                opacity: _isMenuOpen ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isMenuOpen = false;
+                    });
+                  },
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                      child: Container(color: Colors.black.withValues(alpha: 0.4)),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          // Staggered menu popup buttons above the FAB
-          Positioned(
-            bottom: bottomPadding + 112.0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              ignoring: !_isMenuOpen,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  StaggeredMenuItem(
-                    isVisible: _isMenuOpen,
-                    delay: const Duration(milliseconds: 160),
-                    onTap: () {
-                      _closeMenuThen(() {
-                        Get.to(() => const VideoUploadScreen(tap: 'Upload Video',));
-                      });
-                    },
-                    child: _buildMenuButton(
-                      'assets/images/video.png',
-                      'Upload Video',
+            // Staggered menu popup buttons above the FAB
+            Positioned(
+              bottom: bottomPadding + 112.0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                ignoring: !_isMenuOpen,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    StaggeredMenuItem(
+                      isVisible: _isMenuOpen,
+                      delay: const Duration(milliseconds: 160),
+                      onTap: () {
+                        _closeMenuThen(() {
+                          Get.to(() => const VideoUploadScreen(tap: 'Upload Video',));
+                        });
+                      },
+                      child: _buildMenuButton(
+                        'assets/images/video.png',
+                        'Upload Video',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  StaggeredMenuItem(
-                    isVisible: _isMenuOpen,
-                    delay: const Duration(milliseconds: 80),
-                    onTap: () {
-                      _closeMenuThen(() {
-                        // Get.to(UploadPostScreen());
-                        Get.to(() =>   UploadPhotoScreen(tap: 'Upload Photos',));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Upload Photos tapped!'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      });
-                    },
-                    child: _buildMenuButton(
-                      'assets/images/uploand.png',
-                      'Upload Photos',
+                    const SizedBox(height: 12),
+                    StaggeredMenuItem(
+                      isVisible: _isMenuOpen,
+                      delay: const Duration(milliseconds: 80),
+                      onTap: () {
+                        _closeMenuThen(() {
+                          // Get.to(UploadPostScreen());
+                          Get.to(() =>   UploadPhotoScreen(tap: 'Upload Photos',));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Upload Photos tapped!'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        });
+                      },
+                      child: _buildMenuButton(
+                        'assets/images/uploand.png',
+                        'Upload Photos',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  StaggeredMenuItem(
-                    isVisible: _isMenuOpen,
-                    delay: const Duration(milliseconds: 0),
-                    onTap: () {
-                      _closeMenuThen(() {
-                        Get.to(() =>   CreatAPostScreeen(thumbnailPath: 'Create a Post',));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Create a Post tapped!'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      });
-                    },
-                    child: _buildMenuButton(
-                      'assets/icons/psotOne.png',
-                      'Create a Post',
+                    const SizedBox(height: 12),
+                    StaggeredMenuItem(
+                      isVisible: _isMenuOpen,
+                      delay: const Duration(milliseconds: 0),
+                      onTap: () {
+                        _closeMenuThen(() {
+                          Get.to(() =>   CreatAPostScreeen(thumbnailPath: 'Create a Post',));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Create a Post tapped!'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        });
+                      },
+                      child: _buildMenuButton(
+                        'assets/icons/psotOne.png',
+                        'Create a Post',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _currentIndex,
-        isMenuOpen: _isMenuOpen,
-        onTap: _onTabTapped,
-        onFABTap: _onFABTapped,
+          ],
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentIndex,
+          isMenuOpen: _isMenuOpen,
+          onTap: _onTabTapped,
+          onFABTap: _onFABTapped,
+        ),
       ),
     );
   }

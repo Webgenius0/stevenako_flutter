@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +37,14 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = true;
   bool _isLoading = false;
 
+  // Rate Limiting variables
+  int _failedAttempts = 0;
+  int _lockoutSeconds = 0;
+  Timer? _coolDownTimer;
+
+  static const int _maxAllowedAttempts = 3;
+  static const int _lockoutDurationSeconds = 60;
+
   @override
   void initState() {
     super.initState();
@@ -55,8 +64,31 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _coolDownTimer?.cancel();
     _signinRx.dataFetcher.close();
     super.dispose();
+  }
+
+  void _startLockoutTimer() {
+    _coolDownTimer?.cancel();
+    setState(() {
+      _lockoutSeconds = _lockoutDurationSeconds;
+    });
+
+    _coolDownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_lockoutSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _lockoutSeconds = 0;
+          _failedAttempts = 0;
+        });
+      } else {
+        setState(() {
+          _lockoutSeconds--;
+        });
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -108,7 +140,13 @@ class _LoginScreenState extends State<LoginScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> _handleLogin() async {
-    // Prevent multiple API requests
+    // Prevent login if locked out or loading
+    if (_lockoutSeconds > 0) {
+      ToastUtil.showShortToast(
+          'Too many failed attempts. Please wait $_lockoutSeconds seconds.');
+      return;
+    }
+
     if (_isLoading) return;
 
     // Hide keyboard
@@ -145,17 +183,34 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (result.success == true) {
+        _failedAttempts = 0;
+        _coolDownTimer?.cancel();
         NavigationService.navigateToReplacement(Routes.navigationMenu);
+      } else {
+        _handleFailedAttempt();
       }
     } catch (e) {
       if (!mounted) return;
-      ToastUtil.showShortToast('Unable to sign in. Please check your credentials.');
+      _handleFailedAttempt();
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _handleFailedAttempt() {
+    _failedAttempts++;
+    if (_failedAttempts >= _maxAllowedAttempts) {
+      _startLockoutTimer();
+      ToastUtil.showShortToast(
+          'Too many failed login attempts. Please wait 60 seconds.');
+    } else {
+      final remaining = _maxAllowedAttempts - _failedAttempts;
+      ToastUtil.showShortToast(
+          'Incorrect email or password. $remaining attempt${remaining == 1 ? '' : 's'} remaining.');
     }
   }
 
@@ -189,6 +244,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isButtonDisabled = _isLoading || _lockoutSeconds > 0;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -277,7 +334,50 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          SizedBox(height: 36.h),
+                          SizedBox(height: 32.h),
+
+                          // ------------------------------------------------
+                          // RATE LIMIT LOCKOUT BANNER
+                          // ------------------------------------------------
+                          if (_lockoutSeconds > 0) ...[
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF3F55)
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border.all(
+                                  color: const Color(0xFFFF3F55)
+                                      .withValues(alpha: 0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.timer_outlined,
+                                    color: const Color(0xFFFF3F55),
+                                    size: 22.sp,
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Text(
+                                      'Too many failed attempts. Try again in 00:${_lockoutSeconds.toString().padLeft(2, "0")}',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFFF3F55),
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                          ],
 
                           // ------------------------------------------------
                           // EMAIL
@@ -345,12 +445,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 40.h),
 
                           // ------------------------------------------------
-                          // LOGIN BUTTON WITH CUPERTINO LOADING
+                          // LOGIN BUTTON WITH RATE LIMITING & LOADING
                           // ------------------------------------------------
                           CustomButton(
-                            text: 'Login',
+                            text: _lockoutSeconds > 0
+                                ? 'Locked (00:${_lockoutSeconds.toString().padLeft(2, "0")})'
+                                : 'Login',
                             isLoading: _isLoading,
-                            onTap: _isLoading ? null : _handleLogin,
+                            onTap: isButtonDisabled ? null : _handleLogin,
                           ),
 
                           SizedBox(height: 24.h),
@@ -398,7 +500,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               SocialLoginButton(
                                 iconPath: AppIcons.google,
-                                onTap: _isLoading
+                                onTap: isButtonDisabled
                                     ? () {}
                                     : () {
                                         // Google Login
@@ -409,7 +511,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               SocialLoginButton(
                                 iconPath: AppIcons.apple,
-                                onTap: _isLoading
+                                onTap: isButtonDisabled
                                     ? () {}
                                     : () {
                                         // Apple Login
@@ -452,7 +554,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
               ],
             ),
           ),

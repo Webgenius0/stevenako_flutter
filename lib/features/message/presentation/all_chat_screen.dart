@@ -1,3 +1,4 @@
+import 'package:auto_animated/auto_animated.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,7 @@ import 'package:stevenako_flutter/features/message/presentation/conversation_scr
 import 'package:stevenako_flutter/features/message/widgets/chat_list_item.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class AllChatScreen extends StatefulWidget {
@@ -114,13 +116,15 @@ class _AllChatScreenState extends State<AllChatScreen> {
   }
 
   Widget _buildErrorState(String errorMessage) {
+    final String cleanedError = ToastUtil.cleanErrorMessage(errorMessage);
+
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 32.w),
         child: Container(
           padding: EdgeInsets.all(24.r),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E2E).withValues(alpha: 0.75),
+            color: const Color(0xFF1E1E2C).withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(
               color: const Color(0xFFEF4444).withValues(alpha: 0.3),
@@ -131,13 +135,13 @@ class _AllChatScreenState extends State<AllChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.error_outline_rounded,
+                Icons.wifi_off_rounded,
                 color: const Color(0xFFEF4444),
                 size: 48.sp,
               ),
               SizedBox(height: 12.h),
               Text(
-                'Failed to load messages',
+                'Unable to load messages',
                 style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 16.sp,
@@ -146,9 +150,7 @@ class _AllChatScreenState extends State<AllChatScreen> {
               ),
               SizedBox(height: 8.h),
               Text(
-                errorMessage.isNotEmpty
-                    ? errorMessage
-                    : 'Something went wrong while fetching your conversations.',
+                cleanedError,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF9CA3AF),
@@ -589,13 +591,19 @@ class _AllChatScreenState extends State<AllChatScreen> {
                               onRefresh: () async {
                                 await getAllMessageListRxObj.getMessages();
                               },
-                              child: ListView.builder(
+                              child: LiveList.options(
                                 physics: const AlwaysScrollableScrollPhysics(
                                   parent: BouncingScrollPhysics(),
                                 ),
                                 padding: EdgeInsets.only(bottom: 24.h),
+                                options: const LiveOptions(
+                                  delay: Duration(milliseconds: 40),
+                                  showItemInterval: Duration(milliseconds: 70),
+                                  showItemDuration: Duration(milliseconds: 250),
+                                  visibleFraction: 0.05,
+                                ),
                                 itemCount: filtered.length,
-                                itemBuilder: (context, index) {
+                                itemBuilder: (context, index, animation) {
                                   final conversation = filtered[index];
                                   final otherUser = conversation.otherUser;
                                   final latestMessage =
@@ -609,27 +617,36 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                         conversation.updatedAt,
                                   );
 
-                                  return ChatListItem(
-                                    avatarUrl: avatarUrl,
-                                    name: name,
-                                    message: message,
-                                    time: timeStr,
-                                    isActive: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ConversationScreen(
-                                                name: name,
-                                                avatarUrl: avatarUrl,
-                                                isActive: true,
-                                                conversationId:
-                                                    conversation.id?.toString(),
-                                              ),
-                                        ),
-                                      );
-                                    },
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0, 0.12),
+                                        end: Offset.zero,
+                                      ).animate(animation),
+                                      child: ChatListItem(
+                                        avatarUrl: avatarUrl,
+                                        name: name,
+                                        message: message,
+                                        time: timeStr,
+                                        isActive: true,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ConversationScreen(
+                                                    name: name,
+                                                    avatarUrl: avatarUrl,
+                                                    isActive: true,
+                                                    conversationId:
+                                                        conversation.id?.toString(),
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   );
                                 },
                               ),

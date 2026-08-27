@@ -500,19 +500,21 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Pinned Top Header Row in SafeArea (Never hides when scrolling)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: _buildHeader(accentPurple, followBtnColor),
+            ),
+
             // Scrollable Content area
             Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top User Header Row
-                    _buildHeader(accentPurple, followBtnColor),
-                    SizedBox(height: 16.h),
-
                     // Main Post Image (Instagram-style Multi-Image Carousel)
                     _buildPostImage(),
                     SizedBox(height: 14.h),

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
+import '../../../../helpers/di.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/rx_base.dart';
 import '../../model/user_profile_model.dart';
@@ -39,6 +40,14 @@ final class GetUserProfileRx extends RxResponseInt<UserProfileModel> {
 
   @override
   UserProfileModel handleSuccessWithReturn(UserProfileModel data) {
+    final int? userId = data.data?.user?.id;
+    if (userId != null) {
+      appData.write('user_id', userId);
+      log('=== Logged In User ID Saved to appData: $userId ===');
+      if (kDebugMode) {
+        print('=== Logged In User ID Saved to appData: $userId ===');
+      }
+    }
     dataFetcher.sink.add(data);
     return data;
   }
