@@ -1,38 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../model/get_payment_dashboard_model.dart';
 
 class DashboardTopContent extends StatelessWidget {
-  const DashboardTopContent({super.key});
+  final List<TopContent>? topContent;
+
+  const DashboardTopContent({super.key, this.topContent});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> contents = [
-      {
-        'rank': '1',
-        'title': 'Golden hour in Barcelona',
-        'subtitle': 'Video · 2.4M views',
-        'value': '€2,400',
-      },
-      {
-        'rank': '2',
-        'title': '5-ingredient pasta that changed my',
-        'subtitle': 'Video · 1.8M views',
-        'value': '€1,800',
-      },
-      {
-        'rank': '3',
-        'title': 'Creator economy thread',
-        'subtitle': 'Post · 890K views',
-        'value': '€890',
-      },
-      {
-        'rank': '4',
-        'title': 'Lisbon travel photos',
-        'subtitle': 'Photos · 650K views',
-        'value': '€650',
-      },
-    ];
+    final List<TopContent> items = topContent ?? [];
+
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFA78BFA).withValues(alpha: 0.02),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: const Color(0xFFA78BFA).withValues(alpha: 0.25),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Top Content',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'No top content available yet',
+              style: GoogleFonts.inter(
+                color: Colors.white38,
+                fontSize: 13.sp,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: EdgeInsets.all(20.w),
@@ -58,14 +71,21 @@ class DashboardTopContent extends StatelessWidget {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: contents.length,
+            itemCount: items.length,
             separatorBuilder: (context, index) => SizedBox(height: 16.h),
             itemBuilder: (context, index) {
-              final item = contents[index];
+              final item = items[index];
+              final String rankStr = '${item.rank ?? (index + 1)}';
+              final String titleStr = item.title ?? 'Untitled Post';
+              final String typeStr = item.typeLabel ?? item.type ?? 'Post';
+              final String viewsStr = item.formattedViews ?? '${item.viewsCount ?? 0} views';
+              final String subtitleStr = '$typeStr · $viewsStr';
+              final String earningsStr = item.formattedEarnings ?? '€${item.earnings ?? 0}';
+
               return Row(
                 children: [
                   Text(
-                    item['rank']!,
+                    rankStr,
                     style: GoogleFonts.inter(
                       color: Colors.white30,
                       fontSize: 14.sp,
@@ -78,7 +98,7 @@ class DashboardTopContent extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item['title']!,
+                          titleStr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
@@ -89,7 +109,7 @@ class DashboardTopContent extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          item['subtitle']!,
+                          subtitleStr,
                           style: GoogleFonts.inter(
                             color: Colors.white54,
                             fontSize: 12.sp,
@@ -100,7 +120,7 @@ class DashboardTopContent extends StatelessWidget {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    item['value']!,
+                    earningsStr,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF10B981),
                       fontSize: 14.sp,

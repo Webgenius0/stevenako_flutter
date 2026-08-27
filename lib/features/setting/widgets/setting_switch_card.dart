@@ -1,9 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:stevenako_flutter/assets_helper/app_colors.dart';
 
-class SettingSwitchCard extends StatelessWidget {
+class SettingSwitchCard extends StatefulWidget {
   final String title;
   final String description;
   final bool value;
@@ -18,60 +18,87 @@ class SettingSwitchCard extends StatelessWidget {
   });
 
   @override
+  State<SettingSwitchCard> createState() => _SettingSwitchCardState();
+}
+
+class _SettingSwitchCardState extends State<SettingSwitchCard> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF27273A).withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: () => widget.onChanged(!widget.value),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: widget.value
+                ? const Color(0xFF7C3AED).withValues(alpha: 0.12)
+                : const Color(0xFF27273A).withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: widget.value
+                  ? const Color(0xFF7C3AED).withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.08),
+              width: 1.2,
+            ),
+            boxShadow: widget.value
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  Transform.scale(
+                    scale: 0.85,
+                    child: CupertinoSwitch(
+                      value: widget.value,
+                      onChanged: widget.onChanged,
+                      activeTrackColor: const Color(0xFF7C3AED),
+                      inactiveTrackColor: const Color(0xFF3F3F56),
+                      thumbColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-              Transform.scale(
-                scale: 0.85,
-                child: Switch(
-                  value: value,
-                  onChanged: onChanged,
-                  activeColor: Color(0xFF8B5CF6),
-                  activeTrackColor: Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                  inactiveThumbColor: Color(0xFF9CA3AF),
-                  inactiveTrackColor: AppColor.c797A7C,
-                  trackOutlineColor: WidgetStateProperty.all(
-                    Colors.transparent,
-                  ),
+              SizedBox(height: 6.h),
+              Text(
+                widget.description,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 13.sp,
+                  height: 1.4,
                 ),
               ),
             ],
           ),
-
-          Text(
-            description,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF94A3B8),
-              fontSize: 13.sp,
-              height: 1.4,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

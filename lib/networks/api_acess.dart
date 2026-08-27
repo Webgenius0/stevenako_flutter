@@ -9,6 +9,9 @@ import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dar
 import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
 
 import 'package:stevenako_flutter/features/home/model/user_post_model.dart';
+import 'package:stevenako_flutter/features/profile/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/data/rx_get_my_post_vidio_api/rx.dart';
+import 'package:stevenako_flutter/features/profile/model/get_my_vidoe_post_model.dart';
 
 
 
@@ -34,6 +37,11 @@ import '../features/message/data/rx_post_block_user/rx.dart';
 import '../features/message/model/conversation_details_model.dart';
 import '../features/message/model/conversation_list_model.dart';
 
+import '../features/profile/data/rx_desbroad_payment_api/rx.dart';
+import '../features/profile/model/get_payment_dashboard_model.dart';
+import '../features/profile/data/rx_flow_user_post_api/rx.dart';
+import '../features/profile/model/get_my_photo_post_model.dart';
+import '../features/profile/model/post_flow_model.dart';
 import '../features/setting/data/rx_change_pass/rx.dart';
 import '../features/setting/data/rx_delete_user/rx.dart';
 import '../features/setting/data/rx_get_user_profile/rx.dart';
@@ -145,19 +153,53 @@ final PostNotificationSettingsRx postNotificationSettingsRxObj =
       dataFetcher: BehaviorSubject<NotificationSettingsModel>(),
     );
 
-//
-//
-// OtpVerifyRx otpVerifyRxObj = OtpVerifyRx(
-//   empty: OtpVerifyModel(
-//     success: false,
-//     code: 0,
-//     message: "",
-//     data: null,
-//     timestamp: "",
-//   ),
-//   dataFetcher: BehaviorSubject<OtpVerifyModel>(),
-// );
-//
+
+
+GetMyPhotoPostRx getMyPhotoPostRxObj = GetMyPhotoPostRx(
+  empty: GetMyPhotoPostModel(
+    success: false,
+    code: 0,
+    message: "",
+    data: null,
+
+  ),
+  dataFetcher: BehaviorSubject<GetMyPhotoPostModel>(),
+);
+
+
+GetMyVideoPostRx getMyVideoPostRxObj = GetMyVideoPostRx(
+  empty: GetMyVodeoPostModel(
+    success: false,
+    code: 0,
+    message: "",
+    data: null,
+
+  ),
+  dataFetcher: BehaviorSubject<GetMyVodeoPostModel>(),
+);
+
+PostFlowRx postFlowRxObj = PostFlowRx(
+  empty: PostFlowModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<PostFlowModel>(),
+);
+
+GetPaymentDashboardRx getPaymentDashboardRxObj = GetPaymentDashboardRx(
+  empty: GetPaymentDashboardModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetPaymentDashboardModel>(),
+);
+
+
+
 final GetAllPostRx getAllPostRxObj = GetAllPostRx(
   empty: GetAllPostModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<GetAllPostModel>(),

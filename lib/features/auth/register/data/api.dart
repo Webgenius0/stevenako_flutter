@@ -111,6 +111,7 @@ final class RegisterApi {
 
     final res = response.data;
 
+
     if (res is! Map<String, dynamic>) {
       throw Exception('Invalid response format');
     }

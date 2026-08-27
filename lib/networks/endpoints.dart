@@ -1,7 +1,10 @@
-// ignore_for_file: constant_identifier_names, unnecessary_string_interpolations
+// ignore_for_file: constant_identifier_names
 
-const String url = "https://stevenako.thesyndicates.team/api";
-const String imageUrl = "${url}";
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+String get url =>
+    dotenv.env['BASE_URL'] ?? "https://stevenako.thesyndicates.team/api";
+String get imageUrl => url;
 
 final class NetworkConstants {
   NetworkConstants._();
@@ -96,6 +99,10 @@ final class Endpoints {
   static String tagPeople(String query) =>
       "/user/search?query=${Uri.encodeQueryComponent(query)}";
   static String userPost() => "/user/posts";
+  static String myPhotoPost() => "/user/my-posts-photos";
+  static String myVideoPost() => "/user/my-posts-videos";
+  static String postFlow(int userId) => "/user/follow/$userId";
+  static String userPaymentDesbroad(int userId) => "/user/creator/dashboard";
   static String getSound() => "/user/sounds";
   static String myBlockedUsers() => "/user/my-blocked";
   static String blockOrUnblockUser(String userId) => "/user/block/$userId";
