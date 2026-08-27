@@ -1,16 +1,21 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
-
+import 'package:dart_pusher_channels/dart_pusher_channels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/message/model/conversation_details_model.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_bubble.dart';
 import 'package:stevenako_flutter/features/message/widgets/chat_input_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ConversationScreen extends StatefulWidget {
@@ -18,6 +23,7 @@ class ConversationScreen extends StatefulWidget {
   final String avatarUrl;
   final bool isActive;
   final String? conversationId;
+  final String? userId;
 
   const ConversationScreen({
     super.key,
@@ -25,6 +31,7 @@ class ConversationScreen extends StatefulWidget {
     required this.avatarUrl,
     this.isActive = false,
     this.conversationId,
+    this.userId,
   });
 
   @override
@@ -34,15 +41,110 @@ class ConversationScreen extends StatefulWidget {
 class _ConversationScreenState extends State<ConversationScreen> {
   final List<Map<String, dynamic>> _sentMessages = [];
   final ScrollController _scrollController = ScrollController();
+  bool _isBlocked = false;
+
+  PusherChannelsClient? _pusherClient;
+  StreamSubscription? _pusherSubscription;
+  StreamSubscription? _connectionSubscription;
+  PrivateChannel? _myPrivateChannel;
 
   @override
   void initState() {
     super.initState();
     _sentMessages.clear();
+    _checkBlockedStatus();
     if (widget.conversationId != null && widget.conversationId!.isNotEmpty) {
       getConversationMessagesRxObj.getConversationMessages(
         widget.conversationId!,
       );
+      _initPusher();
+    }
+  }
+
+  Future<void> _initPusher() async {
+    if (widget.conversationId == null || widget.conversationId!.isEmpty) return;
+
+    final String channelName = "private-chat.${widget.conversationId}";
+    final String? token = appData.read(kKeyAccessToken);
+
+    try {
+      // 1. Define options
+      final options = PusherChannelsOptions.fromHost(
+        scheme: 'ws',
+        host: 'stevenako.thesyndicates.team',
+        key: 'stevenakoappkey12345',
+        port: 8090,
+        metadata: PusherChannelsOptionsMetadata.byDefault(),
+      );
+
+      // 2. Create client
+      _pusherClient = PusherChannelsClient.websocket(
+        options: options,
+        connectionErrorHandler: (exception, trace, refresh) {
+          log("Pusher connection error: $exception");
+          refresh(); // auto reconnect
+        },
+      );
+
+      log('Conversation id: ${widget.conversationId}');
+
+      // 3. Create a private channel
+      _myPrivateChannel = _pusherClient?.privateChannel(
+        channelName,
+        authorizationDelegate:
+            EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
+              authorizationEndpoint: Uri.parse(
+                "https://stevenako.thesyndicates.team/api/user/broadcasting/auth",
+              ),
+              headers: {
+                "Authorization": "Bearer ${token ?? ''}",
+                "Accept": "application/json",
+              },
+            ),
+      );
+
+      // 4. Bind to event
+      _pusherSubscription = _myPrivateChannel?.bind('message.sent').listen((
+        event,
+      ) {
+        log("Message received: ${event.data}");
+        if (mounted &&
+            widget.conversationId != null &&
+            widget.conversationId!.isNotEmpty) {
+          getConversationMessagesRxObj.getConversationMessages(
+            widget.conversationId!,
+          );
+        }
+      });
+
+      // 5. Connect client
+      _pusherClient?.connect();
+
+      // 6. Auto-subscribe after connection established
+      _connectionSubscription = _pusherClient?.onConnectionEstablished.listen((
+        _,
+      ) {
+        log("Connection Established");
+        _myPrivateChannel?.subscribeIfNotUnsubscribed();
+        log("Successfully subscribed to private channel");
+      });
+    } catch (e, stack) {
+      log("Pusher Initialization Error: $e", stackTrace: stack);
+    }
+  }
+
+  void _checkBlockedStatus() {
+    if (getMyBlockedUsersRxObj.dataFetcher.hasValue) {
+      final users = getMyBlockedUsersRxObj.dataFetcher.value.data?.users ?? [];
+      final targetIdStr = widget.userId;
+      if (targetIdStr != null && targetIdStr.isNotEmpty) {
+        final targetId = int.tryParse(targetIdStr);
+        if (targetId != null && users.any((u) => u.id == targetId)) {
+          setState(() {
+            _isBlocked = true;
+          });
+        }
+      }
     }
   }
 
@@ -53,6 +155,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
     String? fileName,
     String? fileSize,
   }) async {
+    if (_isBlocked) {
+      ToastUtil.showShortToast(
+        'You have blocked this user. Unblock to send messages.',
+      );
+      return;
+    }
+
     final Map<String, dynamic> tempMsg = {
       'message': text,
       'time': DateFormat('HH:mm').format(DateTime.now()),
@@ -149,7 +258,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
               onPressed: () async {
                 Navigator.pop(dialogContext);
-
                 // Show loading indicator dialog
                 showDialog(
                   context: context,
@@ -217,10 +325,173 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
+  void _confirmBlockUser() {
+    String? targetUserId = widget.userId;
+
+    if (targetUserId == null || targetUserId.isEmpty) {
+      if (getConversationMessagesRxObj.dataFetcher.hasValue) {
+        final messages =
+            getConversationMessagesRxObj.dataFetcher.value.data?.messages ?? [];
+        final currentUserId = getUserProfileRxObj.dataFetcher.hasValue
+            ? getUserProfileRxObj.dataFetcher.value.data?.user?.id
+            : null;
+        for (var msg in messages) {
+          if (msg.senderId != null && msg.senderId != currentUserId) {
+            targetUserId = msg.senderId.toString();
+            break;
+          } else if (msg.sender?.id != null &&
+              msg.sender?.name == widget.name) {
+            targetUserId = msg.sender!.id.toString();
+            break;
+          }
+        }
+      }
+    }
+
+    if (targetUserId == null || targetUserId.isEmpty) {
+      ToastUtil.showShortToast('Unable to identify user to block.');
+      return;
+    }
+
+    final finalUserId = targetUserId;
+    final bool willBlock = !_isBlocked;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            willBlock ? 'Block User?' : 'Unblock User?',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 16.sp,
+            ),
+          ),
+          content: Text(
+            willBlock
+                ? 'Are you sure you want to block ${widget.name}? You will no longer receive messages or notifications from this user.'
+                : 'Are you sure you want to unblock ${widget.name}?',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 13.sp,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: willBlock
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFF7C3AED),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (loadingContext) {
+                    return Dialog(
+                      backgroundColor: const Color(0xFF1E1E2E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.w,
+                          vertical: 20.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 24.w,
+                              height: 24.h,
+                              child: const CircularProgressIndicator(
+                                color: Color(0xFF7C3AED),
+                                strokeWidth: 2.5,
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Text(
+                              willBlock
+                                  ? 'Blocking user...'
+                                  : 'Unblocking user...',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  final res = await postBlockUserRxObj.blockUser(finalUserId);
+                  if (res != null) {
+                    if (mounted) {
+                      setState(() {
+                        _isBlocked = willBlock;
+                      });
+                    }
+                    getConversationListRxObj.getConversationList();
+                    getMyBlockedUsersRxObj.getMyBlockedUsers();
+                  }
+                } finally {
+                  if (mounted && Navigator.canPop(context)) {
+                    Navigator.pop(context); // close loading dialog
+                  }
+                }
+              },
+              child: Text(
+                willBlock ? 'Block' : 'Unblock',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
+    _disconnectPusher();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _disconnectPusher() async {
+    try {
+      await _pusherSubscription?.cancel();
+      await _connectionSubscription?.cancel();
+      _myPrivateChannel?.unsubscribe();
+      await _pusherClient?.disconnect();
+    } catch (e) {
+      log("Pusher disconnect error: $e");
+    }
   }
 
   @override
@@ -348,9 +619,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
                             // Info / Details Button
                             IconButton(
-                              onPressed: () {
-                                // Action handler for chat detail/info
-                              },
+                              onPressed: _confirmBlockUser,
                               icon: Icon(
                                 Icons.info_outline_rounded,
                                 color: Colors.white,
@@ -441,6 +710,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               );
                             }
 
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (_scrollController.hasClients) {
+                                _scrollController.animateTo(
+                                  _scrollController.position.maxScrollExtent,
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            });
+
                             return ListView.builder(
                               controller: _scrollController,
                               physics: const BouncingScrollPhysics(),
@@ -472,7 +751,55 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       ),
 
                       // --------------- Bottom Input Field ---------------
-                      ChatInputBar(onSend: _sendMessage),
+                      if (_isBlocked)
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 14.h,
+                            horizontal: 20.w,
+                          ),
+                          margin: EdgeInsets.all(16.r),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF1E1E2E,
+                            ).withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFEF4444,
+                              ).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'You have blocked this user.',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              GestureDetector(
+                                onTap: _confirmBlockUser,
+                                child: Text(
+                                  'Unblock',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF7C3AED),
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ChatInputBar(onSend: _sendMessage),
                     ],
                   ),
                 ),
