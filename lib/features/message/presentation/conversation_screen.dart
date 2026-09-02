@@ -71,8 +71,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
       // 1. Define options
       final options = PusherChannelsOptions.fromHost(
         scheme: 'wss',
-        host: 'admin.castilo.co.uk',
-        key: 'ajfr4ft3c9c4954lolll',
+        host: 'dashboard.realmworldapp.live',
+        key: 'stevenakoappkey12345',
         port: 443,
         metadata: PusherChannelsOptionsMetadata.byDefault(),
       );
@@ -91,13 +91,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
       // 3. Create a private channel
       _myPrivateChannel = _pusherClient?.privateChannel(
         channelName,
-        authorizationDelegate: 
+        authorizationDelegate:
             EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
               authorizationEndpoint: Uri.parse(
-                "https://stevenako.thesyndicates.team/api/user/broadcasting/auth",
+                "https://dashboard.realmworldapp.live/api/user/broadcasting/auth",
               ),
               headers: {
-                "Authorization": "Bearer ${token ?? ''}",  
+                "Authorization": "Bearer ${token ?? ''}",
                 "Accept": "application/json",
               },
             ),

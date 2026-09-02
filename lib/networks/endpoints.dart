@@ -3,11 +3,12 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 String get url =>
-    dotenv.env['BASE_URL'] ?? "https://stevenako.thesyndicates.team/api";
+    // dotenv.env['BASE_URL'] ?? "https://stevenako.thesyndicates.team/api";
+    dotenv.env['BASE_URL'] ?? "https://dashboard.realmworldapp.live/api";
 String get imageUrl => url;
 
 final class NetworkConstants {
-  NetworkConstants._(); 
+  NetworkConstants._();
   static const ACCEPT = "Accept";
   static const APP_KEY = "App-Key";
   static const ACCEPT_LANGUAGE = "Accept-Language";
