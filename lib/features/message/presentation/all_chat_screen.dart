@@ -617,7 +617,6 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                         conversation.updatedAt,
                                   );
 
- 
                                   return FadeTransition(
                                     opacity: animation,
                                     child: SlideTransition(
@@ -640,39 +639,15 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                                     name: name,
                                                     avatarUrl: avatarUrl,
                                                     isActive: true,
-                                                    conversationId:
-                                                        conversation.id?.toString(),
+                                                    conversationId: conversation
+                                                        .id
+                                                        ?.toString(),
                                                   ),
                                             ),
                                           );
                                         },
                                       ),
                                     ),
-=======
-                                  return ChatListItem(
-                                    avatarUrl: avatarUrl,
-                                    name: name,
-                                    message: message,
-                                    time: timeStr,
-                                    isActive: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ConversationScreen(
-                                                name: name,
-                                                avatarUrl: avatarUrl,
-                                                isActive: true,
-                                                conversationId:
-                                                    conversation.id?.toString(),
-                                                userId:
-                                                    otherUser?.id?.toString(),
-                                              ),
-                                        ),
-                                      );
-                                    },
- 
                                   );
                                 },
                               ),
