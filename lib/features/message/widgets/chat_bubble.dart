@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -14,6 +15,8 @@ class ChatBubble extends StatelessWidget {
   final String? fileName;
   final String? fileSize;
   final VoidCallback? onDelete;
+  final bool isPending;
+  final bool isFailed;
 
   const ChatBubble({
     super.key,
@@ -26,10 +29,14 @@ class ChatBubble extends StatelessWidget {
     this.fileName,
     this.fileSize,
     this.onDelete,
+    this.isPending = false,
+    this.isFailed = false,
   });
 
   void _showDeleteOption(BuildContext context) {
     if (!isMe || onDelete == null) return;
+
+    final String deleteText = type == 'image' ? 'Delete Image' : 'Delete Message';
 
     showModalBottomSheet(
       context: context,
@@ -59,7 +66,7 @@ class ChatBubble extends StatelessWidget {
                     color: Color(0xFFEF4444),
                   ),
                   title: Text(
-                    'Delete Message',
+                    deleteText,
                     style: GoogleFonts.inter(
                       color: const Color(0xFFEF4444),
                       fontWeight: FontWeight.w600,
@@ -129,7 +136,7 @@ class ChatBubble extends StatelessWidget {
   Widget _buildBubbleContent(BuildContext context) {
     switch (type) {
       case 'image':
-        return _buildImageBubble();
+        return _buildImageBubble(context);
       case 'document':
         return _buildDocumentBubble();
       case 'text':
@@ -187,11 +194,7 @@ class ChatBubble extends StatelessWidget {
               ),
               if (isMe) ...[
                 SizedBox(width: 4.w),
-                Icon(
-                  Icons.done_all_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 14.sp,
-                ),
+                _buildDeliveryIcon(),
               ],
             ],
           ),
@@ -201,105 +204,325 @@ class ChatBubble extends StatelessWidget {
   }
 
   // --------------- Image Attachment Bubble ---------------
-  Widget _buildImageBubble() {
+  Widget _buildImageBubble(BuildContext context) {
     final bool isNetwork = path != null && path!.startsWith('http');
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16.r),
-          topRight: Radius.circular(16.r),
-          bottomLeft: isMe ? Radius.circular(16.r) : Radius.zero,
-          bottomRight: isMe ? Radius.zero : Radius.circular(16.r),
+
+    // If message is still uploading (isPending == true), show pure Shimmer Skeleton Card
+    if (isPending) {
+      return Container(
+        width: 220.w,
+        height: 160.h,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E2E),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16.r),
+            topRight: Radius.circular(16.r),
+            bottomLeft: isMe ? Radius.circular(16.r) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : Radius.circular(16.r),
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.08),
+            width: 1,
+          ),
         ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(15.r),
+            topRight: Radius.circular(15.r),
+            bottomLeft: isMe ? Radius.circular(15.r) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : Radius.circular(15.r),
+          ),
+          child: Stack(
+            children: [
+              // Full Card Pure Shimmer Wave Animation
+              Positioned.fill(
+                child: Shimmer.fromColors(
+                  baseColor: const Color(0xFF1F2232),
+                  highlightColor: const Color(0xFF383D59),
+                  child: Container(
+                    width: 220.w,
+                    height: 160.h,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+
+              // Center Uploading Pill Badge
+              Center(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cloud_upload_rounded,
+                        color: const Color(0xFF9D65FF),
+                        size: 18.r,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Uploading image...',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Bottom Right Time & Clock Indicator
+              Positioned(
+                bottom: 8.r,
+                right: 8.r,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        time,
+                        style: GoogleFonts.inter(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 9.5.sp,
+                        ),
+                      ),
+                      SizedBox(width: 4.w),
+                      _buildDeliveryIcon(size: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(15.r),
-          topRight: Radius.circular(15.r),
-          bottomLeft: isMe ? Radius.circular(15.r) : Radius.zero,
-          bottomRight: isMe ? Radius.zero : Radius.circular(15.r),
+      );
+    }
+
+    // Confirmed Loaded Image View
+    return GestureDetector(
+      onTap: () => _openFullScreenImage(context, path),
+      child: Container(
+        width: 220.w,
+        height: 160.h,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E2E),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16.r),
+            topRight: Radius.circular(16.r),
+            bottomLeft: isMe ? Radius.circular(16.r) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : Radius.circular(16.r),
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.08),
+            width: 1,
+          ),
         ),
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            // The Image
-            Container(
-              constraints: BoxConstraints(maxWidth: 220.w, maxHeight: 180.h),
-              child: isNetwork
-                  ? CachedNetworkImage(
-                      imageUrl: path!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(15.r),
+            topRight: Radius.circular(15.r),
+            bottomLeft: isMe ? Radius.circular(15.r) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : Radius.circular(15.r),
+          ),
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              // The Image
+              Positioned.fill(
+                child: isNetwork
+                    ? CachedNetworkImage(
+                        imageUrl: path!,
                         width: 220.w,
-                        height: 180.h,
-                        color: Colors.grey[900],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
+                        height: 160.h,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: const Color(0xFF222533),
+                          highlightColor: const Color(0xFF32364A),
+                          child: Container(
+                            width: 220.w,
+                            height: 160.h,
+                            color: Colors.white,
                           ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 220.w,
-                        height: 180.h,
-                        color: Colors.grey[900],
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.white54,
+                        errorWidget: (context, url, error) => Container(
+                          width: 220.w,
+                          height: 160.h,
+                          color: const Color(0xFF222533),
+                          child: const Icon(
+                            Icons.broken_image_rounded,
+                            color: Colors.white54,
+                          ),
                         ),
-                      ),
-                    )
-                  : (path != null
-                        ? Image.file(File(path!), fit: BoxFit.cover)
-                        : Container(
+                      )
+                    : (path != null && File(path!).existsSync()
+                        ? Image.file(
+                            File(path!),
                             width: 220.w,
-                            height: 180.h,
-                            color: Colors.grey[900],
-                            child: const Icon(
-                              Icons.image,
-                              color: Colors.white54,
+                            height: 160.h,
+                            fit: BoxFit.cover,
+                          )
+                        : Shimmer.fromColors(
+                            baseColor: const Color(0xFF222533),
+                            highlightColor: const Color(0xFF32364A),
+                            child: Container(
+                              width: 220.w,
+                              height: 160.h,
+                              color: Colors.white,
                             ),
                           )),
-            ),
-
-            // Semi-transparent Overlay for Time & Checkmark
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              margin: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(10.r),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    time,
-                    style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 9.sp,
+
+              // Semi-transparent Overlay for Time & Checkmark
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                margin: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      time,
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 9.5.sp,
+                      ),
+                    ),
+                    if (isMe) ...[
+                      SizedBox(width: 4.w),
+                      _buildDeliveryIcon(size: 12),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreenImage(BuildContext context, String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          final bool isNetwork = imagePath.startsWith('http');
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              children: [
+                // Edge-to-Edge Interactive Full Screen Image Container
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: isNetwork
+                          ? CachedNetworkImage(
+                              imageUrl: imagePath,
+                              fit: BoxFit.contain,
+                              width: double.infinity,
+                              height: double.infinity,
+                              placeholder: (context, url) => Center(
+                                child: Shimmer.fromColors(
+                                  baseColor: const Color(0xFF222533),
+                                  highlightColor: const Color(0xFF32364A),
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 300.h,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => const Icon(
+                                Icons.broken_image_rounded,
+                                color: Colors.white54,
+                                size: 64,
+                              ),
+                            )
+                          : (File(imagePath).existsSync()
+                              ? Image.file(
+                                  File(imagePath),
+                                  fit: BoxFit.contain,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : const Icon(
+                                  Icons.broken_image_rounded,
+                                  color: Colors.white54,
+                                  size: 64,
+                                )),
                     ),
                   ),
-                  if (isMe) ...[
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.done_all_rounded,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      size: 12.sp,
+                ),
+
+                // Top Floating AppBar with Back & Close Button
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      color: Colors.black.withValues(alpha: 0.4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white,
+                              size: 22.sp,
+                            ),
+                          ),
+                          Text(
+                            'Photo',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -408,16 +631,35 @@ class ChatBubble extends StatelessWidget {
               ),
               if (isMe) ...[
                 SizedBox(width: 4.w),
-                Icon(
-                  Icons.done_all_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 13.sp,
-                ),
+                _buildDeliveryIcon(size: 13),
               ],
             ],
           ),
         ],
       ),
+    );
+  }
+
+  /// WhatsApp-style delivery status icon
+  Widget _buildDeliveryIcon({double size = 14}) {
+    if (isPending) {
+      return Icon(
+        Icons.access_time_rounded,
+        color: Colors.white.withValues(alpha: 0.5),
+        size: size.sp,
+      );
+    }
+    if (isFailed) {
+      return Icon(
+        Icons.error_outline_rounded,
+        color: const Color(0xFFEF4444),
+        size: size.sp,
+      );
+    }
+    return Icon(
+      Icons.done_all_rounded,
+      color: Colors.white.withValues(alpha: 0.8),
+      size: size.sp,
     );
   }
 }

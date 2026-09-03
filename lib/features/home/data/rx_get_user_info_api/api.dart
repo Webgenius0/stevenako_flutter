@@ -1,40 +1,32 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:stevenako_flutter/features/home/model/get_user_info_model.dart';
 
-import '../../../networks/dio/dio.dart';
-import '../../../networks/endpoints.dart';
-import '../model/hom_screen_reals_model.dart';
+import '../../../../networks/dio/dio.dart';
+import '../../../../networks/endpoints.dart';
 
-final class GetReelsApi {
-  static final GetReelsApi _instance = GetReelsApi._internal();
+final class GetUserInfoApi {
+  static final GetUserInfoApi _instance = GetUserInfoApi._internal();
 
-  GetReelsApi._internal();
+  GetUserInfoApi._internal();
 
-  static GetReelsApi get instance => _instance;
+  static GetUserInfoApi get instance => _instance;
 
-  Future<GetReelsListModel> getReels({
-    int page = 1,
-    int? perPage,
-    String? mentorId,
-  }) async {
+  Future<GetUserInfoModel> getUserInfo({required dynamic id}) async {
     try {
       final Response response = await getHttp(
-        Endpoints.getRealsVideoAll(
-          page: page,
-          perPage: perPage,
-          mentorId: mentorId,
-        ),
+        Endpoints.userData(id),
       );
 
       final dynamic responseData = response.data;
 
       if (response.statusCode == 200 && responseData is Map<String, dynamic>) {
-        return GetReelsListModel.fromJson(responseData);
+        return GetUserInfoModel.fromJson(responseData);
       }
 
       log(
-        'Get Reels API: Invalid response '
+        'GetUserInfoApi: Invalid response '
             'status=${response.statusCode}, '
             'data=$responseData',
       );
@@ -42,7 +34,7 @@ final class GetReelsApi {
       throw Exception('Invalid response from server.');
     } on DioException catch (error, stackTrace) {
       log(
-        'Get Reels API DioException: ${error.message}',
+        'GetUserInfoApi DioException: ${error.message}',
         stackTrace: stackTrace,
       );
 
@@ -62,7 +54,7 @@ final class GetReelsApi {
       );
     } catch (error, stackTrace) {
       log(
-        'Get Reels API Unexpected Error: $error',
+        'GetUserInfoApi Unexpected Error: $error',
         stackTrace: stackTrace,
       );
 

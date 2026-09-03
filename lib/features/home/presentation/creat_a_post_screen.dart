@@ -344,16 +344,6 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
     }
   }
 
-  void _onSaveDraft() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Draft saved successfully!'),
-        backgroundColor: _purple,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   Future<void> _onPostNow() async {
     if (userPostRxObj.isLoading.value) return;
 
@@ -382,7 +372,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
     }
 
     final response = await userPostRxObj.post(
-      type: 'text', // strictly text type for text post screen (photo is optional)
+      type: _selectedImages.isNotEmpty ? 'photo' : 'text',
       caption: caption,
       locationName: _selectedLocationName ?? '',
       locationLat: _selectedLocationLat ?? 0.0,
@@ -392,6 +382,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
       allowGifts: _allowGifts ? 1 : 0,
       taggedUserIds: _taggedUserIds,
       photo: photoFile,
+      photos: _selectedImages.isNotEmpty ? _selectedImages : null,
     );
 
     if (!mounted) return;
@@ -427,7 +418,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
                     ),
                     const Expanded(
                       child: Text(
-                        'Create Post',
+                        'Create a Post',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -564,56 +555,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
                       SizedBox(height: 16.h),
 
                       // Multi-Image Display Section (Facebook / Instagram Style)
-                      if (_selectedImages.isEmpty)
-                        GestureDetector(
-                          onTap: _showAddImageSheet,
-                          child: Container(
-                            height: 130.h,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF161423),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(
-                                color: _purpleLight.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10.r),
-                                  decoration: BoxDecoration(
-                                    color: _purple.withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.add_photo_alternate_rounded,
-                                    color: _purpleLight,
-                                    size: 32.sp,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  'Add Photos to your Post',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  'Select multiple images from Gallery or Camera',
-                                  style: TextStyle(
-                                    color: _hintColor,
-                                    fontSize: 12.sp,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else ...[
+                      if (_selectedImages.isNotEmpty) ...[
                         // Dynamic Facebook / Instagram Multi-Photo Grid Preview
                         _buildMultiImageGrid(),
 
@@ -625,7 +567,15 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
 
                       SizedBox(height: 24.h),
 
-                      // Nav Rows for extras (Tag, Location, Privacy, Toggles)
+                      // Nav Rows for extras (Image, Tag, Location, Privacy, Toggles)
+                      _NavRow(
+                        label: _selectedImages.isEmpty
+                            ? 'Add Photos'
+                            : 'Photos (${_selectedImages.length} selected)',
+                        onTap: _showAddImageSheet,
+                        imagePath: 'assets/images/gallery.png',
+                      ),
+                      SizedBox(height: 12.h),
                       _NavRow(
                         label: _taggedUserIds.isEmpty
                             ? 'Tag people'
@@ -673,7 +623,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _onSaveDraft,
+                        onPressed: _onBack,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: const BorderSide(color: _purpleLight, width: 1.4),
@@ -682,7 +632,7 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
                           ),
                         ),
                         child: const Text(
-                          'Save as Draft',
+                          'Cancel',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
