@@ -13,21 +13,26 @@ final class GetAllPhotoApi {
 
   static GetAllPhotoApi get instance => _instance;
 
-  Future<GetAllPhotoModel> getPhotos() async {
+  Future<GetAllPhotoModel> getPhotos({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     try {
       final Response response = await getHttp(
-        Endpoints.getPhotoList(),
+        Endpoints.getPhotoList(
+          page: page,
+          perPage: perPage,
+        ),
       );
 
       final dynamic responseData = response.data;
 
-      if (response.statusCode == 200 &&
-          responseData is Map<String, dynamic>) {
+      if (response.statusCode == 200 && responseData is Map<String, dynamic>) {
         return GetAllPhotoModel.fromJson(responseData);
       }
 
       log(
-        'Get All Photos API: Invalid response '
+        'GetAllPhotoApi: Invalid response '
             'status=${response.statusCode}, '
             'data=$responseData',
       );
@@ -35,17 +40,18 @@ final class GetAllPhotoApi {
       throw Exception('Invalid response from server.');
     } on DioException catch (error, stackTrace) {
       log(
-        'Get All Photos API DioException: ${error.message}',
+        'GetAllPhotoApi DioException: ${error.message}',
         stackTrace: stackTrace,
       );
 
       final dynamic responseData = error.response?.data;
 
       if (responseData is Map<String, dynamic>) {
-        final dynamic message = responseData['message'];
+        final dynamic message =
+            responseData['message'] ?? responseData['status_message'];
 
-        if (message is String && message.isNotEmpty) {
-          throw Exception(message);
+        if (message is String && message.trim().isNotEmpty) {
+          throw Exception(message.trim());
         }
       }
 
@@ -54,7 +60,7 @@ final class GetAllPhotoApi {
       );
     } catch (error, stackTrace) {
       log(
-        'Get All Photos API Unexpected Error: $error',
+        'GetAllPhotoApi Unexpected Error: $error',
         stackTrace: stackTrace,
       );
 

@@ -1,28 +1,41 @@
 import 'dart:convert';
 
-class GetAllPostModel {
+class GetUserInfoModel {
   final bool? success;
   final String? message;
-  final PostFeedData? data;
+  final UserInfoData? data;
   final int? code;
 
-  GetAllPostModel({
+  GetUserInfoModel({
     this.success,
     this.message,
     this.data,
     this.code,
   });
 
-  factory GetAllPostModel.fromRawJson(String str) =>
-      GetAllPostModel.fromJson(json.decode(str));
+  GetUserInfoModel copyWith({
+    bool? success,
+    String? message,
+    UserInfoData? data,
+    int? code,
+  }) =>
+      GetUserInfoModel(
+        success: success ?? this.success,
+        message: message ?? this.message,
+        data: data ?? this.data,
+        code: code ?? this.code,
+      );
+
+  factory GetUserInfoModel.fromRawJson(String str) =>
+      GetUserInfoModel.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
-  factory GetAllPostModel.fromJson(Map<String, dynamic> json) =>
-      GetAllPostModel(
+  factory GetUserInfoModel.fromJson(Map<String, dynamic> json) =>
+      GetUserInfoModel(
         success: _toBoolSafe(json["success"]),
         message: json["message"]?.toString(),
-        data: json["data"] == null ? null : PostFeedData.fromJson(json["data"]),
+        data: json["data"] == null ? null : UserInfoData.fromJson(json["data"]),
         code: _toIntSafe(json["code"]),
       );
 
@@ -34,106 +47,92 @@ class GetAllPostModel {
   };
 }
 
-class PostFeedData {
-  final PostsPagination? posts;
+class UserInfoData {
+  final DataUser? user;
+  final UserPosts? posts;
 
-  PostFeedData({this.posts});
+  UserInfoData({
+    this.user,
+    this.posts,
+  });
 
-  factory PostFeedData.fromRawJson(String str) =>
-      PostFeedData.fromJson(json.decode(str));
+  UserInfoData copyWith({
+    DataUser? user,
+    UserPosts? posts,
+  }) =>
+      UserInfoData(
+        user: user ?? this.user,
+        posts: posts ?? this.posts,
+      );
+
+  factory UserInfoData.fromRawJson(String str) =>
+      UserInfoData.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
-  factory PostFeedData.fromJson(Map<String, dynamic> json) => PostFeedData(
-    posts: json["posts"] == null
-        ? null
-        : PostsPagination.fromJson(json["posts"]),
+  factory UserInfoData.fromJson(Map<String, dynamic> json) => UserInfoData(
+    user: json["user"] == null ? null : DataUser.fromJson(json["user"]),
+    posts: json["posts"] == null ? null : UserPosts.fromJson(json["posts"]),
   );
 
   Map<String, dynamic> toJson() => {
+    "user": user?.toJson(),
     "posts": posts?.toJson(),
   };
 }
 
-class PostsPagination {
-  final int? currentPage;
-  final List<PostItem>? data;
-  final String? firstPageUrl;
-  final int? from;
-  final int? lastPage;
-  final String? lastPageUrl;
-  final List<PaginationLink>? links;
-  final String? nextPageUrl;
-  final String? path;
-  final int? perPage;
-  final String? prevPageUrl;
-  final int? to;
-  final int? total;
+class UserPosts {
+  final List<PostItem>? photo;
+  final List<PostItem>? video;
+  final List<PostItem>? text;
 
-  PostsPagination({
-    this.currentPage,
-    this.data,
-    this.firstPageUrl,
-    this.from,
-    this.lastPage,
-    this.lastPageUrl,
-    this.links,
-    this.nextPageUrl,
-    this.path,
-    this.perPage,
-    this.prevPageUrl,
-    this.to,
-    this.total,
+  UserPosts({
+    this.photo,
+    this.video,
+    this.text,
   });
 
-  factory PostsPagination.fromRawJson(String str) =>
-      PostsPagination.fromJson(json.decode(str));
+  UserPosts copyWith({
+    List<PostItem>? photo,
+    List<PostItem>? video,
+    List<PostItem>? text,
+  }) =>
+      UserPosts(
+        photo: photo ?? this.photo,
+        video: video ?? this.video,
+        text: text ?? this.text,
+      );
+
+  factory UserPosts.fromRawJson(String str) =>
+      UserPosts.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
-  factory PostsPagination.fromJson(Map<String, dynamic> json) =>
-      PostsPagination(
-        currentPage: _toIntSafe(json["current_page"]),
-        data: json["data"] == null
-            ? []
-            : List<PostItem>.from(
-            json["data"]!.map((x) => PostItem.fromJson(x))),
-        firstPageUrl: json["first_page_url"]?.toString(),
-        from: _toIntSafe(json["from"]),
-        lastPage: _toIntSafe(json["last_page"]),
-        lastPageUrl: json["last_page_url"]?.toString(),
-        links: json["links"] == null
-            ? []
-            : List<PaginationLink>.from(
-            json["links"]!.map((x) => PaginationLink.fromJson(x))),
-        nextPageUrl: json["next_page_url"]?.toString(),
-        path: json["path"]?.toString(),
-        perPage: _toIntSafe(json["per_page"]),
-        prevPageUrl: json["prev_page_url"]?.toString(),
-        to: _toIntSafe(json["to"]),
-        total: _toIntSafe(json["total"]),
-      );
+  factory UserPosts.fromJson(Map<String, dynamic> json) => UserPosts(
+    photo: json["photo"] == null
+        ? []
+        : List<PostItem>.from(
+        json["photo"]!.map((x) => PostItem.fromJson(x))),
+    video: json["video"] == null
+        ? []
+        : List<PostItem>.from(
+        json["video"]!.map((x) => PostItem.fromJson(x))),
+    text: json["text"] == null
+        ? []
+        : List<PostItem>.from(
+        json["text"]!.map((x) => PostItem.fromJson(x))),
+  );
 
   Map<String, dynamic> toJson() => {
-    "current_page": currentPage,
-    "data": data == null ? [] : List<dynamic>.from(data!.map((x) => x.toJson())),
-    "first_page_url": firstPageUrl,
-    "from": from,
-    "last_page": lastPage,
-    "last_page_url": lastPageUrl,
-    "links": links == null ? [] : List<dynamic>.from(links!.map((x) => x.toJson())),
-    "next_page_url": nextPageUrl,
-    "path": path,
-    "per_page": perPage,
-    "prev_page_url": prevPageUrl,
-    "to": to,
-    "total": total,
+    "photo": photo == null ? [] : List<dynamic>.from(photo!.map((x) => x.toJson())),
+    "video": video == null ? [] : List<dynamic>.from(video!.map((x) => x.toJson())),
+    "text": text == null ? [] : List<dynamic>.from(text!.map((x) => x.toJson())),
   };
 }
 
 class PostItem {
   final int? id;
-  final String? itemType; // "post" | "ad"
+  final String? itemType;
   final String? type;
   final String? caption;
   final String? locationName;
@@ -150,17 +149,11 @@ class PostItem {
   final int? sharesCount;
   final bool? isLiked;
   final bool? isViewed;
-  final PostUser? user;
+  final UserSummary? user;
   final List<Media>? media;
-  final List<PostUser>? taggedUsers;
-  final dynamic sound;
+  final List<UserSummary>? taggedUsers;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  final String? title;
-  final String? mediaUrl;
-  final String? mediaType;
-  final String? targetUrl;
-  final int? clicksCount;
 
   PostItem({
     this.id,
@@ -184,18 +177,9 @@ class PostItem {
     this.user,
     this.media,
     this.taggedUsers,
-    this.sound,
     this.createdAt,
     this.updatedAt,
-    this.title,
-    this.mediaUrl,
-    this.mediaType,
-    this.targetUrl,
-    this.clicksCount,
   });
-
-  bool get isAd => itemType == "ad";
-  bool get isPost => itemType == "post";
 
   factory PostItem.fromRawJson(String str) =>
       PostItem.fromJson(json.decode(str));
@@ -221,23 +205,16 @@ class PostItem {
     sharesCount: _toIntSafe(json["shares_count"]),
     isLiked: _toBoolSafe(json["is_liked"]),
     isViewed: _toBoolSafe(json["is_viewed"]),
-    user: json["user"] == null ? null : PostUser.fromJson(json["user"]),
+    user: json["user"] == null ? null : UserSummary.fromJson(json["user"]),
     media: json["media"] == null
         ? []
-        : List<Media>.from(
-        json["media"]!.map((x) => Media.fromJson(x))),
+        : List<Media>.from(json["media"]!.map((x) => Media.fromJson(x))),
     taggedUsers: json["tagged_users"] == null
         ? []
-        : List<PostUser>.from(
-        json["tagged_users"]!.map((x) => PostUser.fromJson(x))),
-    sound: json["sound"],
+        : List<UserSummary>.from(
+        json["tagged_users"]!.map((x) => UserSummary.fromJson(x))),
     createdAt: _toDateSafe(json["created_at"]),
     updatedAt: _toDateSafe(json["updated_at"]),
-    title: json["title"]?.toString(),
-    mediaUrl: json["media_url"]?.toString(),
-    mediaType: json["media_type"]?.toString(),
-    targetUrl: json["target_url"]?.toString(),
-    clicksCount: _toIntSafe(json["clicks_count"]),
   );
 
   Map<String, dynamic> toJson() => {
@@ -262,14 +239,8 @@ class PostItem {
     "user": user?.toJson(),
     "media": media == null ? [] : List<dynamic>.from(media!.map((x) => x.toJson())),
     "tagged_users": taggedUsers == null ? [] : List<dynamic>.from(taggedUsers!.map((x) => x.toJson())),
-    "sound": sound,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
-    "title": title,
-    "media_url": mediaUrl,
-    "media_type": mediaType,
-    "target_url": targetUrl,
-    "clicks_count": clicksCount,
   };
 }
 
@@ -305,14 +276,14 @@ class Media {
   };
 }
 
-class PostUser {
+class UserSummary {
   final int? id;
   final String? avatar;
   final String? name;
   final String? username;
   final bool? isFollow;
 
-  PostUser({
+  UserSummary({
     this.id,
     this.avatar,
     this.name,
@@ -320,12 +291,12 @@ class PostUser {
     this.isFollow,
   });
 
-  factory PostUser.fromRawJson(String str) =>
-      PostUser.fromJson(json.decode(str));
+  factory UserSummary.fromRawJson(String str) =>
+      UserSummary.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
-  factory PostUser.fromJson(Map<String, dynamic> json) => PostUser(
+  factory UserSummary.fromJson(Map<String, dynamic> json) => UserSummary(
     id: _toIntSafe(json["id"]),
     avatar: json["avatar"]?.toString(),
     name: json["name"]?.toString(),
@@ -342,42 +313,97 @@ class PostUser {
   };
 }
 
-class PaginationLink {
-  final String? url;
-  final String? label;
-  final int? page;
-  final bool? active;
+class DataUser {
+  final int? id;
+  final String? avatar;
+  final String? name;
+  final String? username;
+  final String? email;
+  final String? dateOfBirth;
+  final String? bio;
+  final String? gender;
+  final String? role;
+  final String? status;
+  final bool? termsAndConditions;
+  final int? followersCount;
+  final int? followingCount;
+  final int? likesCount;
+  final bool? isFriends;
+  final bool? isFollow;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  PaginationLink({
-    this.url,
-    this.label,
-    this.page,
-    this.active,
+  DataUser({
+    this.id,
+    this.avatar,
+    this.name,
+    this.username,
+    this.email,
+    this.dateOfBirth,
+    this.bio,
+    this.gender,
+    this.role,
+    this.status,
+    this.termsAndConditions,
+    this.followersCount,
+    this.followingCount,
+    this.likesCount,
+    this.isFriends,
+    this.isFollow,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  factory PaginationLink.fromRawJson(String str) =>
-      PaginationLink.fromJson(json.decode(str));
+  factory DataUser.fromRawJson(String str) =>
+      DataUser.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
-  factory PaginationLink.fromJson(Map<String, dynamic> json) =>
-      PaginationLink(
-        url: json["url"]?.toString(),
-        label: json["label"]?.toString(),
-        page: _toIntSafe(json["page"]),
-        active: _toBoolSafe(json["active"]),
-      );
+  factory DataUser.fromJson(Map<String, dynamic> json) => DataUser(
+    id: _toIntSafe(json["id"]),
+    avatar: json["avatar"]?.toString(),
+    name: json["name"]?.toString(),
+    username: json["username"]?.toString(),
+    email: json["email"]?.toString(),
+    dateOfBirth: json["date_of_birth"]?.toString(),
+    bio: json["bio"]?.toString(),
+    gender: json["gender"]?.toString(),
+    role: json["role"]?.toString(),
+    status: json["status"]?.toString(),
+    termsAndConditions: _toBoolSafe(json["terms_and_conditions"]),
+    followersCount: _toIntSafe(json["followers_count"]),
+    followingCount: _toIntSafe(json["following_count"]),
+    likesCount: _toIntSafe(json["likes_count"]),
+    isFriends: _toBoolSafe(json["is_friends"]),
+    isFollow: _toBoolSafe(json["is_follow"]),
+    createdAt: _toDateSafe(json["created_at"]),
+    updatedAt: _toDateSafe(json["updated_at"]),
+  );
 
   Map<String, dynamic> toJson() => {
-    "url": url,
-    "label": label,
-    "page": page,
-    "active": active,
+    "id": id,
+    "avatar": avatar,
+    "name": name,
+    "username": username,
+    "email": email,
+    "date_of_birth": dateOfBirth,
+    "bio": bio,
+    "gender": gender,
+    "role": role,
+    "status": status,
+    "terms_and_conditions": termsAndConditions,
+    "followers_count": followersCount,
+    "following_count": followingCount,
+    "likes_count": likesCount,
+    "is_friends": isFriends,
+    "is_follow": isFollow,
+    "created_at": createdAt?.toIso8601String(),
+    "updated_at": updatedAt?.toIso8601String(),
   };
 }
 
 // ==========================================
-// Safe Parsing Helpers
+// Safe Helper Parsers
 // ==========================================
 
 int? _toIntSafe(dynamic value) {

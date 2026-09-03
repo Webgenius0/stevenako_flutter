@@ -1,12 +1,18 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+
 import 'package:dart_pusher_channels/dart_pusher_channels.dart';
+
+import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/message/model/conversation_details_model.dart';
@@ -155,6 +161,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
     String? fileName,
     String? fileSize,
   }) async {
+
     if (_isBlocked) {
       ToastUtil.showShortToast(
         'You have blocked this user. Unblock to send messages.',
@@ -162,7 +169,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
       return;
     }
 
+
+    // Generate a unique local ID for this message
+    final int localId = DateTime.now().millisecondsSinceEpoch;
+
     final Map<String, dynamic> tempMsg = {
+      'localId': localId,
       'message': text,
       'time': DateFormat('HH:mm').format(DateTime.now()),
       'isMe': true,
@@ -170,6 +182,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       'path': path,
       'fileName': fileName,
       'fileSize': fileSize,
+      'isPending': true,
     };
 
     setState(() {
@@ -201,41 +214,177 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
       if (res != null && res['success'] == true) {
         if (mounted) {
+          final dynamic serverMsgData = res['data']?['message'];
+          final dynamic serverId = serverMsgData?['id'];
+          final String? mediaUrl = serverMsgData?['media_url']?.toString();
+
           setState(() {
-            _sentMessages.remove(tempMsg);
+            final idx = _sentMessages.indexWhere((m) => m['localId'] == localId);
+            if (idx != -1) {
+              _sentMessages[idx] = {
+                ..._sentMessages[idx],
+                'id': serverId ?? _sentMessages[idx]['id'],
+                'path': (mediaUrl != null && mediaUrl.isNotEmpty)
+                    ? mediaUrl
+                    : _sentMessages[idx]['path'],
+                'isPending': false,
+              };
+            }
+          });
+          // Silently refresh API data in background (will merge without jump)
+          getConversationMessagesRxObj.getConversationMessages(
+            widget.conversationId!,
+          );
+          getConversationListRxObj.getConversationList();
+        }
+      } else {
+        // Mark as failed
+        if (mounted) {
+          setState(() {
+            final idx = _sentMessages.indexWhere((m) => m['localId'] == localId);
+            if (idx != -1) {
+              _sentMessages[idx] = {
+                ..._sentMessages[idx],
+                'isPending': false,
+                'isFailed': true,
+              };
+            }
           });
         }
-        getConversationMessagesRxObj.getConversationMessages(
-          widget.conversationId!,
-        );
-        getConversationListRxObj.getConversationList();
       }
     }
   }
 
-  void _confirmDeleteMessage(String messageId) {
+  void _showChatInfoDialog() {
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
+          backgroundColor: const Color(0xFF1E212D),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          title: Text(
-            'Delete Message?',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 16.sp,
+            borderRadius: BorderRadius.circular(20.r),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
             ),
           ),
-          content: Text(
-            'Are you sure you want to delete this message?',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 13.sp,
-            ),
+          title: Row(
+            children: [
+              Container(
+                width: 40.r,
+                height: 40.r,
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: ClipOval(
+                  child: widget.avatarUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: widget.avatarUrl,
+                          width: 40.r,
+                          height: 40.r,
+                          fit: BoxFit.cover,
+                          errorWidget: (context, url, error) => Container(
+                            color: const Color(0xFF2A2A3C),
+                            child: const Icon(Icons.person, color: Colors.white70),
+                          ),
+                        )
+                      : Container(
+                          color: const Color(0xFF2A2A3C),
+                          child: const Icon(Icons.person, color: Colors.white70),
+                        ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.name,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      widget.isActive ? 'Active Now' : 'Offline',
+                      style: GoogleFonts.inter(
+                        color: widget.isActive
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFF9CA3AF),
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(color: Colors.white.withValues(alpha: 0.1)),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.person_outline_rounded,
+                    color: Colors.white, size: 22.sp),
+                title: Text(
+                  'View Contact Info',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  NavigationService.navigateTo(
+                    Routes.contactInfoScreen,
+                    arguments: {
+                      'name': widget.name,
+                      'avatarUrl': widget.avatarUrl,
+                    },
+                  );
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.flag_outlined,
+                    color: const Color(0xFFEAB308), size: 22.sp),
+                title: Text(
+                  'Report User',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFEAB308),
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  NavigationService.navigateTo(
+                    Routes.reportUserScreen,
+                    arguments: {'name': widget.name},
+                  );
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.block_rounded,
+                    color: const Color(0xFFEF4444), size: 22.sp),
+                title: Text(
+                  'Block User',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFEF4444),
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _confirmBlockUser();
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -243,55 +392,59 @@ class _ConversationScreenState extends State<ConversationScreen> {
               child: Text(
                 'Cancel',
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontWeight: FontWeight.w500,
+                  color: Colors.white60,
+                  fontSize: 14.sp,
                 ),
               ),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteMessage(String messageId, {bool isImage = false}) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text(isImage ? 'Delete Image?' : 'Delete Message?'),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              isImage
+                  ? 'Are you sure you want to delete this image?'
+                  : 'Are you sure you want to delete this message?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
               onPressed: () async {
                 Navigator.pop(dialogContext);
-                // Show loading indicator dialog
-                showDialog(
+
+                // Show Cupertino loading indicator dialog
+                showCupertinoDialog(
                   context: context,
                   barrierDismissible: false,
                   builder: (loadingContext) {
-                    return Dialog(
-                      backgroundColor: const Color(0xFF1E1E2E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
-                          vertical: 20.h,
-                        ),
+                    return CupertinoAlertDialog(
+                      content: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: 24.w,
-                              height: 24.h,
-                              child: const CircularProgressIndicator(
-                                color: Color(0xFF7C3AED),
-                                strokeWidth: 2.5,
-                              ),
-                            ),
-                            SizedBox(width: 16.w),
+                            const CupertinoActivityIndicator(),
+                            SizedBox(width: 12.w),
                             Text(
-                              'Deleting message...',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              isImage
+                                  ? 'Deleting image...'
+                                  : 'Deleting message...',
+                              style: TextStyle(fontSize: 13.sp),
                             ),
                           ],
                         ),
@@ -301,7 +454,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 );
 
                 try {
-                  final res = await deleteMessageRxObj.deleteMessage(messageId);
+                  final res =
+                      await deleteMessageRxObj.deleteMessage(messageId);
                   if (res != null && widget.conversationId != null) {
                     await getConversationMessagesRxObj.getConversationMessages(
                       widget.conversationId!,
@@ -314,10 +468,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   }
                 }
               },
-              child: Text(
-                'Delete',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -547,8 +698,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                 );
                               },
                               child: Container(
-                                width: 38.w,
-                                height: 38.h,
+                                width: 38.r,
+                                height: 38.r,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -556,21 +707,56 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                     width: 1,
                                   ),
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(19.r),
-                                  child: Image.network(
-                                    widget.avatarUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              color: Colors.grey[800],
-                                              child: const Icon(
-                                                Icons.person,
-                                                color: Colors.white70,
+                                child: ClipOval(
+                                  child: widget.avatarUrl.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: widget.avatarUrl,
+                                          width: 38.r,
+                                          height: 38.r,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) =>
+                                              Shimmer.fromColors(
+                                            baseColor: const Color(0xFF2A2A3C),
+                                            highlightColor:
+                                                const Color(0xFF3F3F56),
+                                            child: Container(
+                                              width: 38.r,
+                                              height: 38.r,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFF2A2A3C),
+                                                shape: BoxShape.circle,
                                               ),
                                             ),
-                                  ),
+                                          ),
+                                          errorWidget:
+                                              (context, url, error) =>
+                                                  Container(
+                                            width: 38.r,
+                                            height: 38.r,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF2A2A3C),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.person,
+                                              color: Colors.white70,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 38.r,
+                                          height: 38.r,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF2A2A3C),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.person,
+                                            color: Colors.white70,
+                                            size: 20,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
@@ -619,7 +805,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
                             // Info / Details Button
                             IconButton(
-                              onPressed: _confirmBlockUser,
+                              onPressed: _showChatInfoDialog,
                               icon: Icon(
                                 Icons.info_outline_rounded,
                                 color: Colors.white,
@@ -645,11 +831,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                     ConnectionState.waiting &&
                                 !snapshot.hasData &&
                                 widget.conversationId != null) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF7C3AED),
-                                ),
-                              );
+                              return _buildChatShimmerLoading();
                             }
 
                             final model = snapshot.data;
@@ -674,7 +856,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                 seenIds.add(msg.id!);
                               }
                               final timeStr = msg.createdAt != null
-                                  ? DateFormat('HH:mm').format(msg.createdAt!)
+                                  ? DateFormat('HH:mm').format(msg.createdAt!.toLocal())
                                   : '';
                               bool isMe = false;
                               if (currentUserId != null &&
@@ -696,7 +878,46 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               });
                             }
 
-                            allMessages.addAll(_sentMessages);
+                             // Merge API messages with optimistic sent messages
+                            final Set<dynamic> apiIds = {};
+                            final Set<String> apiMediaUrls = {};
+                            final Set<String> apiTexts = {};
+
+                            for (var m in allMessages) {
+                              if (m['id'] != null) apiIds.add(m['id']);
+                              if (m['path'] != null) apiMediaUrls.add(m['path'].toString());
+                              if (m['message'] != null &&
+                                  m['message'].toString().trim().isNotEmpty) {
+                                apiTexts.add(m['message'].toString().trim());
+                              }
+                            }
+
+                            for (var sent in _sentMessages) {
+                              // Always include pending (currently uploading) messages so shimmer is shown immediately
+                              if (sent['isPending'] == true) {
+                                allMessages.add(sent);
+                                continue;
+                              }
+
+                              final sentId = sent['id'];
+                              final sentPath = sent['path']?.toString();
+                              final sentText = sent['message']?.toString().trim();
+
+                              bool isAlreadyInApi = false;
+                              if (sentId != null && apiIds.contains(sentId)) {
+                                isAlreadyInApi = true;
+                              } else if (sentPath != null && apiMediaUrls.contains(sentPath)) {
+                                isAlreadyInApi = true;
+                              } else if (sentText != null &&
+                                  sentText.isNotEmpty &&
+                                  apiTexts.contains(sentText)) {
+                                isAlreadyInApi = true;
+                              }
+
+                              if (!isAlreadyInApi) {
+                                allMessages.add(sent);
+                              }
+                            }
 
                             if (allMessages.isEmpty) {
                               return Center(
@@ -729,18 +950,23 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                 final msg = allMessages[index];
                                 final bool isMe = msg['isMe'] == true;
                                 final messageId = msg['id'];
+                                final msgType = msg['type'] ?? 'text';
+                                final bool isImage = msgType == 'image';
                                 return ChatBubble(
                                   message: msg['message'],
                                   time: msg['time'],
                                   isMe: isMe,
                                   avatarUrl: widget.avatarUrl,
-                                  type: msg['type'] ?? 'text',
+                                  type: msgType,
                                   path: msg['path'],
                                   fileName: msg['fileName'],
                                   fileSize: msg['fileSize'],
+                                  isPending: msg['isPending'] == true,
+                                  isFailed: msg['isFailed'] == true,
                                   onDelete: isMe && messageId != null
                                       ? () => _confirmDeleteMessage(
                                           messageId.toString(),
+                                          isImage: isImage,
                                         )
                                       : null,
                                 );
@@ -808,6 +1034,55 @@ class _ConversationScreenState extends State<ConversationScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChatShimmerLoading() {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+      itemCount: 8,
+      itemBuilder: (context, index) {
+        final bool isMe = index % 3 != 0;
+        return Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: Shimmer.fromColors(
+            baseColor: const Color(0xFF222533),
+            highlightColor: const Color(0xFF32364A),
+            child: Row(
+              mainAxisAlignment:
+                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (!isMe)
+                  Container(
+                    width: 32.r,
+                    height: 32.r,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                if (!isMe) SizedBox(width: 8.w),
+                Container(
+                  width: isMe ? 180.w : 200.w,
+                  height: index % 2 == 0 ? 50.h : 36.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.r),
+                      topRight: Radius.circular(16.r),
+                      bottomLeft:
+                          isMe ? Radius.circular(16.r) : Radius.zero,
+                      bottomRight:
+                          isMe ? Radius.zero : Radius.circular(16.r),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -51,24 +51,35 @@ class ChatListItem extends StatelessWidget {
             Stack(
               children: [
                 Container(
-                  width: 56.w,
-                  height: 56.h,
+                  width: 54.r,
+                  height: 54.r,
                   decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28.r),
+                  child: ClipOval(
                     child: fullAvatarUrl.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: fullAvatarUrl,
+                            width: 54.r,
+                            height: 54.r,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Shimmer.fromColors(
                               baseColor: const Color(0xFF2A2A3C),
                               highlightColor: const Color(0xFF3F3F56),
                               child: Container(
-                                color: const Color(0xFF2A2A3C),
+                                width: 54.r,
+                                height: 54.r,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF2A2A3C),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: const Color(0xFF2A2A3C),
+                              width: 54.r,
+                              height: 54.r,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2A2A3C),
+                                shape: BoxShape.circle,
+                              ),
                               child: Center(
                                 child: Text(
                                   name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -82,7 +93,12 @@ class ChatListItem extends StatelessWidget {
                             ),
                           )
                         : Container(
-                            color: const Color(0xFF2A2A3C),
+                            width: 54.r,
+                            height: 54.r,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF2A2A3C),
+                              shape: BoxShape.circle,
+                            ),
                             child: Center(
                               child: Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -101,14 +117,14 @@ class ChatListItem extends StatelessWidget {
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      width: 14.w,
-                      height: 14.h,
+                      width: 14.r,
+                      height: 14.r,
                       decoration: BoxDecoration(
                         color: const Color(0xFF22C55E), // Active green
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Colors.black, // Dark border separator
-                          width: 2.w,
+                          width: 2.r,
                         ),
                       ),
                     ),

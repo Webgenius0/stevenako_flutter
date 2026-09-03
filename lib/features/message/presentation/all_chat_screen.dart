@@ -642,37 +642,14 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                                     isActive: true,
                                                     conversationId:
                                                         conversation.id?.toString(),
+                                                    userId:
+                                                        otherUser?.id?.toString(),
                                                   ),
                                             ),
                                           );
                                         },
                                       ),
                                     ),
-=======
-                                  return ChatListItem(
-                                    avatarUrl: avatarUrl,
-                                    name: name,
-                                    message: message,
-                                    time: timeStr,
-                                    isActive: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ConversationScreen(
-                                                name: name,
-                                                avatarUrl: avatarUrl,
-                                                isActive: true,
-                                                conversationId:
-                                                    conversation.id?.toString(),
-                                                userId:
-                                                    otherUser?.id?.toString(),
-                                              ),
-                                        ),
-                                      );
-                                    },
- 
                                   );
                                 },
                               ),

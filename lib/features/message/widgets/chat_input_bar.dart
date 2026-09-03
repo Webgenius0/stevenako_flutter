@@ -245,92 +245,94 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(left: 24.w, right: 24.w, top: 8.h, bottom: 24.h),
-      color: Colors.transparent,
-      child: Row(
-        children: [
-          // --------------- Left Attachment Button (+) ---------------
-          GestureDetector(
-            onTap: () => _showAttachmentBottomSheet(context),
-            child: Container(
-              width: 48.w,
-              height: 48.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  width: 1.5,
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.only(left: 24.w, right: 24.w, top: 8.h, bottom: 24.h),
+        color: Colors.transparent,
+        child: Row(
+          children: [
+            // --------------- Left Attachment Button (+) ---------------
+            GestureDetector(
+              onTap: () => _showAttachmentBottomSheet(context),
+              child: Container(
+                width: 48.w,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    width: 1.5,
+                  ),
                 ),
+                child: const Icon(Icons.add, color: Colors.white),
               ),
-              child: const Icon(Icons.add, color: Colors.white),
             ),
-          ),
-          SizedBox(width: 12.w),
-
-          // --------------- Input Field & Send Button Container ---------------
-          Expanded(
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E2E).withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  width: 1,
+            SizedBox(width: 12.w),
+      
+            // --------------- Input Field & Send Button Container ---------------
+            Expanded(
+              child: Container(
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E2E).withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14.sp,
-                      ),
-                      cursorColor: const Color(0xFF7C3AED),
-                      decoration: InputDecoration(
-                        hintText: 'Type here...',
-                        hintStyle: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
+                child: Row(
+                  children: [
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
                           fontSize: 14.sp,
                         ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                        cursorColor: const Color(0xFF7C3AED),
+                        decoration: InputDecoration(
+                          hintText: 'Type here...',
+                          hintStyle: GoogleFonts.inter(
+                            color: const Color(0xFF6B7280),
+                            fontSize: 14.sp,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                        ),
+                        onSubmitted: (_) => _handleSend(),
                       ),
-                      onSubmitted: (_) => _handleSend(),
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-
-                  // --------------- Send Button ---------------
-                  GestureDetector(
-                    onTap: _handleSend,
-                    child: Container(
-                      width: 40.w,
-                      height: 40.h,
-                      margin: EdgeInsets.only(right: 4.w),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF7C3AED),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                          size: 18.sp,
+                    SizedBox(width: 8.w),
+      
+                    // --------------- Send Button ---------------
+                    GestureDetector(
+                      onTap: _handleSend,
+                      child: Container(
+                        width: 40.w,
+                        height: 40.h,
+                        margin: EdgeInsets.only(right: 4.w),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF7C3AED),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 18.sp,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

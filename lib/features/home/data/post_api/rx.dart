@@ -18,14 +18,20 @@ final class GetAllPostRx extends RxResponseInt<GetAllPostModel> {
 
   ValueStream<GetAllPostModel> get stream => dataFetcher.stream;
 
-  Future<GetAllPostModel?> getAllPosts() async {
+  Future<GetAllPostModel?> getAllPosts({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     try {
-      final GetAllPostModel data = await api.getAllPosts();
+      final GetAllPostModel data = await api.getAllPosts(
+        page: page,
+        perPage: perPage,
+      );
 
       return handleSuccessWithReturn(data);
     } catch (error, stackTrace) {
       log(
-        'Get All Posts Error: $error',
+        'GetAllPostRx Error: $error',
         stackTrace: stackTrace,
       );
 
@@ -45,32 +51,31 @@ final class GetAllPostRx extends RxResponseInt<GetAllPostModel> {
   GetAllPostModel? handleErrorWithReturn(
       dynamic error,
       ) {
-    String message = 'Something went wrong. Please try again.';
+    String message = 'Failed to load posts. Please try again.';
 
     if (error is DioException) {
       final dynamic responseData = error.response?.data;
 
       if (responseData is Map<String, dynamic>) {
-        final dynamic apiMessage = responseData['message'];
+        final dynamic apiMessage =
+            responseData['message'] ?? responseData['status_message'];
 
-        if (apiMessage is String && apiMessage.isNotEmpty) {
-          message = apiMessage;
+        if (apiMessage is String && apiMessage.trim().isNotEmpty) {
+          message = apiMessage.trim();
         }
-      }
-
-      if (message == 'Something went wrong. Please try again.' &&
-          error.message != null &&
-          error.message!.isNotEmpty) {
-        message = error.message!;
+      } else if (error.message != null && error.message!.trim().isNotEmpty) {
+        message = error.message!.trim();
       }
     } else if (error is Exception) {
-      message = error
-          .toString()
-          .replaceFirst('Exception: ', '');
+      final parsed = error.toString().replaceFirst('Exception: ', '').trim();
+      if (parsed.isNotEmpty) {
+        message = parsed;
+      }
+    } else if (error is String && error.trim().isNotEmpty) {
+      message = error.trim();
     }
 
     ToastUtil.showShortToast(message);
-
     dataFetcher.sink.addError(message);
 
     return null;

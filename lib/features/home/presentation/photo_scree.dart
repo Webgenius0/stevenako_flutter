@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
+import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
@@ -32,68 +33,71 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.transparent, // Transparent to show background gradient
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 56.h,
-        left: 12.w,
-        right: 12.w,
-      ),
-      child: RefreshIndicator(
-        onRefresh: _fetchPhotos,
-        color: const Color(0xFF7C3AED),
-        backgroundColor: const Color(0xFF1E1E2C),
-        child: StreamBuilder<GetAllPhotoModel>(
-          stream: getAllPhotoRxObj.dataFetcher.stream,
-          builder: (context, snapshot) {
-            // Error State
-            if (snapshot.hasError) {
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  child: _buildErrorView(snapshot.error.toString()),
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        color: Colors.transparent, // Transparent to show background gradient
+        padding: EdgeInsets.only(
+          top: 64.h,
+          left: 12.w,
+          right: 12.w,
+        ),
+        child: RefreshIndicator(
+          onRefresh: _fetchPhotos,
+          color: const Color(0xFF7C3AED),
+          backgroundColor: const Color(0xFF1E1E2C),
+          child: StreamBuilder<GetAllPhotoModel>(
+            stream: getAllPhotoRxObj.dataFetcher.stream,
+            builder: (context, snapshot) {
+              // Error State
+              if (snapshot.hasError) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: _buildErrorView(snapshot.error.toString()),
+                  ),
+                );
+              }
+
+              // Loading State (Shimmer)
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildShimmerLoading();
+              }
+
+              final GetAllPhotoModel? photoModel = snapshot.data;
+              final List<PhotoItem> posts = photoModel?.data?.posts?.data ?? [];
+
+              // Empty State
+              if (posts.isEmpty) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: _buildEmptyView(),
+                  ),
+                );
+              }
+
+              // Data Success Grid
+              return GridView.builder(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-              );
-            }
-
-            // Loading State (Shimmer)
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !snapshot.hasData) {
-              return _buildShimmerLoading();
-            }
-
-            final GetAllPhotoModel? photoModel = snapshot.data;
-            final List<Post> posts = photoModel?.data?.posts ?? [];
-
-            // Empty State
-            if (posts.isEmpty) {
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  child: _buildEmptyView(),
+                itemCount: posts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.72,
                 ),
+                itemBuilder: (context, index) {
+                  return _PhotoTile(index: index, post: posts[index]);
+                },
               );
-            }
-
-            // Data Success Grid
-            return GridView.builder(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              itemCount: posts.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.72,
-              ),
-              itemBuilder: (context, index) {
-                return _PhotoTile(index: index, post: posts[index]);
-              },
-            );
-          },
+            },
+          ),
         ),
       ),
     );
@@ -291,7 +295,7 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
 
 class _PhotoTile extends StatefulWidget {
   final int index;
-  final Post post;
+  final PhotoItem post;
 
   const _PhotoTile({required this.index, required this.post});
 
@@ -490,10 +494,16 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
 
   void _handleComment() {
     _commentController.forward(from: 0);
+    final int? pid = widget.post.id is int
+        ? widget.post.id as int
+        : int.tryParse(widget.post.id?.toString() ?? '');
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PostDetailsScreen(postData: _mapPostToData()),
+        builder: (context) => PostDetailsScreen(
+          postData: _mapPostToData(),
+          postId: pid,
+        ),
       ),
     );
   }
@@ -555,11 +565,16 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                   onTapCancel: () => setState(() => _isPressed = false),
                   onDoubleTap: _handleDoubleTap,
                   onTap: () {
+                    final int? pid = widget.post.id is int
+                        ? widget.post.id as int
+                        : int.tryParse(widget.post.id?.toString() ?? '');
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            PostDetailsScreen(postData: _mapPostToData()),
+                        builder: (context) => PostDetailsScreen(
+                          postData: _mapPostToData(),
+                          postId: pid,
+                        ),
                       ),
                     );
                   },
@@ -716,7 +731,15 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                 children: [
                   // User Avatar with CachedNetworkImage
                   _BounceTap(
-                    onTap: () {},
+                    onTap: () {
+                      final int? userId = widget.post.user?.id;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(userId: userId),
+                        ),
+                      );
+                    },
                     child: userAvatar.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: userAvatar,
@@ -755,15 +778,26 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                   ),
                   SizedBox(width: 5.w),
                   Expanded(
-                    child: Text(
-                      handle,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.w500,
+                    child: GestureDetector(
+                      onTap: () {
+                        final int? userId = widget.post.user?.id;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfileScreen(userId: userId),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        handle,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
 
