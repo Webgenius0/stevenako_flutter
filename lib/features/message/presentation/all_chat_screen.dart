@@ -617,7 +617,6 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                         conversation.updatedAt,
                                   );
 
- 
                                   return FadeTransition(
                                     opacity: animation,
                                     child: SlideTransition(
