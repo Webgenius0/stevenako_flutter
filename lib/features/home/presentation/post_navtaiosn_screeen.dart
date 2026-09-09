@@ -119,9 +119,9 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Post action executed.')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Post action executed.')),
+                );
               },
               child: const Text(
                 'Delete',
@@ -212,9 +212,9 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       return trimmed;
     }
     if (trimmed.startsWith('/')) {
-      return 'https://stevenako.thesyndicates.team$trimmed';
+      return 'https://dashboard.realmworldapp.live$trimmed';
     }
-    return 'https://stevenako.thesyndicates.team/$trimmed';
+    return 'https://dashboard.realmworldapp.live/$trimmed';
   }
 
   bool _isVideoUrl(String? url) {
@@ -248,10 +248,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: 360.h,
-            minHeight: 120.h,
-          ),
+          constraints: BoxConstraints(maxHeight: 360.h, minHeight: 120.h),
           child: CachedNetworkImage(
             imageUrl: fullUrl,
             width: double.infinity,
@@ -288,8 +285,9 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
             }
 
             if (snapshot.hasError) {
-              final String cleanError =
-                  ToastUtil.cleanErrorMessage(snapshot.error);
+              final String cleanError = ToastUtil.cleanErrorMessage(
+                snapshot.error,
+              );
               return Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -358,7 +356,10 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 onRefresh: _refreshPosts,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 120.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 120.h,
+                  ),
                   children: [
                     Center(
                       child: Column(
@@ -422,8 +423,11 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 itemBuilder: (context, index, animation) {
                   final Post postModel = livePosts[index];
                   final int postId = postModel.id ?? index;
-                  final bool isLiked = _likedPostIds.contains(postId) || (postModel.isLiked == true);
-                  final int likesCount = (postModel.likesCount ?? 0) + (_extraLikes[postId] ?? 0);
+                  final bool isLiked =
+                      _likedPostIds.contains(postId) ||
+                      (postModel.isLiked == true);
+                  final int likesCount =
+                      (postModel.likesCount ?? 0) + (_extraLikes[postId] ?? 0);
                   final int commentsCount = postModel.commentsCount ?? 0;
 
                   String? mediaUrl = postModel.mediaUrl;
@@ -434,11 +438,15 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                   }
 
                   final String avatarUrl = postModel.user?.avatar ?? '';
-                  final String userName = postModel.user?.name ?? postModel.user?.username ?? 'Community Member';
+                  final String userName =
+                      postModel.user?.name ??
+                      postModel.user?.username ??
+                      'Community Member';
                   final String timeText = postModel.createdAt != null
                       ? '${postModel.createdAt!.hour}:${postModel.createdAt!.minute} '
                       : 'Just now';
-                  final String captionText = postModel.caption ?? postModel.title ?? '';
+                  final String captionText =
+                      postModel.caption ?? postModel.title ?? '';
 
                   final Map<String, dynamic> postDataForSheet = {
                     'userName': userName,
@@ -472,10 +480,12 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                             setState(() {
                               if (_likedPostIds.contains(postId)) {
                                 _likedPostIds.remove(postId);
-                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) - 1;
+                                _extraLikes[postId] =
+                                    (_extraLikes[postId] ?? 0) - 1;
                               } else {
                                 _likedPostIds.add(postId);
-                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) + 1;
+                                _extraLikes[postId] =
+                                    (_extraLikes[postId] ?? 0) + 1;
                               }
                             });
                           },
@@ -517,13 +527,12 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E2C),
         borderRadius: BorderRadius.circular(hasImage ? 16.r : 12.r),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // Ensures tight fitting around text for text-only posts
+        mainAxisSize: MainAxisSize
+            .min, // Ensures tight fitting around text for text-only posts
         children: [
           // Header
           Row(
@@ -576,9 +585,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
           ],
 
           // Media Content (ONLY rendered if valid image exists, NO dummy boxes)
-          if (hasImage) ...[
-            _buildPostMediaImage(resolvedMediaUrl),
-          ],
+          if (hasImage) ...[_buildPostMediaImage(resolvedMediaUrl)],
 
           SizedBox(height: hasImage ? 12.h : 8.h),
 
@@ -694,7 +701,12 @@ class _PostsShimmerLoaderState extends State<PostsShimmerLoader>
 
         return ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(top: 64.h, left: 16.w, right: 16.w, bottom: 24.h),
+          padding: EdgeInsets.only(
+            top: 64.h,
+            left: 16.w,
+            right: 16.w,
+            bottom: 24.h,
+          ),
           itemCount: 3,
           separatorBuilder: (context, index) => SizedBox(height: 16.h),
           itemBuilder: (context, index) => Container(
@@ -917,10 +929,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white70,
-                ),
+                leading: const Icon(Icons.edit_outlined, color: Colors.white70),
                 title: const Text(
                   'Edit',
                   style: TextStyle(color: Colors.white, fontSize: 14.5),
@@ -931,10 +940,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.copy_rounded,
-                  color: Colors.white70,
-                ),
+                leading: const Icon(Icons.copy_rounded, color: Colors.white70),
                 title: const Text(
                   'Copy text',
                   style: TextStyle(color: Colors.white, fontSize: 14.5),
@@ -944,7 +950,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   final text = _comments[index]['text'] ?? '';
                   Clipboard.setData(ClipboardData(text: text));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Comment copied to clipboard!')),
+                    const SnackBar(
+                      content: Text('Comment copied to clipboard!'),
+                    ),
                   );
                 },
               ),
@@ -1128,57 +1136,58 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
-                                           children: [
-                                             if (wasEdited)
-                                               const Padding(
-                                                 padding: EdgeInsets.only(
-                                                   right: 10,
-                                                 ),
-                                                 child: Text(
-                                                   'edited',
-                                                   style: TextStyle(
-                                                     color: Colors.white30,
-                                                     fontSize: 11,
-                                                   ),
-                                                 ),
-                                               ),
-                                             GestureDetector(
-                                               onTap: () => _startReply(index),
-                                               child: const Text(
-                                                 'Reply',
-                                                 style: TextStyle(
-                                                   color: Colors.white54,
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                             const SizedBox(width: 14),
-                                             GestureDetector(
-                                               onTap: () => _startEdit(index),
-                                               child: const Text(
-                                                 'Edit',
-                                                 style: TextStyle(
-                                                   color: Colors.white54,
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                             const SizedBox(width: 14),
-                                             GestureDetector(
-                                               onTap: () => _confirmDeleteComment(index),
-                                               child: const Text(
-                                                 'Delete',
-                                                 style: TextStyle(
-                                                   color: Color(0xFFFF3F55),
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                           ],
-                                         ),
+                                          children: [
+                                            if (wasEdited)
+                                              const Padding(
+                                                padding: EdgeInsets.only(
+                                                  right: 10,
+                                                ),
+                                                child: Text(
+                                                  'edited',
+                                                  style: TextStyle(
+                                                    color: Colors.white30,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ),
+                                            GestureDetector(
+                                              onTap: () => _startReply(index),
+                                              child: const Text(
+                                                'Reply',
+                                                style: TextStyle(
+                                                  color: Colors.white54,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            GestureDetector(
+                                              onTap: () => _startEdit(index),
+                                              child: const Text(
+                                                'Edit',
+                                                style: TextStyle(
+                                                  color: Colors.white54,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  _confirmDeleteComment(index),
+                                              child: const Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: Color(0xFFFF3F55),
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),

@@ -28,7 +28,7 @@ class ChatListItem extends StatelessWidget {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    const String baseUrl = 'https://stevenako.thesyndicates.team';
+    const String baseUrl = 'https://dashboard.realmworldapp.live';
     if (url.startsWith('/')) {
       return '$baseUrl$url';
     }
@@ -63,9 +63,7 @@ class ChatListItem extends StatelessWidget {
                             placeholder: (context, url) => Shimmer.fromColors(
                               baseColor: const Color(0xFF2A2A3C),
                               highlightColor: const Color(0xFF3F3F56),
-                              child: Container(
-                                color: const Color(0xFF2A2A3C),
-                              ),
+                              child: Container(color: const Color(0xFF2A2A3C)),
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: const Color(0xFF2A2A3C),

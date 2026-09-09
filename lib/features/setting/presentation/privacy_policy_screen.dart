@@ -29,7 +29,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
         ),
       )
       ..loadRequest(
-        Uri.parse('https://stevenako.thesyndicates.team/privacy-policy'),
+        Uri.parse('https://dashboard.realmworldapp.live/privacy-policy'),
       );
   }
 

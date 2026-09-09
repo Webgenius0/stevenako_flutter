@@ -72,7 +72,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       final options = PusherChannelsOptions.fromHost(
         scheme: 'wss',
         host: 'dashboard.realmworldapp.live',
-        key: 'stevenakoappkey12345',
+        key: 'ajfr4ft3c9c4954lolll',
         port: 443,
         metadata: PusherChannelsOptionsMetadata.byDefault(),
       );
@@ -94,7 +94,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         authorizationDelegate:
             EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
               authorizationEndpoint: Uri.parse(
-                "https://dashboard.realmworldapp.live/api/user/broadcasting/auth",
+                "https://dashboard.realmworldapp.live/broadcasting/auth",
               ),
               headers: {
                 "Authorization": "Bearer ${token ?? ''}",
