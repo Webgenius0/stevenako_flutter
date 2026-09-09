@@ -25,6 +25,7 @@ final class UserPostApi {
     required List<int> taggedUserIds,
     File? video,
     File? photo,
+    List<File>? photos,
     int? soundId,
   }) async {
     try {
@@ -49,24 +50,35 @@ final class UserPostApi {
 
       final FormData data = FormData.fromMap(mapData);
 
-      if (photo != null) {
-        final filename = photo.path.split('/').last;
+      final List<File> allPhotos = [];
+      if (photos != null && photos.isNotEmpty) {
+        allPhotos.addAll(photos);
+      } else if (photo != null) {
+        allPhotos.add(photo);
+      }
 
-        data.files.add(MapEntry(
-          'photos',
-          await MultipartFile.fromFile(photo.path, filename: filename),
-        ));
-        data.files.add(MapEntry(
-          'photos[]',
-          await MultipartFile.fromFile(photo.path, filename: filename),
-        ));
-        data.files.add(MapEntry(
-          'photos[0]',
-          await MultipartFile.fromFile(photo.path, filename: filename),
-        ));
+      if (allPhotos.isNotEmpty) {
+        for (int i = 0; i < allPhotos.length; i++) {
+          final file = allPhotos[i];
+          final filename = file.path.split('/').last;
+          data.files.add(MapEntry(
+            'photos[$i]',
+            await MultipartFile.fromFile(file.path, filename: filename),
+          ));
+          data.files.add(MapEntry(
+            'photos[]',
+            await MultipartFile.fromFile(file.path, filename: filename),
+          ));
+        }
+        final firstFile = allPhotos.first;
+        final firstFilename = firstFile.path.split('/').last;
         data.files.add(MapEntry(
           'photo',
-          await MultipartFile.fromFile(photo.path, filename: filename),
+          await MultipartFile.fromFile(firstFile.path, filename: firstFilename),
+        ));
+        data.files.add(MapEntry(
+          'photos',
+          await MultipartFile.fromFile(firstFile.path, filename: firstFilename),
         ));
       }
 

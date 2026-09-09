@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_screen.dart';
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
@@ -107,29 +108,39 @@ class _AccountCenterScreenState extends State<AccountCenterScreen> {
                                         ),
                                         SizedBox(width: 16.w),
                                         Expanded(
-                                          child:
-                                              StreamBuilder<UserProfileModel>(
-                                                stream:
-                                                    getUserProfileRxObj.stream,
+                                          child: ValueListenableBuilder<bool>(
+                                            valueListenable: getUserProfileRxObj.isLoading,
+                                            builder: (context, isLoading, child) {
+                                              return StreamBuilder<UserProfileModel>(
+                                                stream: getUserProfileRxObj.stream,
                                                 builder: (context, snapshot) {
-                                                  final email =
-                                                      snapshot
-                                                          .data
-                                                          ?.data
-                                                          ?.user
-                                                          ?.email ??
-                                                      'example@mail.com';
+                                                  if (isLoading && !snapshot.hasData) {
+                                                    return Shimmer.fromColors(
+                                                      baseColor: const Color(0xFF27273A),
+                                                      highlightColor: const Color(0xFF3B3B54),
+                                                      child: Container(
+                                                        width: 140.w,
+                                                        height: 16.h,
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius: BorderRadius.circular(4.r),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                  final email = snapshot.data?.data?.user?.email ?? '';
                                                   return Text(
-                                                    email,
+                                                    email.isNotEmpty ? email : 'No email provided',
                                                     style: GoogleFonts.inter(
                                                       color: Colors.white,
                                                       fontSize: 14.sp,
-                                                      fontWeight:
-                                                          FontWeight.w400,
+                                                      fontWeight: FontWeight.w400,
                                                     ),
                                                   );
                                                 },
-                                              ),
+                                              );
+                                            },
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -224,37 +235,48 @@ class _AccountCenterScreenState extends State<AccountCenterScreen> {
                                           child: Row(
                                             children: [
                                               isLoading
-                                                  ? SizedBox(
-                                                      width: 20.sp,
-                                                      height: 20.sp,
-                                                      child:
-                                                          const CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                            color: Color(
-                                                              0xFFEF4444,
+                                                  ? Expanded(
+                                                      child: Shimmer.fromColors(
+                                                        baseColor: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                                                        highlightColor: Colors.white,
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.cancel_outlined,
+                                                              color: const Color(0xFFEF4444),
+                                                              size: 20.sp,
                                                             ),
-                                                          ),
-                                                    )
-                                                  : Icon(
-                                                      Icons.cancel_outlined,
-                                                      color: const Color(
-                                                        0xFFEF4444,
+                                                            SizedBox(width: 16.w),
+                                                            Text(
+                                                              'Deleting Account...',
+                                                              style: GoogleFonts.inter(
+                                                                color: const Color(0xFFEF4444),
+                                                                fontSize: 14.sp,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
-                                                      size: 20.sp,
+                                                    )
+                                                  : Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.cancel_outlined,
+                                                          color: const Color(0xFFEF4444),
+                                                          size: 20.sp,
+                                                        ),
+                                                        SizedBox(width: 16.w),
+                                                        Text(
+                                                          'Delete Account',
+                                                          style: GoogleFonts.inter(
+                                                            color: const Color(0xFFEF4444),
+                                                            fontSize: 14.sp,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                              SizedBox(width: 16.w),
-                                              Expanded(
-                                                child: Text(
-                                                  'Delete Account',
-                                                  style: GoogleFonts.inter(
-                                                    color: const Color(
-                                                      0xFFEF4444,
-                                                    ),
-                                                    fontSize: 14.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
                                             ],
                                           ),
                                         ),

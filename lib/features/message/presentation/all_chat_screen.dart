@@ -639,9 +639,10 @@ class _AllChatScreenState extends State<AllChatScreen> {
                                                     name: name,
                                                     avatarUrl: avatarUrl,
                                                     isActive: true,
-                                                    conversationId: conversation
-                                                        .id
-                                                        ?.toString(),
+                                                    conversationId:
+                                                        conversation.id?.toString(),
+                                                    userId:
+                                                        otherUser?.id?.toString(),
                                                   ),
                                             ),
                                           );

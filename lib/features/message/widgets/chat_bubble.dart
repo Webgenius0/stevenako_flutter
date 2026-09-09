@@ -13,6 +13,8 @@ class ChatBubble extends StatelessWidget {
   final String? path;
   final String? fileName;
   final String? fileSize;
+  final bool isPending;
+  final bool isFailed;
   final VoidCallback? onDelete;
 
   const ChatBubble({
@@ -25,6 +27,8 @@ class ChatBubble extends StatelessWidget {
     this.path,
     this.fileName,
     this.fileSize,
+    this.isPending = false,
+    this.isFailed = false,
     this.onDelete,
   });
 
@@ -187,11 +191,7 @@ class ChatBubble extends StatelessWidget {
               ),
               if (isMe) ...[
                 SizedBox(width: 4.w),
-                Icon(
-                  Icons.done_all_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 14.sp,
-                ),
+                _buildStatusIcon(size: 14.sp),
               ],
             ],
           ),
@@ -300,11 +300,7 @@ class ChatBubble extends StatelessWidget {
                         ),
                         if (isMe) ...[
                           SizedBox(width: 4.w),
-                          Icon(
-                            Icons.done_all_rounded,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            size: 12.sp,
-                          ),
+                          _buildStatusIcon(size: 12.sp),
                         ],
                       ],
                     ),
@@ -345,11 +341,7 @@ class ChatBubble extends StatelessWidget {
                         ),
                         if (isMe) ...[
                           SizedBox(width: 4.w),
-                          Icon(
-                            Icons.done_all_rounded,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            size: 13.sp,
-                          ),
+                          _buildStatusIcon(size: 13.sp),
                         ],
                       ],
                     ),
@@ -479,16 +471,39 @@ class ChatBubble extends StatelessWidget {
               ),
               if (isMe) ...[
                 SizedBox(width: 4.w),
-                Icon(
-                  Icons.done_all_rounded,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: 13.sp,
-                ),
+                _buildStatusIcon(size: 13.sp),
               ],
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatusIcon({required double size}) {
+    if (isPending) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: CircularProgressIndicator(
+          strokeWidth: 1.5,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            Colors.white.withValues(alpha: 0.8),
+          ),
+        ),
+      );
+    }
+    if (isFailed) {
+      return Icon(
+        Icons.error_outline_rounded,
+        color: const Color(0xFFEF4444),
+        size: size,
+      );
+    }
+    return Icon(
+      Icons.done_all_rounded,
+      color: Colors.white.withValues(alpha: 0.8),
+      size: size,
     );
   }
 }
