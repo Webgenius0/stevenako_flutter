@@ -237,7 +237,10 @@ class ChatBubble extends StatelessWidget {
               alignment: Alignment.bottomRight,
               children: [
                 Container(
-                  constraints: BoxConstraints(maxWidth: 240.w, maxHeight: 200.h),
+                  constraints: BoxConstraints(
+                    maxWidth: 240.w,
+                    maxHeight: 200.h,
+                  ),
                   width: 240.w,
                   child: isNetwork
                       ? CachedNetworkImage(
@@ -282,7 +285,10 @@ class ChatBubble extends StatelessWidget {
                 // If there's no caption, show timestamp on the image
                 if (!hasMessage)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     margin: EdgeInsets.all(8.r),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.5),
