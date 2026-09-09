@@ -161,14 +161,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
     String? fileName,
     String? fileSize,
   }) async {
-
     if (_isBlocked) {
       ToastUtil.showShortToast(
         'You have blocked this user. Unblock to send messages.',
       );
       return;
     }
-
 
     // Generate a unique local ID for this message
     final int localId = DateTime.now().millisecondsSinceEpoch;
@@ -219,7 +217,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
           final String? mediaUrl = serverMsgData?['media_url']?.toString();
 
           setState(() {
-            final idx = _sentMessages.indexWhere((m) => m['localId'] == localId);
+            final idx = _sentMessages.indexWhere(
+              (m) => m['localId'] == localId,
+            );
             if (idx != -1) {
               _sentMessages[idx] = {
                 ..._sentMessages[idx],
@@ -241,7 +241,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
         // Mark as failed
         if (mounted) {
           setState(() {
-            final idx = _sentMessages.indexWhere((m) => m['localId'] == localId);
+            final idx = _sentMessages.indexWhere(
+              (m) => m['localId'] == localId,
+            );
             if (idx != -1) {
               _sentMessages[idx] = {
                 ..._sentMessages[idx],
@@ -283,12 +285,18 @@ class _ConversationScreenState extends State<ConversationScreen> {
                           fit: BoxFit.cover,
                           errorWidget: (context, url, error) => Container(
                             color: const Color(0xFF2A2A3C),
-                            child: const Icon(Icons.person, color: Colors.white70),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white70,
+                            ),
                           ),
                         )
                       : Container(
                           color: const Color(0xFF2A2A3C),
-                          child: const Icon(Icons.person, color: Colors.white70),
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white70,
+                          ),
                         ),
                 ),
               ),
@@ -326,8 +334,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
               Divider(color: Colors.white.withValues(alpha: 0.1)),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.person_outline_rounded,
-                    color: Colors.white, size: 22.sp),
+                leading: Icon(
+                  Icons.person_outline_rounded,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
                 title: Text(
                   'View Contact Info',
                   style: GoogleFonts.inter(
@@ -349,8 +360,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.flag_outlined,
-                    color: const Color(0xFFEAB308), size: 22.sp),
+                leading: Icon(
+                  Icons.flag_outlined,
+                  color: const Color(0xFFEAB308),
+                  size: 22.sp,
+                ),
                 title: Text(
                   'Report User',
                   style: GoogleFonts.inter(
@@ -369,8 +383,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.block_rounded,
-                    color: const Color(0xFFEF4444), size: 22.sp),
+                leading: Icon(
+                  Icons.block_rounded,
+                  color: const Color(0xFFEF4444),
+                  size: 22.sp,
+                ),
                 title: Text(
                   'Block User',
                   style: GoogleFonts.inter(
@@ -454,8 +471,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 );
 
                 try {
-                  final res =
-                      await deleteMessageRxObj.deleteMessage(messageId);
+                  final res = await deleteMessageRxObj.deleteMessage(messageId);
                   if (res != null && widget.conversationId != null) {
                     await getConversationMessagesRxObj.getConversationMessages(
                       widget.conversationId!,
@@ -716,33 +732,38 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                           fit: BoxFit.cover,
                                           placeholder: (context, url) =>
                                               Shimmer.fromColors(
-                                            baseColor: const Color(0xFF2A2A3C),
-                                            highlightColor:
-                                                const Color(0xFF3F3F56),
-                                            child: Container(
-                                              width: 38.r,
-                                              height: 38.r,
-                                              decoration: const BoxDecoration(
-                                                color: Color(0xFF2A2A3C),
-                                                shape: BoxShape.circle,
+                                                baseColor: const Color(
+                                                  0xFF2A2A3C,
+                                                ),
+                                                highlightColor: const Color(
+                                                  0xFF3F3F56,
+                                                ),
+                                                child: Container(
+                                                  width: 38.r,
+                                                  height: 38.r,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: Color(
+                                                          0xFF2A2A3C,
+                                                        ),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                          errorWidget:
-                                              (context, url, error) =>
-                                                  Container(
-                                            width: 38.r,
-                                            height: 38.r,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF2A2A3C),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.person,
-                                              color: Colors.white70,
-                                              size: 20,
-                                            ),
-                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                                width: 38.r,
+                                                height: 38.r,
+                                                decoration: const BoxDecoration(
+                                                  color: Color(0xFF2A2A3C),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.person,
+                                                  color: Colors.white70,
+                                                  size: 20,
+                                                ),
+                                              ),
                                         )
                                       : Container(
                                           width: 38.r,
@@ -856,7 +877,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                 seenIds.add(msg.id!);
                               }
                               final timeStr = msg.createdAt != null
-                                  ? DateFormat('HH:mm').format(msg.createdAt!.toLocal())
+                                  ? DateFormat(
+                                      'HH:mm',
+                                    ).format(msg.createdAt!.toLocal())
                                   : '';
                               bool isMe = false;
                               if (currentUserId != null &&
@@ -878,14 +901,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               });
                             }
 
-                             // Merge API messages with optimistic sent messages
+                            // Merge API messages with optimistic sent messages
                             final Set<dynamic> apiIds = {};
                             final Set<String> apiMediaUrls = {};
                             final Set<String> apiTexts = {};
 
                             for (var m in allMessages) {
                               if (m['id'] != null) apiIds.add(m['id']);
-                              if (m['path'] != null) apiMediaUrls.add(m['path'].toString());
+                              if (m['path'] != null)
+                                apiMediaUrls.add(m['path'].toString());
                               if (m['message'] != null &&
                                   m['message'].toString().trim().isNotEmpty) {
                                 apiTexts.add(m['message'].toString().trim());
@@ -901,12 +925,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
                               final sentId = sent['id'];
                               final sentPath = sent['path']?.toString();
-                              final sentText = sent['message']?.toString().trim();
+                              final sentText = sent['message']
+                                  ?.toString()
+                                  .trim();
 
                               bool isAlreadyInApi = false;
                               if (sentId != null && apiIds.contains(sentId)) {
                                 isAlreadyInApi = true;
-                              } else if (sentPath != null && apiMediaUrls.contains(sentPath)) {
+                              } else if (sentPath != null &&
+                                  apiMediaUrls.contains(sentPath)) {
                                 isAlreadyInApi = true;
                               } else if (sentText != null &&
                                   sentText.isNotEmpty &&
@@ -1049,8 +1076,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
             baseColor: const Color(0xFF222533),
             highlightColor: const Color(0xFF32364A),
             child: Row(
-              mainAxisAlignment:
-                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              mainAxisAlignment: isMe
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (!isMe)
@@ -1071,10 +1099,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(16.r),
                       topRight: Radius.circular(16.r),
-                      bottomLeft:
-                          isMe ? Radius.circular(16.r) : Radius.zero,
-                      bottomRight:
-                          isMe ? Radius.zero : Radius.circular(16.r),
+                      bottomLeft: isMe ? Radius.circular(16.r) : Radius.zero,
+                      bottomRight: isMe ? Radius.zero : Radius.circular(16.r),
                     ),
                   ),
                 ),

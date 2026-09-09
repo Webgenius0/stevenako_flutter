@@ -64,9 +64,6 @@ class ChatListItem extends StatelessWidget {
                             placeholder: (context, url) => Shimmer.fromColors(
                               baseColor: const Color(0xFF2A2A3C),
                               highlightColor: const Color(0xFF3F3F56),
- 
-                              child: Container(color: const Color(0xFF2A2A3C)),
- 
                               child: Container(
                                 width: 54.r,
                                 height: 54.r,
@@ -75,7 +72,6 @@ class ChatListItem extends StatelessWidget {
                                   shape: BoxShape.circle,
                                 ),
                               ),
- 
                             ),
                             errorWidget: (context, url, error) => Container(
                               width: 54.r,
