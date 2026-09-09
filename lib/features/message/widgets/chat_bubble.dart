@@ -203,8 +203,13 @@ class ChatBubble extends StatelessWidget {
   // --------------- Image Attachment Bubble ---------------
   Widget _buildImageBubble() {
     final bool isNetwork = path != null && path!.startsWith('http');
+    final bool hasMessage = message.trim().isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
+        color: isMe
+            ? const Color(0xFF7C3AED)
+            : const Color(0xFF1E1E2E).withValues(alpha: 0.6),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16.r),
           topRight: Radius.circular(16.r),
@@ -223,81 +228,134 @@ class ChatBubble extends StatelessWidget {
           bottomLeft: isMe ? Radius.circular(15.r) : Radius.zero,
           bottomRight: isMe ? Radius.zero : Radius.circular(15.r),
         ),
-        child: Stack(
-          alignment: Alignment.bottomRight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // The Image
-            Container(
-              constraints: BoxConstraints(maxWidth: 220.w, maxHeight: 180.h),
-              child: isNetwork
-                  ? CachedNetworkImage(
-                      imageUrl: path!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: 220.w,
-                        height: 180.h,
-                        color: Colors.grey[900],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Container(
+                  constraints: BoxConstraints(maxWidth: 240.w, maxHeight: 200.h),
+                  width: 240.w,
+                  child: isNetwork
+                      ? CachedNetworkImage(
+                          imageUrl: path!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 240.w,
+                            height: 180.h,
+                            color: Colors.grey[900],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 220.w,
-                        height: 180.h,
-                        color: Colors.grey[900],
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    )
-                  : (path != null
-                        ? Image.file(File(path!), fit: BoxFit.cover)
-                        : Container(
-                            width: 220.w,
+                          errorWidget: (context, url, error) => Container(
+                            width: 240.w,
                             height: 180.h,
                             color: Colors.grey[900],
                             child: const Icon(
-                              Icons.image,
+                              Icons.broken_image,
                               color: Colors.white54,
                             ),
-                          )),
-            ),
+                          ),
+                        )
+                      : (path != null
+                            ? Image.file(File(path!), fit: BoxFit.cover)
+                            : Container(
+                                width: 240.w,
+                                height: 180.h,
+                                color: Colors.grey[900],
+                                child: const Icon(
+                                  Icons.image,
+                                  color: Colors.white54,
+                                ),
+                              )),
+                ),
 
-            // Semi-transparent Overlay for Time & Checkmark
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              margin: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    time,
-                    style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 9.sp,
+                // If there's no caption, show timestamp on the image
+                if (!hasMessage)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    margin: EdgeInsets.all(8.r),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          time,
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 9.sp,
+                          ),
+                        ),
+                        if (isMe) ...[
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.done_all_rounded,
+                            color: Colors.white.withValues(alpha: 0.8),
+                            size: 12.sp,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (isMe) ...[
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.done_all_rounded,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      size: 12.sp,
+              ],
+            ),
+
+            // Caption / Text message under image
+            if (hasMessage)
+              Container(
+                constraints: BoxConstraints(maxWidth: 240.w),
+                padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 8.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      message,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          time,
+                          style: GoogleFonts.inter(
+                            color: isMe
+                                ? Colors.white.withValues(alpha: 0.6)
+                                : const Color(0xFF6B7280),
+                            fontSize: 10.sp,
+                          ),
+                        ),
+                        if (isMe) ...[
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.done_all_rounded,
+                            color: Colors.white.withValues(alpha: 0.8),
+                            size: 13.sp,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -309,9 +367,10 @@ class ChatBubble extends StatelessWidget {
     final String displayName = fileName ?? 'Document';
     final String displaySize = fileSize ?? 'Unknown size';
     final bool isPdf = displayName.toLowerCase().endsWith('.pdf');
+    final bool hasMessage = message.trim().isNotEmpty;
 
     return Container(
-      width: 230.w,
+      width: 240.w,
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
         color: isMe
@@ -393,6 +452,18 @@ class ChatBubble extends StatelessWidget {
               ),
             ],
           ),
+          if (hasMessage) ...[
+            SizedBox(height: 8.h),
+            Text(
+              message,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+          ],
           SizedBox(height: 6.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

@@ -207,7 +207,9 @@ class _ChatInputBarState extends State<ChatInputBar> {
     try {
       final XFile? image = await _picker.pickImage(source: source);
       if (image != null) {
-        widget.onSend('', type: 'image', path: image.path);
+        final text = _controller.text.trim();
+        _controller.clear();
+        widget.onSend(text, type: 'image', path: image.path);
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -224,8 +226,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
       if (result != null && result.files.single.path != null) {
         PlatformFile file = result.files.single;
+        final text = _controller.text.trim();
+        _controller.clear();
         widget.onSend(
-          '',
+          text,
           type: 'document',
           path: file.path,
           fileName: file.name,
