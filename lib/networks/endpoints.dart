@@ -3,7 +3,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 String get url =>
-    // dotenv.env['BASE_URL'] ?? "https://stevenako.thesyndicates.team/api";
+    // dotenv.env['BASE_URL'] ?? "https://dashboard.realmworldapp.live/api";
     dotenv.env['BASE_URL'] ?? "https://dashboard.realmworldapp.live/api";
 String get imageUrl => url;
 
@@ -16,7 +16,7 @@ final class NetworkConstants {
   static const APP_KEY_VALUE = String.fromEnvironment("APP_KEY_VALUE");
   static const ACCEPT_TYPE = "application/json";
   static const AUTHORIZATION = "Authorization";
-  static const CONTENT_TYPE = "content-Type";
+  static const CONTENT_TYPE = "content-Type"; 
 }
 
 final class Endpoints {

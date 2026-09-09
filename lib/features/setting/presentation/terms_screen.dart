@@ -29,7 +29,7 @@ class _TermsScreenState extends State<TermsScreen> {
         ),
       )
       ..loadRequest(
-        Uri.parse('https://stevenako.thesyndicates.team/terms-and-conditions'),
+        Uri.parse('https://dashboard.realmworldapp.live/terms-and-conditions'),
       );
   }
 

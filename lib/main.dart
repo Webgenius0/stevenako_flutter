@@ -40,11 +40,7 @@ void main() async {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          Icon(
-            Icons.wifi_off_rounded,
-            color: Colors.white54,
-            size: 42,
-          ),
+          Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 42),
           SizedBox(height: 14),
           Text(
             'Unable to load content',
