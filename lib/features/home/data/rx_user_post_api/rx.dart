@@ -34,6 +34,7 @@ final class UserPostRx extends RxResponseInt<UserPostModel> {
     required List<int> taggedUserIds,
     File? video,
     File? photo,
+    List<File>? photos,
     int? soundId,
   }) async {
     try {
@@ -51,6 +52,7 @@ final class UserPostRx extends RxResponseInt<UserPostModel> {
         taggedUserIds: taggedUserIds,
         video: video,
         photo: photo,
+        photos: photos,
         soundId: soundId,
       );
 

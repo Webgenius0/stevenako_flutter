@@ -1,15 +1,22 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-
+import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
+import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class PostDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? postData;
+  final int? postId;
 
   const PostDetailsScreen({
     super.key,
     this.postData,
+    this.postId,
   });
 
   @override
@@ -28,6 +35,7 @@ class CommentItem {
   bool isLiked;
   int likeCount;
   List<CommentItem> replies;
+  final int? userId;
 
   CommentItem({
     required this.id,
@@ -38,6 +46,7 @@ class CommentItem {
     this.isLiked = false,
     this.likeCount = 0,
     List<CommentItem>? replies,
+    this.userId,
   }) : replies = replies ?? [];
 }
 
@@ -63,6 +72,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   // Comment list
   late List<CommentItem> _comments;
 
+  StreamSubscription? _postDetailsSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -83,50 +94,76 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       _isFollowing = widget.postData!['isFollowing'];
     }
 
-    _comments = [
-      CommentItem(
-        id: '1',
-        userHandle: '@kai',
-        text: ' Absolutely stunning shot! 🔥',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        timeAgo: '2h',
-        likeCount: 3,
-        replies: [
-          CommentItem(
-            id: '1_1',
-            userHandle: '@frances',
-            text: ' Thank you so much Kai! 🙏',
-            avatarUrl:
-                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-            timeAgo: '1h',
-            likeCount: 1,
-          ),
-        ],
-      ),
-      CommentItem(
-        id: '2',
-        userHandle: '@priya',
-        text: ' Love the composition here.',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        timeAgo: '2h',
-        likeCount: 5,
-      ),
-      CommentItem(
-        id: '3',
-        userHandle: '@tom',
-        text: ' Goals 🚴',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-        timeAgo: '1h',
-        likeCount: 2,
-      ),
-    ];
+    _comments = [];
+
+    _fetchPostDetails();
+  }
+
+  void _fetchPostDetails() {
+    final dynamic effectiveId = widget.postId ?? widget.postData?['id'];
+    if (effectiveId != null) {
+      getCommentsRxObj.getComments(id: effectiveId);
+      _postDetailsSubscription = getCommentsRxObj.stream.listen((model) {
+        if (!mounted || model.data?.post == null) return;
+        final post = model.data!.post!;
+
+        setState(() {
+          if (post.likesCount != null) _likeCount = post.likesCount!;
+          if (post.commentsCount != null) _commentCount = post.commentsCount!;
+          if (post.isLiked != null) _isLiked = post.isLiked!;
+          if (post.user?.isFollow != null) _isFollowing = post.user!.isFollow!;
+
+          // Map Media URLs
+          if (post.media != null && post.media!.isNotEmpty) {
+            final urls = post.media!
+                .map((m) => m.mediaUrl ?? '')
+                .where((u) => u.isNotEmpty)
+                .toList();
+            if (urls.isNotEmpty) {
+              _postImages = urls;
+            }
+          }
+
+          // Map Comments
+          if (post.comments != null) {
+            _comments = post.comments!
+                .map((c) => _mapApiCommentToCommentItem(c))
+                .toList();
+          }
+        });
+      });
+    }
+  }
+
+  CommentItem _mapApiCommentToCommentItem(Comment comment) {
+    final user = comment.user;
+    final handle = user?.username != null && user!.username!.isNotEmpty
+        ? '@${user.username}'
+        : (user?.name != null && user!.name!.isNotEmpty ? user.name! : '@user');
+
+    final replies = comment.replies != null
+        ? comment.replies!.map((r) => _mapApiCommentToCommentItem(r)).toList()
+        : <CommentItem>[];
+
+    return CommentItem(
+      id: comment.id?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      userHandle: handle,
+      text: comment.content ?? '',
+      avatarUrl: user?.avatar ?? '',
+      timeAgo: comment.createdAt != null
+          ? DateFormat('dd MMM').format(comment.createdAt!.toLocal())
+          : '2h',
+      isLiked: comment.isLiked ?? false,
+      likeCount: comment.likesCount ?? 0,
+      replies: replies,
+      userId: user?.id,
+    );
   }
 
   @override
   void dispose() {
+    _postDetailsSubscription?.cancel();
     _commentController.dispose();
     _scrollController.dispose();
     _pageController.dispose();
@@ -337,9 +374,14 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     );
   }
 
-  void _submitComment() {
+  void _submitComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
+
+    final dynamic effectiveId = widget.postId ?? widget.postData?['id'];
+    final int? targetPostId = effectiveId is int
+        ? effectiveId
+        : int.tryParse(effectiveId?.toString() ?? '');
 
     // Mode 1: Edit existing comment
     if (_editingComment != null) {
@@ -359,47 +401,22 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       return;
     }
 
-    // Mode 2: Reply to existing comment
-    if (_replyingToComment != null) {
-      final newReply = CommentItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userHandle: '@you',
-        text: ' $text',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-        timeAgo: 'Just now',
-      );
+    // Mode 2 & Mode 3: Reply or New top-level comment
+    final newComment = CommentItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userHandle: '@you',
+      text: ' $text',
+      avatarUrl: '',
+      timeAgo: 'Just now',
+    );
 
-      setState(() {
-        _replyingToComment!.replies.add(newReply);
-        _commentCount++;
-        _replyingToComment = null;
-        _commentController.clear();
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Reply posted'),
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      FocusScope.of(context).unfocus();
-      return;
-    }
-
-    // Mode 3: Add new top-level comment
     setState(() {
-      _comments.add(
-        CommentItem(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          userHandle: '@you',
-          text: ' $text',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-          timeAgo: 'Just now',
-        ),
-      );
+      if (_replyingToComment != null) {
+        _replyingToComment!.replies.add(newComment);
+        _replyingToComment = null;
+      } else {
+        _comments.add(newComment);
+      }
       _commentCount++;
       _commentController.clear();
     });
@@ -416,6 +433,19 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         );
       }
     });
+
+    // Call API: POST /user/posts/{postId}/comment
+    if (targetPostId != null) {
+      final res = await postCommantsRxObj.post(
+        userId: targetPostId,
+        content: text,
+      );
+
+      if (res != null && res.success == true) {
+        // Silently refresh server comments
+        getCommentsRxObj.getComments(id: targetPostId);
+      }
+    }
   }
 
   void _showCommentOptions(CommentItem comment, {CommentItem? parentComment}) {
@@ -489,6 +519,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    if (kDebugMode) {
+      print('Post Id ${widget.postId}');
+    }
     // Theme colors matching exact design screenshot
     const backgroundColor = Color(0xFF13151E);
     const commentBgColor = Color(0xFF1F222E);
@@ -581,46 +615,74 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         SizedBox(width: 10.w),
 
         // User Avatar
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20.r),
-          child: Image.network(
-            avatar,
-            width: 38.r,
-            height: 38.r,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
+        GestureDetector(
+          onTap: () {
+            final dynamic rawUserId = widget.postData?['userId'];
+            final int? userId = rawUserId is int
+                ? rawUserId
+                : int.tryParse(rawUserId?.toString() ?? '');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileScreen(userId: userId),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20.r),
+            child: Image.network(
+              avatar,
               width: 38.r,
               height: 38.r,
-              color: Colors.grey[800],
-              child: const Icon(Icons.person, color: Colors.white70),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 38.r,
+                height: 38.r,
+                color: Colors.grey[800],
+                child: const Icon(Icons.person, color: Colors.white70),
+              ),
             ),
           ),
         ),
         SizedBox(width: 12.w),
 
         // User Handle and Time
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              handle,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
+        GestureDetector(
+          onTap: () {
+            final dynamic rawUserId = widget.postData?['userId'];
+            final int? userId = rawUserId is int
+                ? rawUserId
+                : int.tryParse(rawUserId?.toString() ?? '');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileScreen(userId: userId),
               ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              '2 hours ago',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.45),
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w400,
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                handle,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 2.h),
+              Text(
+                '2 hours ago',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
         ),
 
         const Spacer(),
@@ -861,15 +923,15 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         SizedBox(height: 10.h),
 
         // Hashtags
-        Wrap(
-          spacing: 8.w,
-          runSpacing: 4.h,
-          children: [
-            _buildHashtag('#cycling', accentPurple),
-            _buildHashtag('#streetphotography', accentPurple),
-            _buildHashtag('#goldenhour', accentPurple),
-          ],
-        ),
+        // Wrap(
+        //   spacing: 8.w,
+        //   runSpacing: 4.h,
+        //   children: [
+        //     _buildHashtag('#cycling', accentPurple),
+        //     _buildHashtag('#streetphotography', accentPurple),
+        //     _buildHashtag('#goldenhour', accentPurple),
+        //   ],
+        // ),
       ],
     );
   }
@@ -947,19 +1009,29 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Commenter Avatar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(avatarSize / 2),
-            child: Image.network(
-              comment.avatarUrl,
-              width: avatarSize,
-              height: avatarSize,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(userId: comment.userId),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(avatarSize / 2),
+              child: Image.network(
+                comment.avatarUrl,
                 width: avatarSize,
                 height: avatarSize,
-                color: Colors.grey[800],
-                child: Icon(Icons.person,
-                    color: Colors.white70, size: isReply ? 16 : 20),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: avatarSize,
+                  height: avatarSize,
+                  color: Colors.grey[800],
+                  child: Icon(Icons.person,
+                      color: Colors.white70, size: isReply ? 16 : 20),
+                ),
               ),
             ),
           ),

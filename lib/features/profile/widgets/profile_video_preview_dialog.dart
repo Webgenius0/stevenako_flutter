@@ -8,7 +8,7 @@ import 'package:video_player/video_player.dart';
 import 'package:stevenako_flutter/features/profile/model/get_my_vidoe_post_model.dart';
 
 class ProfileVideoPreviewDialog extends StatefulWidget {
-  final List<Post> posts;
+  final List<dynamic> posts;
   final int initialIndex;
 
   const ProfileVideoPreviewDialog({
@@ -209,7 +209,7 @@ class _ProfileVideoPreviewDialogState extends State<ProfileVideoPreviewDialog> {
 }
 
 class ProfileReelItem extends StatefulWidget {
-  final Post post;
+  final dynamic post;
   final bool isActive;
   final VideoPlayerController? controller;
   final bool isInitialized;

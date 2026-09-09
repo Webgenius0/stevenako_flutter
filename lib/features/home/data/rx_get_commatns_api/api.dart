@@ -1,39 +1,33 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
 
 import '../../../../networks/dio/dio.dart';
 import '../../../../networks/endpoints.dart';
 
-final class GetAllPostApi {
-  static final GetAllPostApi _instance = GetAllPostApi._internal();
+final class GetCommentsApi {
+  static final GetCommentsApi _instance = GetCommentsApi._internal();
 
-  GetAllPostApi._internal();
+  GetCommentsApi._internal();
 
-  static GetAllPostApi get instance => _instance;
+  static GetCommentsApi get instance => _instance;
 
-  Future<GetAllPostModel> getAllPosts({
-    int page = 1,
-    int perPage = 10,
-  }) async {
+  Future<GetUserCommentsModel> getComments({required dynamic id}) async {
     try {
       final Response response = await getHttp(
-        Endpoints.getPostList(
-          page: page,
-          perPage: perPage,
-        ),
+        Endpoints.getAllCommants(id),
       );
 
       final dynamic responseData = response.data;
 
       if (response.statusCode == 200 &&
           responseData is Map<String, dynamic>) {
-        return GetAllPostModel.fromJson(responseData);
+        return GetUserCommentsModel.fromJson(responseData);
       }
 
       log(
-        'GetAllPostApi: Invalid response '
+        'GetCommentsApi: Invalid response '
             'status=${response.statusCode}, '
             'data=$responseData',
       );
@@ -41,18 +35,17 @@ final class GetAllPostApi {
       throw Exception('Invalid response from server.');
     } on DioException catch (error, stackTrace) {
       log(
-        'GetAllPostApi DioException: ${error.message}',
+        'GetCommentsApi DioException: ${error.message}',
         stackTrace: stackTrace,
       );
 
       final dynamic responseData = error.response?.data;
 
       if (responseData is Map<String, dynamic>) {
-        final dynamic message =
-            responseData['message'] ?? responseData['status_message'];
+        final dynamic message = responseData['message'];
 
-        if (message is String && message.trim().isNotEmpty) {
-          throw Exception(message.trim());
+        if (message is String && message.isNotEmpty) {
+          throw Exception(message);
         }
       }
 
@@ -61,7 +54,7 @@ final class GetAllPostApi {
       );
     } catch (error, stackTrace) {
       log(
-        'GetAllPostApi Unexpected Error: $error',
+        'GetCommentsApi Unexpected Error: $error',
         stackTrace: stackTrace,
       );
 

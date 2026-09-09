@@ -2,56 +2,55 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter/foundation.dart';
+import 'package:stevenako_flutter/features/home/model/get_user_info_model.dart';
 
 import '../../../../helpers/toast.dart';
 import '../../../../networks/rx_base.dart';
-import '../../model/get_all_photo_model.dart';
 import 'api.dart';
 
-final class GetAllPhotoRx extends RxResponseInt<GetAllPhotoModel> {
-  final GetAllPhotoApi api = GetAllPhotoApi.instance;
+final class GetUserInfoRx extends RxResponseInt<GetUserInfoModel> {
+  final GetUserInfoApi api = GetUserInfoApi.instance;
+  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
 
-  GetAllPhotoRx({
+  GetUserInfoRx({
     required super.empty,
     required super.dataFetcher,
   });
 
-  ValueStream<GetAllPhotoModel> get stream => dataFetcher.stream;
+  ValueStream<GetUserInfoModel> get stream => dataFetcher.stream;
 
-  Future<GetAllPhotoModel?> getPhotos({
-    int page = 1,
-    int perPage = 10,
-  }) async {
+  Future<GetUserInfoModel?> getUserInfo({required dynamic id}) async {
     try {
-      final GetAllPhotoModel data = await api.getPhotos(
-        page: page,
-        perPage: perPage,
-      );
+      isLoading.value = true;
+      final GetUserInfoModel data = await api.getUserInfo(id: id);
 
       return handleSuccessWithReturn(data);
     } catch (error, stackTrace) {
       log(
-        'GetAllPhotoRx Error: $error',
+        'GetUserInfoRx Error: $error',
         stackTrace: stackTrace,
       );
 
       return handleErrorWithReturn(error);
+    } finally {
+      isLoading.value = false;
     }
   }
 
   @override
-  GetAllPhotoModel handleSuccessWithReturn(
-      GetAllPhotoModel data,
+  GetUserInfoModel handleSuccessWithReturn(
+      GetUserInfoModel data,
       ) {
     dataFetcher.sink.add(data);
     return data;
   }
 
   @override
-  GetAllPhotoModel? handleErrorWithReturn(
+  GetUserInfoModel? handleErrorWithReturn(
       dynamic error,
       ) {
-    String message = 'Failed to load photos. Please try again.';
+    String message = 'Failed to load user profile. Please try again.';
 
     if (error is DioException) {
       final dynamic responseData = error.response?.data;
@@ -76,6 +75,7 @@ final class GetAllPhotoRx extends RxResponseInt<GetAllPhotoModel> {
     }
 
     ToastUtil.showShortToast(message);
+
     dataFetcher.sink.addError(message);
 
     return null;

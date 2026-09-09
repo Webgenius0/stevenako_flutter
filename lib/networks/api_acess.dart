@@ -2,16 +2,25 @@
 
 import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/home/data/post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_get_commatns_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_get_user_info_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_post_sent_commatn_api/rx.dart';
 import 'package:stevenako_flutter/features/home/data/rx_user_post_api/rx.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
+import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
+import 'package:stevenako_flutter/features/home/model/post_my_commants_model.dart';
+import 'package:stevenako_flutter/features/home/model/start_convergatosn_model.dart';
+import 'package:stevenako_flutter/features/home/rx_post_start_convergatosn_api/rx.dart';
 
 import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
 
 import 'package:stevenako_flutter/features/home/model/user_post_model.dart';
 import 'package:stevenako_flutter/features/profile/data/rx.dart';
 import 'package:stevenako_flutter/features/profile/data/rx_get_my_post_vidio_api/rx.dart';
+import 'package:stevenako_flutter/features/profile/data/rx_get_post_data/rx.dart';
 import 'package:stevenako_flutter/features/profile/model/get_my_vidoe_post_model.dart';
+import 'package:stevenako_flutter/features/profile/model/get_post_model.dart';
 
 
 
@@ -30,6 +39,7 @@ import '../features/home/data/get_all_photo_api/rx.dart';
 import '../features/home/data/rx.dart';
 
 import '../features/home/model/get_all_post_model.dart';
+import '../features/home/model/get_user_info_model.dart';
 import '../features/message/data/rx_delete_message/rx.dart';
 import '../features/message/data/rx_get_conversation_messages/rx.dart';
 import '../features/message/data/rx_post_send_message/rx.dart';
@@ -38,10 +48,13 @@ import '../features/message/model/conversation_details_model.dart';
 import '../features/message/model/conversation_list_model.dart';
 
 import '../features/profile/data/rx_desbroad_payment_api/rx.dart';
+import '../features/profile/data/rx_user_comment_like_api/rx.dart';
+import '../features/profile/data/rx_user_post_like_api/rx.dart';
 import '../features/profile/model/get_payment_dashboard_model.dart';
 import '../features/profile/data/rx_flow_user_post_api/rx.dart';
 import '../features/profile/model/get_my_photo_post_model.dart';
 import '../features/profile/model/post_flow_model.dart';
+import '../features/profile/model/user_post_like_model.dart';
 import '../features/setting/data/rx_change_pass/rx.dart';
 import '../features/setting/data/rx_delete_user/rx.dart';
 import '../features/setting/data/rx_get_user_profile/rx.dart';
@@ -102,7 +115,7 @@ RegisterRx registerRxObj = RegisterRx(
 );
 
 final GetReelsRx getReelsRxObj = GetReelsRx(
-  empty: const GetReelsListModel(
+  empty:   GetReelsListModel(
     success: false,
     code: 0,
     message: '',
@@ -178,6 +191,16 @@ GetMyVideoPostRx getMyVideoPostRxObj = GetMyVideoPostRx(
   dataFetcher: BehaviorSubject<GetMyVodeoPostModel>(),
 );
 
+GetPostDataRx getPostDataRxObj = GetPostDataRx(
+  empty: GetPostModel(
+    success: false,
+    code: 0,
+    message: "",
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<GetPostModel>(),
+);
+
 PostFlowRx postFlowRxObj = PostFlowRx(
   empty: PostFlowModel(
     success: false,
@@ -203,6 +226,42 @@ GetPaymentDashboardRx getPaymentDashboardRxObj = GetPaymentDashboardRx(
 final GetAllPostRx getAllPostRxObj = GetAllPostRx(
   empty: GetAllPostModel(success: false, code: 0, message: '', data: null),
   dataFetcher: BehaviorSubject<GetAllPostModel>(),
+);
+
+final UserPostLikeRx userPostLikeRxObj = UserPostLikeRx(
+  empty: UserPostLikeModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<UserPostLikeModel>(),
+);
+
+final UserCommentLikeRx userCommentLikeRxObj = UserCommentLikeRx(
+  empty: UserPostLikeModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<UserPostLikeModel>(),
+);
+
+final PostCommantsRx postCommantsRxObj = PostCommantsRx(
+  empty: PostSentMyCommantsModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<PostSentMyCommantsModel>(),
+);
+
+final GetUserInfoRx getUserInfoRxObj = GetUserInfoRx(
+  empty: GetUserInfoModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<GetUserInfoModel>(),
+);
+
+final GetCommentsRx getCommentsRxObj = GetCommentsRx(
+  empty: GetUserCommentsModel(success: false, code: 0, message: '', data: null),
+  dataFetcher: BehaviorSubject<GetUserCommentsModel>(),
+);
+
+final PostStartConversationRx postStartConversationRxObj =
+    PostStartConversationRx(
+  empty: PostStartConversationModel(
+    success: false,
+    code: 0,
+    message: '',
+    data: null,
+  ),
+  dataFetcher: BehaviorSubject<PostStartConversationModel>(),
 );
 
 final PostAllNotificationRx postAllNotificationRxObj = PostAllNotificationRx(

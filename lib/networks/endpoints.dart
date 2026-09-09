@@ -85,23 +85,41 @@ final class Endpoints {
 
   // ------------------- GetProfile start-------------------
   static String getProfile() => "/v1/auth/profile";
+  static String userData(dynamic id) => "/user/$id";
 
   static String setProfile() => "/user/account/update";
   // -------------------GetProfile end-------------------
-  static String getPostList() => "/user/posts";
-  static String getPhotoList() => "/user/posts-photos";
+  static String getPostList({
+    required int page ,
+    required int perPage ,
+  }) => "/user/posts-text?page=$page&per_page=$perPage";
+
+  static String getAllCommants(dynamic id) => "/user/posts/$id";
+  static String pstSentCommants(dynamic id) => "/user/posts/$id/comment";
+  // static String getPhotoList() => "/user/posts-photos";
+  static String getPhotoList({
+    required int page ,
+    required int perPage ,
+  }) => "/user/posts-photos?page=$page&per_page=$perPage";
+
   static String getMessageList() => "/user/conversations";
   static String changePassword() => "/user/change-password";
   static String userFaqs() => "/user/faqs";
   static String msgNotification() => "/my-notifications";
   static String notificationSettings() => "/notification-settings";
   static String deleteUser() => "/user/delete/user";
+  static String startConversation() => "/user/conversations";
   static String userProfile() => "/user/me";
+  static String userinfo(int id) => "/user/$id";
+  static String userPostLike(dynamic id) => "/user/posts/$id/like";
+  static String userCommentLike(dynamic id) => "/user/comments/$id/like";
+  static String userComment(dynamic id) => "/user/comments/$id";
   static String tagPeople(String query) =>
       "/user/search?query=${Uri.encodeQueryComponent(query)}";
   static String userPost() => "/user/posts";
   static String myPhotoPost() => "/user/my-posts-photos";
   static String myVideoPost() => "/user/my-posts-videos";
+  static String myTextPost() => "/user/my-posts-text";
   static String postFlow(int userId) => "/user/follow/$userId";
   static String userPaymentDesbroad(int userId) => "/user/creator/dashboard";
   static String getSound() => "/user/sounds";
@@ -116,10 +134,29 @@ final class Endpoints {
   static String blockUser(String userId) => "/user/block/$userId";
 
   // ------------------- Mentors details start-------------------
-  static String getRealsVideoAll([String? mentorId]) {
-    if (mentorId != null && mentorId.isNotEmpty) {
-      return "/user/posts-videos?mentor_id=$mentorId";
+  // static String getRealsVideoAll([String? mentorId]) {
+  //   if (mentorId != null && mentorId.isNotEmpty) {
+  //     return "/user/posts-videos?mentor_id=$mentorId";
+  //   }
+  //   return "/user/posts-videos";
+  // }
+
+  static String getRealsVideoAll({
+    int page = 1,
+    int? perPage,
+    String? mentorId,
+  }) {
+    final List<String> queryParams = ['page=$page'];
+
+    if (perPage != null) {
+      queryParams.add('per_page=$perPage');
     }
-    return "/user/posts-videos";
-  } //   // -------------------delete farmer end-------------------
+
+    if (mentorId != null && mentorId.trim().isNotEmpty) {
+      queryParams.add('mentor_id=${mentorId.trim()}');
+    }
+
+    return "/user/posts-videos?${queryParams.join('&')}";
+  }
+  //   // -------------------delete farmer end-------------------
 }

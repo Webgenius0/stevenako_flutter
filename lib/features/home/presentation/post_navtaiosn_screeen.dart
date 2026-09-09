@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/helpers/ui_helpers.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
@@ -347,7 +348,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
               );
             }
 
-            final livePosts = snapshot.data?.data?.posts ?? [];
+            final List<PostItem> livePosts = snapshot.data?.data?.posts?.data ?? [];
 
             if (livePosts.isEmpty) {
               return RefreshIndicator(
@@ -412,7 +413,12 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                padding: EdgeInsets.only(
+                  top: 64.h,
+                  bottom: 120.h,
+                  left: 16.w,
+                  right: 16.w,
+                ),
                 options: const LiveOptions(
                   delay: Duration(milliseconds: 40),
                   showItemInterval: Duration(milliseconds: 80),
@@ -421,7 +427,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 ),
                 itemCount: livePosts.length,
                 itemBuilder: (context, index, animation) {
-                  final Post postModel = livePosts[index];
+                  final PostItem postModel = livePosts[index];
                   final int postId = postModel.id ?? index;
                   final bool isLiked =
                       _likedPostIds.contains(postId) ||
@@ -476,6 +482,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                           likesCount: likesCount,
                           commentsCount: commentsCount,
                           postDataForSheet: postDataForSheet,
+                          userId: postModel.user?.id,
                           onLikeTap: () {
                             setState(() {
                               if (_likedPostIds.contains(postId)) {
@@ -515,6 +522,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     required int commentsCount,
     required Map<String, dynamic> postDataForSheet,
     required VoidCallback onLikeTap,
+    int? userId,
   }) {
     final String resolvedMediaUrl = _resolveFullMediaUrl(mediaUrl);
     final bool hasImage = _isDisplayableImageUrl(resolvedMediaUrl);
@@ -537,28 +545,48 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
           // Header
           Row(
             children: [
-              _buildAvatarImage(_resolveFullMediaUrl(avatarUrl)),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(userId: userId),
+                    ),
+                  );
+                },
+                child: _buildAvatarImage(_resolveFullMediaUrl(avatarUrl)),
+              ),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.5,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(userId: userId),
                       ),
-                    ),
-                    Text(
-                      timeText,
-                      style: const TextStyle(
-                        color: Colors.white30,
-                        fontSize: 11,
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                        ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        timeText,
+                        style: const TextStyle(
+                          color: Colors.white30,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               GestureDetector(
@@ -1091,10 +1119,28 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 16,
-                                    backgroundImage: NetworkImage(
-                                      comment['avatar']!,
+                                  GestureDetector(
+                                    onTap: () {
+                                      final dynamic rawUserId =
+                                          comment['userId'];
+                                      final int? userId = rawUserId is int
+                                          ? rawUserId
+                                          : int.tryParse(
+                                              rawUserId?.toString() ?? '',
+                                            );
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ProfileScreen(userId: userId),
+                                        ),
+                                      );
+                                    },
+                                    child: CircleAvatar(
+                                      radius: 16,
+                                      backgroundImage: NetworkImage(
+                                        comment['avatar']!,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),

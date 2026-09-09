@@ -2,36 +2,30 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
 
 import '../../../../helpers/toast.dart';
 import '../../../../networks/rx_base.dart';
-import '../../model/get_all_photo_model.dart';
 import 'api.dart';
 
-final class GetAllPhotoRx extends RxResponseInt<GetAllPhotoModel> {
-  final GetAllPhotoApi api = GetAllPhotoApi.instance;
+final class GetCommentsRx extends RxResponseInt<GetUserCommentsModel> {
+  final GetCommentsApi api = GetCommentsApi.instance;
 
-  GetAllPhotoRx({
+  GetCommentsRx({
     required super.empty,
     required super.dataFetcher,
   });
 
-  ValueStream<GetAllPhotoModel> get stream => dataFetcher.stream;
+  ValueStream<GetUserCommentsModel> get stream => dataFetcher.stream;
 
-  Future<GetAllPhotoModel?> getPhotos({
-    int page = 1,
-    int perPage = 10,
-  }) async {
+  Future<GetUserCommentsModel?> getComments({required dynamic id}) async {
     try {
-      final GetAllPhotoModel data = await api.getPhotos(
-        page: page,
-        perPage: perPage,
-      );
+      final GetUserCommentsModel data = await api.getComments(id: id);
 
       return handleSuccessWithReturn(data);
     } catch (error, stackTrace) {
       log(
-        'GetAllPhotoRx Error: $error',
+        'GetCommentsRx Error: $error',
         stackTrace: stackTrace,
       );
 
@@ -40,18 +34,18 @@ final class GetAllPhotoRx extends RxResponseInt<GetAllPhotoModel> {
   }
 
   @override
-  GetAllPhotoModel handleSuccessWithReturn(
-      GetAllPhotoModel data,
+  GetUserCommentsModel handleSuccessWithReturn(
+      GetUserCommentsModel data,
       ) {
     dataFetcher.sink.add(data);
     return data;
   }
 
   @override
-  GetAllPhotoModel? handleErrorWithReturn(
+  GetUserCommentsModel? handleErrorWithReturn(
       dynamic error,
       ) {
-    String message = 'Failed to load photos. Please try again.';
+    String message = 'Failed to load comments. Please try again.';
 
     if (error is DioException) {
       final dynamic responseData = error.response?.data;
@@ -76,6 +70,7 @@ final class GetAllPhotoRx extends RxResponseInt<GetAllPhotoModel> {
     }
 
     ToastUtil.showShortToast(message);
+
     dataFetcher.sink.addError(message);
 
     return null;

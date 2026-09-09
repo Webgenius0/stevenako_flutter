@@ -7,7 +7,8 @@ import 'package:stevenako_flutter/helpers/all_routes.dart';
 class ProfileAvatar extends StatelessWidget {
   final String imageUrl;
 
-  const ProfileAvatar({super.key, required this.imageUrl});
+
+  const ProfileAvatar({super.key, required this.imageUrl, });
 
   @override
   Widget build(BuildContext context) {
