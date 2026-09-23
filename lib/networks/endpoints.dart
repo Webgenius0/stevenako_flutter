@@ -3,7 +3,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 String get url =>
-    // dotenv.env['BASE_URL'] ?? "https://stevenako.thesyndicates.team/api";
     dotenv.env['BASE_URL'] ?? "https://dashboard.realmworldapp.live/api";
 String get imageUrl => url;
 
