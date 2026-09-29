@@ -14,8 +14,7 @@ import 'package:stevenako_flutter/features/profile/widgets/profile_save_post_car
 import 'package:stevenako_flutter/features/profile/widgets/profile_stats_row.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_tab_button.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_video_preview_dialog.dart';
-// import 'package:stevenako_flutter/features/setting/model/user_profile_model.dart'; // Commented out: not used directly (getUserProfileRxObj disabled)
-import 'package:stevenako_flutter/helpers/di.dart';
+ import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ProfileScreen extends StatefulWidget {

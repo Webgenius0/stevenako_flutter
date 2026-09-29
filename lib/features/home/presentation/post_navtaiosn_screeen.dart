@@ -3,8 +3,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/helpers/ui_helpers.dart';
@@ -31,7 +33,17 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     await getAllPostRxObj.getAllPosts();
   }
 
-  void _showPostOptions(BuildContext context, int index) {
+  void _showPostOptions(BuildContext context, PostItem post, int index) {
+    final int? postId = post.id;
+    final String caption = post.caption ?? post.title ?? '';
+    final String postUrl = post.mediaUrl ??
+        (post.media != null && post.media!.isNotEmpty
+            ? (post.media!.first.mediaUrl ?? '')
+            : '');
+    final String shareText = caption.isNotEmpty
+        ? caption
+        : (postUrl.isNotEmpty ? postUrl : 'Check out this post on Stevenako!');
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E1E2C),
@@ -58,9 +70,20 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 label: 'Save post',
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Post saved!')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Post saved!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              _buildOptionTile(
+                icon: Icons.share_outlined,
+                label: 'Share post',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showShareOptions(context, postId, shareText);
                 },
               ),
               _buildOptionTile(
@@ -69,8 +92,21 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 onTap: () {
                   Navigator.pop(sheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit coming soon!')),
+                    const SnackBar(
+                      content: Text('Edit coming soon!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
+                },
+              ),
+              _buildOptionTile(
+                icon: Icons.report_problem_outlined,
+                label: 'Report post',
+                iconColor: const Color(0xFFFF3F55),
+                textColor: const Color(0xFFFF3F55),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  HomeReportBottomSheet.show(context, postId: postId);
                 },
               ),
               const Divider(color: Colors.white12, height: 8),
@@ -85,6 +121,78 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 },
               ),
               const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showShareOptions(BuildContext context, int? postId, String shareText) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2C),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: Colors.white),
+                title: const Text(
+                  'Copy Post Text / Link',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Clipboard.setData(ClipboardData(text: shareText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Copied to clipboard!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Colors.white),
+                title: const Text(
+                  'Share via App...',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  SharePlus.instance.share(ShareParams(text: shareText));
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.report_problem_outlined,
+                  color: Color(0xFFFF3F55),
+                ),
+                title: const Text(
+                  'Report Post',
+                  style: TextStyle(color: Color(0xFFFF3F55)),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  HomeReportBottomSheet.show(context, postId: postId);
+                },
+              ),
+              SizedBox(height: 12.h),
             ],
           ),
         );
@@ -236,6 +344,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     if (_isVideoUrl(fullUrl)) return false;
 
     final cleanUrl = fullUrl.toLowerCase();
+    if (cleanUrl.contains('mixkit.co')) return false;
     return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
   }
 
@@ -277,143 +386,158 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF0F0E17),
-      child: SafeArea(
-        child: StreamBuilder<GetAllPostModel>(
-          stream: getAllPostRxObj.dataFetcher.stream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !snapshot.hasData) {
-              return const PostsShimmerLoader();
-            }
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        color: const Color(0xFF0F0E17),
+        padding: EdgeInsets.only(top: 64.h),
+        child: RefreshIndicator(
+          color: const Color(0xFF8B5CF6),
+          backgroundColor: Colors.black,
+          onRefresh: _refreshPosts,
+          child: StreamBuilder<GetAllPostModel>(
+            stream: getAllPostRxObj.dataFetcher.stream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return const PostsShimmerLoader();
+              }
 
-            if (snapshot.hasError) {
-              final String cleanError =
-                  ToastUtil.cleanErrorMessage(snapshot.error);
-              return Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Container(
-                    padding: EdgeInsets.all(24.r),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.3),
-                        width: 1,
+              if (snapshot.hasError) {
+                final String cleanError =
+                    ToastUtil.cleanErrorMessage(snapshot.error);
+                return LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.wifi_off_rounded,
-                          color: const Color(0xFFEF4444),
-                          size: 44.r,
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          'Unable to load posts',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          cleanError,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton.icon(
-                          onPressed: _refreshPosts,
-                          icon: Icon(Icons.refresh_rounded, size: 18.r),
-                          label: const Text('Retry'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B5CF6),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          child: Container(
+                            padding: EdgeInsets.all(24.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(20.r),
+                              border: Border.all(
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.wifi_off_rounded,
+                                  color: const Color(0xFFEF4444),
+                                  size: 44.r,
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'Unable to load posts',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 6.h),
+                                Text(
+                                  cleanError,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13.sp,
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                ElevatedButton.icon(
+                                  onPressed: _refreshPosts,
+                                  icon: Icon(Icons.refresh_rounded, size: 18.r),
+                                  label: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF8B5CF6),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            final List<PostItem> livePosts = snapshot.data?.data?.posts?.data ?? [];
+              final List<PostItem> livePosts =
+                  snapshot.data?.data?.posts?.data ?? [];
 
-            if (livePosts.isEmpty) {
-              return RefreshIndicator(
-                color: const Color(0xFF8B5CF6),
-                backgroundColor: Colors.black,
-                onRefresh: _refreshPosts,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 120.h),
-                  children: [
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(20.r),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E2C),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white10),
-                            ),
-                            child: Icon(
-                              Icons.dynamic_feed_rounded,
-                              color: const Color(0xFF8B5CF6),
-                              size: 42.r,
-                            ),
+              if (livePosts.isEmpty) {
+                return LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(20.r),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E1E2C),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: Icon(
+                                  Icons.dynamic_feed_rounded,
+                                  color: const Color(0xFF8B5CF6),
+                                  size: 42.r,
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+                              Text(
+                                'No Posts Yet',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                'Be the first to share something with the community!',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'No Posts Yet',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          Text(
-                            'Be the first to share something with the community!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            }
+                  ),
+                );
+              }
 
-            return RefreshIndicator(
-              color: const Color(0xFF8B5CF6),
-              backgroundColor: Colors.black,
-              onRefresh: _refreshPosts,
-              child: LiveList.options(
+              return LiveList.options(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: EdgeInsets.only(
-                  top: 64.h,
+                  top: 8.h,
                   bottom: 120.h,
                   left: 16.w,
                   right: 16.w,
@@ -428,23 +552,37 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 itemBuilder: (context, index, animation) {
                   final PostItem postModel = livePosts[index];
                   final int postId = postModel.id ?? index;
-                  final bool isLiked = _likedPostIds.contains(postId) || (postModel.isLiked == true);
-                  final int likesCount = (postModel.likesCount ?? 0) + (_extraLikes[postId] ?? 0);
+                  final bool isLiked = _likedPostIds.contains(postId) ||
+                      (postModel.isLiked == true);
+                  final int likesCount =
+                      (postModel.likesCount ?? 0) + (_extraLikes[postId] ?? 0);
                   final int commentsCount = postModel.commentsCount ?? 0;
 
                   String? mediaUrl = postModel.mediaUrl;
-                  if ((mediaUrl == null || mediaUrl.isEmpty) &&
+                  if ((mediaUrl == null ||
+                          mediaUrl.isEmpty ||
+                          mediaUrl.contains('mixkit.co')) &&
                       postModel.media != null &&
                       postModel.media!.isNotEmpty) {
-                    mediaUrl = postModel.media!.first.mediaUrl;
+                    final validMedia = postModel.media!.firstWhere(
+                      (m) =>
+                          m.mediaUrl != null &&
+                          m.mediaUrl!.trim().isNotEmpty &&
+                          !m.mediaUrl!.contains('mixkit.co'),
+                      orElse: () => postModel.media!.first,
+                    );
+                    mediaUrl = validMedia.mediaUrl;
                   }
 
                   final String avatarUrl = postModel.user?.avatar ?? '';
-                  final String userName = postModel.user?.name ?? postModel.user?.username ?? 'Community Member';
+                  final String userName = postModel.user?.name ??
+                      postModel.user?.username ??
+                      'Community Member';
                   final String timeText = postModel.createdAt != null
                       ? '${postModel.createdAt!.hour}:${postModel.createdAt!.minute} '
                       : 'Just now';
-                  final String captionText = postModel.caption ?? postModel.title ?? '';
+                  final String captionText =
+                      postModel.caption ?? postModel.title ?? '';
 
                   final Map<String, dynamic> postDataForSheet = {
                     'userName': userName,
@@ -479,21 +617,32 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                             setState(() {
                               if (_likedPostIds.contains(postId)) {
                                 _likedPostIds.remove(postId);
-                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) - 1;
+                                _extraLikes[postId] =
+                                    (_extraLikes[postId] ?? 0) - 1;
                               } else {
                                 _likedPostIds.add(postId);
-                                _extraLikes[postId] = (_extraLikes[postId] ?? 0) + 1;
+                                _extraLikes[postId] =
+                                    (_extraLikes[postId] ?? 0) + 1;
                               }
                             });
                           },
+                          onMoreTap: () =>
+                              _showPostOptions(context, postModel, index),
+                          onShareTap: () => _showShareOptions(
+                            context,
+                            postId,
+                            captionText.isNotEmpty
+                                ? captionText
+                                : (mediaUrl ?? 'Check out this post on Stevenako!'),
+                          ),
                         ),
                       ),
                     ),
                   );
                 },
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -512,6 +661,8 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     required int commentsCount,
     required Map<String, dynamic> postDataForSheet,
     required VoidCallback onLikeTap,
+    required VoidCallback onMoreTap,
+    required VoidCallback onShareTap,
     int? userId,
   }) {
     final String resolvedMediaUrl = _resolveFullMediaUrl(mediaUrl);
@@ -581,7 +732,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                 ),
               ),
               GestureDetector(
-                onTap: () => _showPostOptions(context, index),
+                onTap: onMoreTap,
                 child: const Padding(
                   padding: EdgeInsets.all(4),
                   child: Icon(Icons.more_horiz, color: Colors.white54),
@@ -661,12 +812,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
               ),
               UIHelper.horizontalSpace(16.w),
               GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: captionText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Post copied to clipboard!')),
-                  );
-                },
+                onTap: onShareTap,
                 child: Image.asset(
                   'assets/icons/sheee.png',
                   height: 17.w,
@@ -722,7 +868,7 @@ class _PostsShimmerLoaderState extends State<PostsShimmerLoader>
 
         return ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(top: 64.h, left: 16.w, right: 16.w, bottom: 24.h),
+          padding: EdgeInsets.only(top: 8.h, left: 16.w, right: 16.w, bottom: 24.h),
           itemCount: 3,
           separatorBuilder: (context, index) => SizedBox(height: 16.h),
           itemBuilder: (context, index) => Container(

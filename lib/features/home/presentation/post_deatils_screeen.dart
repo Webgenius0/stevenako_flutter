@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
@@ -13,11 +14,7 @@ class PostDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? postData;
   final int? postId;
 
-  const PostDetailsScreen({
-    super.key,
-    this.postData,
-    this.postId,
-  });
+  const PostDetailsScreen({super.key, this.postData, this.postId});
 
   @override
   State<PostDetailsScreen> createState() => _PostDetailsScreenState();
@@ -78,7 +75,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   void initState() {
     super.initState();
 
-    final initialUrl = widget.postData?['url'] ??
+    final initialUrl =
+        widget.postData?['url'] ??
         'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop&q=80';
 
     _postImages = [
@@ -146,7 +144,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         : <CommentItem>[];
 
     return CommentItem(
-      id: comment.id?.toString() ??
+      id:
+          comment.id?.toString() ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       userHandle: handle,
       text: comment.content ?? '',
@@ -192,17 +191,15 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     final String postHandle = widget.postData?['handle'] ?? '@frances';
     final String postCaption =
         'Golden hour ride through the city streets. Nothing beats the feeling of wind rushing past on two wheels. 🏍️✨\n#cycling #streetphotography #goldenhour';
-    final String postUrl = widget.postData?['url'] ??
+    final String postUrl =
+        widget.postData?['url'] ??
         'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop&q=80';
     final String shareText =
         'Check out this post by $postHandle on StevenAko!\n\n"$postCaption"\n\n$postUrl';
 
     try {
       final result = await SharePlus.instance.share(
-        ShareParams(
-          text: shareText,
-          subject: 'Post by $postHandle',
-        ),
+        ShareParams(text: shareText, subject: 'Post by $postHandle'),
       );
 
       if (result.status == ShareResultStatus.success) {
@@ -258,8 +255,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
               // Copy Link / Text
               ListTile(
                 leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text('Copy Post Link',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Copy Post Link',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   Clipboard.setData(ClipboardData(text: shareText));
@@ -276,8 +275,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
               // Share via native apps
               ListTile(
                 leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text('Share via App...',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Share via App...',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   SharePlus.instance.share(ShareParams(text: shareText));
@@ -286,9 +287,14 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
               // Direct Message option
               ListTile(
-                leading: const Icon(Icons.send_rounded, color: Color(0xFF9D65FF)),
-                title: const Text('Send in Message',
-                    style: TextStyle(color: Colors.white)),
+                leading: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF9D65FF),
+                ),
+                title: const Text(
+                  'Send in Message',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -300,6 +306,22 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   );
                 },
               ),
+              ListTile(
+                leading: const Icon(
+                  Icons.report_problem_outlined,
+                  color: Color(0xFFFF3F55),
+                ),
+                title: const Text(
+                  'Report Post',
+                  style: TextStyle(color: Color(0xFFFF3F55)),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  final dynamic effectiveId =
+                      widget.postId ?? widget.postData?['id'];
+                  HomeReportBottomSheet.show(context, postId: effectiveId);
+                },
+              ),
               SizedBox(height: 12.h),
             ],
           ),
@@ -307,7 +329,6 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       },
     );
   }
-
 
   void _toggleCommentLike(CommentItem comment) {
     setState(() {
@@ -360,7 +381,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         _comments.removeWhere((item) => item.id == comment.id);
       }
       if (_commentCount > 0) _commentCount--;
-      if (_editingComment?.id == comment.id || _replyingToComment?.id == comment.id) {
+      if (_editingComment?.id == comment.id ||
+          _replyingToComment?.id == comment.id) {
         _cancelActiveAction();
       }
     });
@@ -474,8 +496,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
               // Reply Option
               ListTile(
                 leading: const Icon(Icons.reply_rounded, color: Colors.white),
-                title: Text('Reply to ${comment.userHandle}',
-                    style: const TextStyle(color: Colors.white)),
+                title: Text(
+                  'Reply to ${comment.userHandle}',
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _startReply(comment);
@@ -485,8 +509,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
               // Edit Option (Allow editing any comment or own comment)
               ListTile(
                 leading: const Icon(Icons.edit_outlined, color: Colors.white),
-                title: const Text('Edit comment',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Edit comment',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _startEdit(comment);
@@ -495,8 +521,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
               // Delete Option
               ListTile(
-                leading: const Icon(Icons.delete_outline,
-                    color: Color(0xFFFF3F5E)),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFFFF3F5E),
+                ),
                 title: const Text(
                   'Delete comment',
                   style: TextStyle(
@@ -519,7 +547,6 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     if (kDebugMode) {
       print('Post Id ${widget.postId}');
     }
@@ -592,7 +619,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   // Header Widget with Back Button, User Avatar, Handle, Time, and Follow Button
   Widget _buildHeader(Color accentPurple, Color followBtnColor) {
     final handle = widget.postData?['handle'] ?? '@frances';
-    final avatar = widget.postData?['avatar'] ??
+    final avatar =
+        widget.postData?['avatar'] ??
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
 
     return Row(
@@ -707,6 +735,20 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
             ),
           ),
         ),
+        SizedBox(width: 8.w),
+        IconButton(
+          onPressed: () {
+            final dynamic effectiveId = widget.postId ?? widget.postData?['id'];
+            HomeReportBottomSheet.show(context, postId: effectiveId);
+          },
+          icon: const Icon(
+            Icons.more_vert_rounded,
+            color: Colors.white70,
+            size: 20,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
       ],
     );
   }
@@ -764,11 +806,16 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_not_supported_rounded,
-                              size: 48, color: Colors.white38),
+                          Icon(
+                            Icons.image_not_supported_rounded,
+                            size: 48,
+                            color: Colors.white38,
+                          ),
                           SizedBox(height: 8),
-                          Text('Photo',
-                              style: TextStyle(color: Colors.white54)),
+                          Text(
+                            'Photo',
+                            style: TextStyle(color: Colors.white54),
+                          ),
                         ],
                       ),
                     );
@@ -870,7 +917,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-           Image.asset('assets/images/chat.png',height: 24.h,width: 24.w,),
+            Image.asset('assets/images/chat.png', height: 24.h, width: 24.w),
             SizedBox(width: 8.w),
             Text(
               '$_commentCount',
@@ -936,24 +983,6 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     );
   }
 
-  Widget _buildHashtag(String text, Color accentPurple) {
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exploring $text')),
-        );
-      },
-      child: Text(
-        text,
-        style: TextStyle(
-          color: accentPurple,
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   // Comments List Widget with reply, edit, delete, like capabilities
   Widget _buildCommentsList(Color commentBgColor, Color accentPurple) {
     return ListView.separated(
@@ -1004,7 +1033,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     final avatarSize = isReply ? 30.r : 36.r;
 
     return GestureDetector(
-      onLongPress: () => _showCommentOptions(comment, parentComment: parentComment),
+      onLongPress: () =>
+          _showCommentOptions(comment, parentComment: parentComment),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1029,8 +1059,11 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   width: avatarSize,
                   height: avatarSize,
                   color: Colors.grey[800],
-                  child: Icon(Icons.person,
-                      color: Colors.white70, size: isReply ? 16 : 20),
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.white70,
+                    size: isReply ? 16 : 20,
+                  ),
                 ),
               ),
             ),
@@ -1048,7 +1081,9 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                     Expanded(
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 12.h),
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
                         decoration: BoxDecoration(
                           color: commentBgColor,
                           borderRadius: BorderRadius.circular(20.r),
@@ -1117,10 +1152,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                     SizedBox(width: 8.w),
                     Text(
                       comment.timeAgo,
-                      style: TextStyle(
-                        color: Colors.white38,
-                        fontSize: 11.sp,
-                      ),
+                      style: TextStyle(color: Colors.white38, fontSize: 11.sp),
                     ),
                     SizedBox(width: 14.w),
 
@@ -1153,7 +1185,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
                     // Delete Button
                     GestureDetector(
-                      onTap: () => _deleteComment(comment, parentComment: parentComment),
+                      onTap: () =>
+                          _deleteComment(comment, parentComment: parentComment),
                       child: Text(
                         'Delete',
                         style: TextStyle(
@@ -1173,19 +1206,13 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   }
 
   // Input Field Widget at the Bottom with Active Replying & Editing Banner
-  Widget _buildCommentInputField(
-      Color backgroundColor, Color commentBgColor) {
+  Widget _buildCommentInputField(Color backgroundColor, Color commentBgColor) {
     final bool isReplying = _replyingToComment != null;
     final bool isEditing = _editingComment != null;
 
     return Container(
       color: backgroundColor,
-      padding: EdgeInsets.only(
-        left: 16.w,
-        right: 16.w,
-        top: 6.h,
-        bottom: 12.h,
-      ),
+      padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 6.h, bottom: 12.h),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1255,8 +1282,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                       hintText: isEditing
                           ? 'Update comment...'
                           : isReplying
-                              ? 'Reply to ${_replyingToComment!.userHandle}...'
-                              : 'Add comment...',
+                          ? 'Reply to ${_replyingToComment!.userHandle}...'
+                          : 'Add comment...',
                       hintStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 14.sp,
@@ -1276,7 +1303,11 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                           color: const Color(0xFF9D65FF),
                           size: 24.r,
                         )
-                      : Image.asset('assets/images/rocket.png',height: 24.h,width: 24.h,),
+                      : Image.asset(
+                          'assets/images/rocket.png',
+                          height: 24.h,
+                          width: 24.h,
+                        ),
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   constraints: const BoxConstraints(),
                 ),

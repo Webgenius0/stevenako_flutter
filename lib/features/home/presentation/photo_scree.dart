@@ -2,11 +2,14 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
@@ -51,11 +54,17 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
             builder: (context, snapshot) {
               // Error State
               if (snapshot.hasError) {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: _buildErrorView(snapshot.error.toString()),
+                return LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: _buildErrorView(snapshot.error.toString()),
+                      ),
+                    ),
                   ),
                 );
               }
@@ -71,11 +80,17 @@ class _PhotosSubScreenState extends State<PhotosSubScreen> {
 
               // Empty State
               if (posts.isEmpty) {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: _buildEmptyView(),
+                return LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: _buildEmptyView(),
+                      ),
+                    ),
                   ),
                 );
               }
@@ -425,14 +440,25 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
   }
 
   String _getPhotoUrl() {
-    if (widget.post.mediaUrl != null && widget.post.mediaUrl!.isNotEmpty) {
-      return widget.post.mediaUrl!;
-    }
     if (widget.post.media != null && widget.post.media!.isNotEmpty) {
-      final firstMediaUrl = widget.post.media!.first.mediaUrl;
-      if (firstMediaUrl != null && firstMediaUrl.isNotEmpty) {
-        return firstMediaUrl;
+      final validMedia = widget.post.media!.firstWhere(
+        (m) =>
+            m.mediaUrl != null &&
+            m.mediaUrl!.trim().isNotEmpty &&
+            !m.mediaUrl!.contains('mixkit.co'),
+        orElse: () => widget.post.media!.lastWhere(
+          (m) => m.mediaUrl != null && m.mediaUrl!.trim().isNotEmpty,
+          orElse: () => widget.post.media!.first,
+        ),
+      );
+      if (validMedia.mediaUrl != null &&
+          validMedia.mediaUrl!.trim().isNotEmpty) {
+        return validMedia.mediaUrl!.trim();
       }
+    }
+    if (widget.post.mediaUrl != null &&
+        widget.post.mediaUrl!.trim().isNotEmpty) {
+      return widget.post.mediaUrl!.trim();
     }
     return '';
   }
@@ -483,12 +509,79 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
 
   void _handleShare() {
     _shareController.forward(from: 0);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Link copied to clipboard!'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
+    final String photoUrl = _getPhotoUrl();
+    final int? pid = widget.post.id is int
+        ? widget.post.id as int
+        : int.tryParse(widget.post.id?.toString() ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E212D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Photo Options',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: Colors.white),
+                title: const Text('Copy Photo Link',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Clipboard.setData(ClipboardData(text: photoUrl));
+                  ToastUtil.showShortToast('Link copied to clipboard!');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Colors.white),
+                title: const Text('Share via App...',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  SharePlus.instance.share(ShareParams(text: photoUrl));
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.report_problem_outlined,
+                  color: Color(0xFFFF3F55),
+                ),
+                title: const Text(
+                  'Report Photo',
+                  style: TextStyle(color: Color(0xFFFF3F55)),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  HomeReportBottomSheet.show(context, postId: pid);
+                },
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -564,6 +657,12 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                   onTapUp: (_) => setState(() => _isPressed = false),
                   onTapCancel: () => setState(() => _isPressed = false),
                   onDoubleTap: _handleDoubleTap,
+                  onLongPress: () {
+                    final int? pid = widget.post.id is int
+                        ? widget.post.id as int
+                        : int.tryParse(widget.post.id?.toString() ?? '');
+                    HomeReportBottomSheet.show(context, postId: pid);
+                  },
                   onTap: () {
                     final int? pid = widget.post.id is int
                         ? widget.post.id as int
@@ -891,6 +990,22 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                         height: 14.h,
                         width: 14.w,
                       ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+
+                  // Report / Options button
+                  _BounceTap(
+                    onTap: () {
+                      final int? pid = widget.post.id is int
+                          ? widget.post.id as int
+                          : int.tryParse(widget.post.id?.toString() ?? '');
+                      HomeReportBottomSheet.show(context, postId: pid);
+                    },
+                    child: Icon(
+                      Icons.more_vert_rounded,
+                      color: Colors.white70,
+                      size: 15.r,
                     ),
                   ),
                 ],

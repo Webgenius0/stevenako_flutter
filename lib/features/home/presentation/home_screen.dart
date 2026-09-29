@@ -7,6 +7,7 @@ import 'package:stevenako_flutter/features/home/presentation/photo_scree.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_navtaiosn_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/releas_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/search_scren.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isActive;
@@ -133,7 +134,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         SizedBox(width: 24.w),
                         _buildTopActionButton(
                           'assets/images/Settings.png',
-                          () {},
+                          () {
+                            HomeReportBottomSheet.show(context);
+                          },
                         ),
                       ],
                     ),

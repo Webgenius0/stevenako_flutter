@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stevenako_flutter/features/auth/google_sing_in/google_singin.dart';
 
 import 'package:stevenako_flutter/assets_helper/app_images.dart';
 import 'package:stevenako_flutter/assets_helper/app_icons.dart';
@@ -29,6 +32,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final SigninRx _signinRx;
+  final _googleService = GoogleServicesAccount();
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -36,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _isLoading = false;
+  bool _isSocialLoading = false;
 
   // Rate Limiting variables
   int _failedAttempts = 0;
@@ -224,6 +229,34 @@ class _LoginScreenState extends State<LoginScreen> {
     KeyboardUtil.hideKeyboard(context);
 
     NavigationService.navigateTo(Routes.forgetPasswordScreen);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GOOGLE SIGN IN
+  // ---------------------------------------------------------------------------
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading || _isSocialLoading) return;
+    KeyboardUtil.hideKeyboard(context);
+
+    setState(() => _isSocialLoading = true);
+
+    try {
+      final credential = await _googleService.signInWithGoogle();
+
+      if (!mounted) return;
+
+      if (credential != null) {
+        NavigationService.navigateToReplacement(Routes.navigationMenu);
+      } else {
+        ToastUtil.showShortToast('Google Sign-In was cancelled.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ToastUtil.showShortToast('Google Sign-In failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isSocialLoading = false);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -493,31 +526,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // ------------------------------------------------
                           // SOCIAL LOGIN
+                          // Platform: Android → Google only, iOS → Apple only
                           // ------------------------------------------------
-                          Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
-                            children: [
-                              SocialLoginButton(
-                                iconPath: AppIcons.google,
-                                onTap: isButtonDisabled
-                                    ? () {}
-                                    : () {
-                                        // Google Login
-                                      },
-                              ),
-
-                              SizedBox(width: 16.w),
-
-                              SocialLoginButton(
-                                iconPath: AppIcons.apple,
-                                onTap: isButtonDisabled
-                                    ? () {}
-                                    : () {
-                                        // Apple Login
-                                      },
-                              ),
-                            ],
+                          Center(
+                            child: _isSocialLoading
+                                ? const CupertinoActivityIndicator(
+                                    radius: 14,
+                                    color: Color(0xFF8B5CF6),
+                                  )
+                                : Platform.isAndroid
+                                    ? SocialLoginButton(
+                                        iconPath: AppIcons.google,
+                                        onTap: isButtonDisabled
+                                            ? () {}
+                                            : _handleGoogleSignIn,
+                                      )
+                                    : SocialLoginButton(
+                                        iconPath: AppIcons.apple,
+                                        onTap: isButtonDisabled
+                                            ? () {}
+                                            : () {
+                                                // Apple Sign-In
+                                              },
+                                      ),
                           ),
 
                           SizedBox(height: 32.h),

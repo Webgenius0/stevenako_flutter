@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,8 +14,14 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/widgets/reel_comments_bottom_sheet.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/features/setting/presentation/my_wallet_screen.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ReelsSubScreen extends StatefulWidget {
   final bool isActive;
@@ -35,7 +42,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   int _currentPage = 0;
   bool _isVisible = true;
   bool _isLoading = true;
-  bool _hasUserStartedPlayback = false;
+  bool _hasUserStartedPlayback = true;
 
   final Map<int, VideoPlayerController> _controllers = {};
   final Map<int, bool> _initializedStates = {};
@@ -43,6 +50,8 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
   List<Map<String, dynamic>> _reelsData = [];
 
+  Timer? _viewCountTimer;
+  final Set<int> _recordedViewPostIds = {};
 
   @override
   void initState() {
@@ -50,7 +59,40 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
     _fetchReels();
   }
 
+  void _startViewCountTimer() {
+    _cancelViewCountTimer();
+
+    if (!widget.isActive || !_isVisible) return;
+    if (_reelsData.isEmpty || _currentPage < 0 || _currentPage >= _reelsData.length) return;
+
+    final currentItem = _reelsData[_currentPage];
+    final dynamic rawId = currentItem['id'];
+    final int? postId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+
+    if (postId == null || _recordedViewPostIds.contains(postId)) {
+      return;
+    }
+
+    final int targetPage = _currentPage;
+
+    _viewCountTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      if (!widget.isActive || !_isVisible) return;
+      if (_currentPage != targetPage) return;
+      if (_recordedViewPostIds.contains(postId)) return;
+
+      _recordedViewPostIds.add(postId);
+      reelsCountRxObj.recordPostView(postId: postId);
+    });
+  }
+
+  void _cancelViewCountTimer() {
+    _viewCountTimer?.cancel();
+    _viewCountTimer = null;
+  }
+
   void _clearAllControllers() {
+    _cancelViewCountTimer();
     _controllers.forEach((_, controller) {
       try {
         controller.pause();
@@ -90,6 +132,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       if (_reelsData.isNotEmpty) {
         _initControllerForIndex(0);
         _initControllerForIndex(1);
+        _startViewCountTimer();
       }
     }
   }
@@ -104,17 +147,36 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       String mediaType = 'video';
       final bool isAd = post.itemType == 'ad' || post.type == 'ad';
 
-      if (post.media != null &&
-          post.media!.isNotEmpty &&
-          post.media!.first.mediaUrl != null &&
-          post.media!.first.mediaUrl!.isNotEmpty) {
-        videoUrl = post.media!.first.mediaUrl!;
-        if (post.media!.first.mediaType != null &&
-            post.media!.first.mediaType!.isNotEmpty) {
-          mediaType = post.media!.first.mediaType!;
+      final List<String> availableUrls = [];
+
+      if (post.media != null && post.media!.isNotEmpty) {
+        for (final m in post.media!) {
+          if (m.mediaUrl != null && m.mediaUrl!.trim().isNotEmpty) {
+            availableUrls.add(m.mediaUrl!.trim());
+          }
         }
-      } else if (post.mediaUrl != null && post.mediaUrl!.isNotEmpty) {
-        videoUrl = post.mediaUrl!;
+
+        final validMedia = post.media!.firstWhere(
+          (m) =>
+              m.mediaUrl != null &&
+              m.mediaUrl!.trim().isNotEmpty &&
+              !m.mediaUrl!.contains('mixkit.co'),
+          orElse: () => post.media!.lastWhere(
+            (m) => m.mediaUrl != null && m.mediaUrl!.trim().isNotEmpty,
+            orElse: () => post.media!.first,
+          ),
+        );
+        if (validMedia.mediaUrl != null &&
+            validMedia.mediaUrl!.trim().isNotEmpty) {
+          videoUrl = validMedia.mediaUrl!.trim();
+        }
+        if (validMedia.mediaType != null &&
+            validMedia.mediaType!.isNotEmpty) {
+          mediaType = validMedia.mediaType!;
+        }
+      } else if (post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty) {
+        videoUrl = post.mediaUrl!.trim();
+        availableUrls.add(videoUrl);
         if (post.mediaType != null && post.mediaType!.isNotEmpty) {
           mediaType = post.mediaType!;
         }
@@ -143,11 +205,19 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
           'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
       final String caption = post.caption ?? post.title ?? '';
 
-      final currentUserId =
+      final dynamic savedUserId =
+          appData.read('user_id') ?? appData.read(kKeyUserID);
+      final dynamic profileUserId =
           getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
-      final bool isSelf = post.user?.id != null &&
-          currentUserId != null &&
-          post.user!.id == currentUserId;
+      final String? currentIdStr =
+          (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+              ? savedUserId.toString().trim()
+              : profileUserId?.toString().trim();
+      final String? postUserIdStr = post.user?.id?.toString().trim();
+      final bool isSelf = post.isMyPost == true ||
+          (currentIdStr != null &&
+              postUserIdStr != null &&
+              currentIdStr == postUserIdStr);
 
       return <String, dynamic>{
         'id': post.id,
@@ -164,6 +234,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
         'likes': post.likesCount ?? 0,
         'comments': post.commentsCount ?? 0,
         'videoUrl': videoUrl,
+        'fallbackUrls': availableUrls,
         'isNetwork': true,
         'musicTitle': isAd ? 'Sponsored Content' : 'Original Sound - $userName',
         'isLiked': post.isLiked ?? false,
@@ -176,6 +247,12 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   void didUpdateWidget(covariant ReelsSubScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive && _isVisible) {
+        _startViewCountTimer();
+      } else {
+        _cancelViewCountTimer();
+      }
+
       final currentItem = _reelsData.isNotEmpty && _currentPage < _reelsData.length
           ? _reelsData[_currentPage]
           : null;
@@ -206,7 +283,18 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
     }
 
     final bool isNetwork = item['isNetwork'] ?? true;
-    final String source = item['videoUrl'];
+    String source = item['videoUrl'] ?? '';
+    final List<dynamic> fallbackUrls = item['fallbackUrls'] ?? [];
+
+    if (source.isEmpty && fallbackUrls.isNotEmpty) {
+      source = fallbackUrls.firstWhere(
+        (u) =>
+            u.toString().trim().isNotEmpty &&
+            !u.toString().contains('mixkit.co'),
+        orElse: () => fallbackUrls.first.toString(),
+      );
+      item['videoUrl'] = source;
+    }
 
     if (source.isEmpty) {
       _errorStates[index] = true;
@@ -215,13 +303,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
     try {
       final controller = isNetwork
-          ? VideoPlayerController.networkUrl(
-              Uri.parse(source),
-              httpHeaders: const {
-                'User-Agent':
-                    'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-              },
-            )
+          ? VideoPlayerController.networkUrl(Uri.parse(source))
           : VideoPlayerController.asset(source);
 
       _controllers[index] = controller;
@@ -255,6 +337,21 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
             if (!mounted) return;
             controller.dispose();
             _controllers.remove(index);
+
+            // If this video has an alternative working URL, retry automatically
+            final nextFallback = fallbackUrls.firstWhere(
+              (u) =>
+                  u.toString().trim().isNotEmpty &&
+                  u.toString().trim() != source &&
+                  !u.toString().contains('mixkit.co'),
+              orElse: () => '',
+            );
+            if (nextFallback.toString().isNotEmpty) {
+              item['videoUrl'] = nextFallback.toString();
+              _initControllerForIndex(index);
+              return;
+            }
+
             setState(() {
               _errorStates[index] = true;
               _initializedStates[index] = false;
@@ -267,6 +364,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   }
 
   void _onPageChanged(int newIndex) {
+    _cancelViewCountTimer();
     if (!_hasUserStartedPlayback) {
       _hasUserStartedPlayback = true;
     }
@@ -282,6 +380,8 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
       _currentPage = newIndex;
     });
 
+    _startViewCountTimer();
+
     final currentItem = newIndex < _reelsData.length ? _reelsData[newIndex] : null;
     final bool isImage = currentItem?['isImage'] ?? false;
 
@@ -296,22 +396,21 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
         _initControllerForIndex(newIndex);
       }
 
-      // Preload next and previous adjacent videos
-      _initControllerForIndex(newIndex + 1);
-      if (newIndex > 0) {
-        _initControllerForIndex(newIndex - 1);
+      // Preload only next adjacent video to avoid hardware decoder limit on Android
+      if (newIndex + 1 < _reelsData.length) {
+        _initControllerForIndex(newIndex + 1);
       }
     }
 
-    // Immediately dispose distant controllers to keep max 3 surface buffers active
+    // Immediately dispose distant controllers to keep at most 2 surface buffers active
     _cleanupControllers(newIndex);
   }
 
   void _cleanupControllers(int currentIndex) {
     final keysToRemove = <int>[];
     _controllers.forEach((index, controller) {
-      // Keep only index - 1, index, index + 1
-      if ((index - currentIndex).abs() > 1) {
+      // Keep only active index and next index
+      if (index != currentIndex && index != currentIndex + 1) {
         try {
           controller.pause();
           controller.dispose();
@@ -331,6 +430,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
 
   @override
   void dispose() {
+    _cancelViewCountTimer();
     _clearAllControllers();
     _pageController.dispose();
     super.dispose();
@@ -340,7 +440,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
   Widget build(BuildContext context) {
 
 
-    print('_____________________mentorId: widget.mentorId${widget.mentorId}____________________-');
+    debugPrint('mentorId: ${widget.mentorId}');
     if (_isLoading && _reelsData.isEmpty) {
       return const ReelsSkeletonLoader();
     }
@@ -359,6 +459,11 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
           setState(() {
             _isVisible = isVisibleNow;
           });
+          if (isVisibleNow && widget.isActive) {
+            _startViewCountTimer();
+          } else {
+            _cancelViewCountTimer();
+          }
           final currentItem =
               _reelsData.isNotEmpty && _currentPage < _reelsData.length
                   ? _reelsData[_currentPage]
@@ -816,6 +921,20 @@ class _ReelPageItemState extends State<ReelPageItem>
                   );
                 },
               ),
+              ListTile(
+                leading: const Icon(
+                  Icons.report_problem_outlined,
+                  color: Color(0xFFFF3F55),
+                ),
+                title: const Text(
+                  'Report Reel',
+                  style: TextStyle(color: Color(0xFFFF3F55)),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  HomeReportBottomSheet.show(context, postId: widget.data['id']);
+                },
+              ),
               SizedBox(height: 12.h),
             ],
           ),
@@ -849,245 +968,633 @@ class _ReelPageItemState extends State<ReelPageItem>
   }
 
   void _showTipsBottomSheet(BuildContext context) {
-    final amounts = [1, 5, 10, 50];
-    int selectedAmount = 50;
+    final dynamic creatorId = widget.data['userId'];
+    final dynamic postId = widget.data['id'];
+    final String userName = widget.data['userName'] ?? 'Creator';
+    final String userHandle = widget.data['userHandle'] ?? '';
+    final String avatar = widget.data['avatar'] ?? '';
+    final bool isAd = widget.data['isAd'] ?? false;
+
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? creatorIdStr = creatorId?.toString().trim();
+
+    final bool isSelf = widget.data['isSelf'] == true ||
+        (currentIdStr != null &&
+            creatorIdStr != null &&
+            currentIdStr == creatorIdStr);
+
+    if (isAd) {
+      ToastUtil.showShortToast('Sponsored content cannot receive tips');
+      return;
+    }
+
+    if (isSelf) {
+      ToastUtil.showShortToast('You cannot send a tip to your own reel');
+      return;
+    }
+
+    // Refresh wallet in background
+    getWalletRxObj.getWallet();
+
+    final List<int> presetAmounts = [1, 5, 10, 20, 50];
+    int selectedAmount = 5;
+    bool isCustom = false;
+    final TextEditingController customController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
+      useSafeArea: true,
+      backgroundColor: const Color(0xFF1B182B),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+      ),
+      builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF181924),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.only(
-                left: 20.w,
-                right: 20.w,
-                top: 12.h,
-                bottom: 24.h + MediaQuery.of(context).padding.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/gift.png',
-                        height: 24.h,
-                        width: 24.w,
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Tips',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 28.h),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Amount',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  Row(
-                    children: amounts.map((amount) {
-                      final isSelected = selectedAmount == amount;
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 5.w),
-                          child: GestureDetector(
-                            onTap: () {
-                              setModalState(() {
-                                selectedAmount = amount;
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              height: 52.h,
-                              decoration: BoxDecoration(
-                                color: isSelected ? null : Colors.white,
-                                gradient: isSelected
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFF8B5CF6),
-                                          Color(0xFF6D28D9),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
-                                    : null,
-                                borderRadius: BorderRadius.circular(16.r),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color(0xFF8B5CF6)
-                                              .withValues(alpha: 0.4),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '\$ $amount',
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 32.h),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      final screenSize = MediaQuery.of(context).size;
-                      setState(() {
-                        _coinAnimX = screenSize.width / 2;
-                        _coinAnimY = screenSize.height / 2;
-                        _showCoinAnim = true;
-                      });
-                      Future.delayed(const Duration(milliseconds: 1000), () {
-                        if (mounted) {
-                          setState(() {
-                            _showCoinAnim = false;
-                          });
-                        }
-                      });
+            final wallet = getWalletRxObj.dataFetcher.valueOrNull?.data?.wallet;
+            final availableBalance = wallet?.availableBalance ?? 0;
+            final currency = wallet?.currency ?? 'EUR';
+            final symbol = currency == 'EUR'
+                ? '€'
+                : (currency == 'USD' ? '\$' : '$currency ');
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.greenAccent,
-                              ),
-                              SizedBox(width: 10.w),
-                              Text(
-                                'Sent \$$selectedAmount tip to ${widget.data['userName']}!',
-                              ),
-                            ],
-                          ),
-                          backgroundColor: const Color(0xFF181924),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+            num effectiveAmount = selectedAmount;
+            if (isCustom) {
+              final parsed = num.tryParse(customController.text.trim());
+              effectiveAmount = (parsed != null && parsed > 0) ? parsed : 0;
+            }
+
+            return SafeArea(
+              top: false,
+              bottom: true,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(22.r),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(2.r),
                           ),
                         ),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: 56.h,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF9061F9), Color(0xFF5B21B6)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(28.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF7C3AED).withValues(alpha: 0.5),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      SizedBox(height: 18.h),
+
+                      // Header with Creator details
+                      Row(
                         children: [
-                          Image.asset(
-                            'assets/images/gift.png',
-                            height: 24.h,
-                            width: 24.w,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Send',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
                           Container(
-                            width: 22.w,
-                            height: 22.h,
+                            padding: EdgeInsets.all(2.5.r),
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
                               ),
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              r'$',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w900,
-                              ),
+                            child: CircleAvatar(
+                              radius: 22.r,
+                              backgroundColor: const Color(0xFF27273A),
+                              backgroundImage: avatar.isNotEmpty
+                                  ? CachedNetworkImageProvider(avatar)
+                                  : null,
+                              child: avatar.isEmpty
+                                  ? Icon(
+                                      Icons.person,
+                                      color: Colors.white70,
+                                      size: 20.sp,
+                                    )
+                                  : null,
                             ),
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            '\$$selectedAmount',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17.sp,
-                              fontWeight: FontWeight.bold,
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Send Tip',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 16.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Image.asset(
+                                      'assets/images/gift.png',
+                                      height: 18.h,
+                                      width: 18.w,
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'To $userName ($userHandle)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white54,
+                                    fontSize: 12.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: Colors.white38,
+                              size: 20.sp,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      SizedBox(height: 18.h),
+
+                      // Wallet Balance Banner
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF27273A).withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: const Color(0xFF7C3AED).withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8.r),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF7C3AED)
+                                        .withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: const Color(0xFF9F75FF),
+                                    size: 16.sp,
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Wallet Balance',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white60,
+                                        fontSize: 11.5.sp,
+                                      ),
+                                    ),
+                                    Text(
+                                      '$symbol$availableBalance',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 14.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(12.r),
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const MyWalletScreen(),
+                                  ),
+                                );
+                                await getWalletRxObj.getWallet();
+                                if (sheetContext.mounted) {
+                                  setModalState(() {});
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF7C3AED)
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: const Color(0xFF9F75FF)
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.add_rounded,
+                                      color: const Color(0xFF9F75FF),
+                                      size: 14.sp,
+                                    ),
+                                    SizedBox(width: 2.w),
+                                    Text(
+                                      'Top Up',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFF9F75FF),
+                                        fontSize: 11.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
+
+                      // Select Amount Label
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Select Tip Amount',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Preset Amount Chips + Custom Button
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final double itemWidth =
+                              (constraints.maxWidth - (2 * 10.w)) / 3;
+                          return Wrap(
+                            spacing: 10.w,
+                            runSpacing: 10.h,
+                            children: [
+                              ...presetAmounts.map((amt) {
+                                final isSelected =
+                                    !isCustom && selectedAmount == amt;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setModalState(() {
+                                      isCustom = false;
+                                      selectedAmount = amt;
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration:
+                                        const Duration(milliseconds: 200),
+                                    width: itemWidth,
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 12.h),
+                                    decoration: BoxDecoration(
+                                      gradient: isSelected
+                                          ? const LinearGradient(
+                                              colors: [
+                                                Color(0xFF7C3AED),
+                                                Color(0xFF402380),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            )
+                                          : null,
+                                      color: isSelected
+                                          ? null
+                                          : const Color(0xFF27273A)
+                                              .withValues(alpha: 0.5),
+                                      borderRadius:
+                                          BorderRadius.circular(14.r),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF9F75FF)
+                                            : Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                        width: isSelected ? 1.5 : 1,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFF7C3AED)
+                                                    .withValues(alpha: 0.4),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/dolor.png',
+                                          width: 14.w,
+                                          height: 14.h,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          '$symbol$amt',
+                                          style: GoogleFonts.inter(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Colors.white70,
+                                            fontSize: 14.5.sp,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                              GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    isCustom = true;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: itemWidth,
+                                  padding:
+                                      EdgeInsets.symmetric(vertical: 12.h),
+                                  decoration: BoxDecoration(
+                                    gradient: isCustom
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Color(0xFF7C3AED),
+                                              Color(0xFF402380),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                    color: isCustom
+                                        ? null
+                                        : const Color(0xFF27273A)
+                                            .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    border: Border.all(
+                                      color: isCustom
+                                          ? const Color(0xFF9F75FF)
+                                          : Colors.white.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                      width: isCustom ? 1.5 : 1,
+                                    ),
+                                    boxShadow: isCustom
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(0xFF7C3AED)
+                                                  .withValues(alpha: 0.4),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Custom',
+                                    style: GoogleFonts.inter(
+                                      color: isCustom
+                                          ? Colors.white
+                                          : Colors.white70,
+                                      fontSize: 13.5.sp,
+                                      fontWeight: isCustom
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      if (isCustom) ...[
+                        SizedBox(height: 14.h),
+                        TextField(
+                          controller: customController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: InputDecoration(
+                            prefixText: '$symbol ',
+                            prefixStyle: GoogleFonts.inter(
+                              color: const Color(0xFF9F75FF),
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            hintText: 'Enter custom tip (e.g. 15)',
+                            hintStyle: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 13.sp,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFF27273A)
+                                .withValues(alpha: 0.5),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                              borderSide: BorderSide(
+                                color: const Color(0xFF7C3AED)
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF9F75FF),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: 24.h),
+
+                      // Send Tip Button
+                      ValueListenableBuilder<bool>(
+                        valueListenable: sentTipRxObj.isLoading,
+                        builder: (context, isLoading, child) {
+                          final isInsufficient =
+                              effectiveAmount > availableBalance;
+
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 50.h,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF7C3AED),
+                                    Color(0xFF402380),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF7C3AED)
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: isLoading
+                                    ? null
+                                    : () async {
+                                        if (effectiveAmount <= 0) {
+                                          ToastUtil.showShortToast(
+                                            'Please select or enter a valid amount',
+                                          );
+                                          return;
+                                        }
+
+                                        if (isInsufficient) {
+                                          ToastUtil.showShortToast(
+                                            'Insufficient balance ($symbol$availableBalance). Please top up your wallet.',
+                                          );
+                                          return;
+                                        }
+
+                                        final response =
+                                            await sentTipRxObj.sendTip(
+                                          creatorId: creatorId,
+                                          amount: effectiveAmount,
+                                          postId: postId,
+                                        );
+
+                                        if (response?.success == true &&
+                                            sheetContext.mounted) {
+                                          Navigator.pop(sheetContext);
+
+                                          // Celebratory coin burst on screen
+                                          final screenSize =
+                                              MediaQuery.of(context).size;
+                                          setState(() {
+                                            _coinAnimX = screenSize.width / 2;
+                                            _coinAnimY =
+                                                screenSize.height / 2;
+                                            _showCoinAnim = true;
+                                          });
+
+                                          Future.delayed(
+                                            const Duration(milliseconds: 1200),
+                                            () {
+                                              if (mounted) {
+                                                setState(() {
+                                                  _showCoinAnim = false;
+                                                });
+                                              }
+                                            },
+                                          );
+
+                                          getWalletRxObj.getWallet();
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16.r),
+                                  ),
+                                ),
+                                child: isLoading
+                                    ? SizedBox(
+                                        width: 22.r,
+                                        height: 22.r,
+                                        child: const CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.2,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/gift.png',
+                                            height: 20.h,
+                                            width: 20.w,
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Text(
+                                            effectiveAmount > 0
+                                                ? 'Send $symbol$effectiveAmount Tip'
+                                                : 'Send Tip',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 15.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -1102,14 +1609,20 @@ class _ReelPageItemState extends State<ReelPageItem>
     final bool isAd = widget.data['isAd'] ?? false;
     final String targetUrl = widget.data['targetUrl'] ?? '';
 
-    final currentUserId =
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
         getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
-    final int? postUserId = widget.data['userId'];
-    final bool isSelf = widget.data['isSelf'] ?? false;
-    final bool isOwnPost = isSelf ||
-        (postUserId != null &&
-            currentUserId != null &&
-            postUserId == currentUserId);
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = widget.data['userId']?.toString().trim();
+    final bool isSelf = widget.data['isSelf'] == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+    final bool isOwnPost = isSelf;
 
     return Material(
       color: Colors.black,
@@ -1616,38 +2129,40 @@ class _ReelPageItemState extends State<ReelPageItem>
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-
-                GestureDetector(
-                  onTapDown: _triggerCoins,
-                  onTap: () => _showTipsBottomSheet(context),
-                  child: Container(
-                    width: 42.w,
-                    height: 42.h,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFBF9405), Color(0xFFBF9405)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFD97706).withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                if (!isOwnPost && !isAd) ...[
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTapDown: _triggerCoins,
+                    onTap: () => _showTipsBottomSheet(context),
+                    child: Container(
+                      width: 42.w,
+                      height: 42.h,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFBF9405), Color(0xFFBF9405)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/images/dolor.png',
-                      width: 20.w,
-                      height: 20.h,
-                      fit: BoxFit.contain,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFFD97706).withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/dolor.png',
+                        width: 20.w,
+                        height: 20.h,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

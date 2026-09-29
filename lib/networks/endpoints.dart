@@ -50,6 +50,10 @@ final class Endpoints {
   static String login() => "/user/login";
   // -------------------Login end-------------------
 
+  // -------------------Google Login start-------------------
+  static String googleLogin() => "/user/login/google";
+  // -------------------Google Login end-------------------
+
   // -------------------Logout start-------------------
   static String logout() => "/user/logout";
   // -------------------Logout end-------------------
@@ -125,6 +129,14 @@ final class Endpoints {
   static String myBlockedUsers() => "/user/my-blocked";
   static String blockOrUnblockUser(String userId) => "/user/block/$userId";
   static String reportUser(String userId) => "/user/report/$userId";
+  static String reportPost(dynamic postId) => "/user/posts/$postId/report";
+  static String postView(dynamic postId) => "/user/posts/$postId/view";
+  static String myWallet() => "/my-wallet";
+  static String walletDeposit() => "/user/wallet/deposit";
+  static String stripeConnect() => "/user/stripe/connect";
+  static String stripeDisconnect() => "/user/stripe/disconnect";
+  static String creatorWithdraw() => "/user/creator/withdraw";
+  static String sendTip() => "/user/tips/send";
   static String conversationList() => "/user/conversations";
   static String conversationMessages(String cId) =>
       "/user/conversations/$cId/messages";

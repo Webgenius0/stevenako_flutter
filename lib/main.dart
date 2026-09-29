@@ -1,4 +1,5 @@
 import 'package:auto_animated/auto_animated.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:stevenako_flutter/firebase_options.dart';
 import 'package:stevenako_flutter/services/internet_checker_service.dart';
 import 'package:stevenako_flutter/splash_screen.dart';
 import '/helpers/all_routes.dart';
@@ -19,6 +21,9 @@ import 'networks/dio/dio.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await dotenv.load(fileName: ".env");
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
