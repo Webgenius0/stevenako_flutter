@@ -70,5 +70,13 @@
 	<string>This app needs access to location to select and display your current location.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to location to select and display your current location.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RealmWorld requires access to your camera to take profile photos and capture photos or videos for your posts.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RealmWorld requires access to your photo library to select photos and videos to share on your feed and profile.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>RealmWorld requires permission to save photos and videos to your photo library.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>RealmWorld requires access to your microphone to record audio when capturing video reels and posts.</string>
 </dict>
 </plist>

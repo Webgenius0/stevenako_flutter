@@ -1,24 +1,17 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-// ============================================================
-// SearchScren — Search bar + user results list with verified
-// badges and back button navigation.
-// ============================================================
+import '../../../helpers/all_routes.dart';
+import '../../../helpers/navigation_service.dart';
+import '../data/user_search_api/rx.dart';
+import '../model/user_search_model.dart';
 
-class _SearchUser {
-  final String name;
-  final String handle;
-  final String avatarUrl;
-  final bool isVerified;
-
-  const _SearchUser({
-    required this.name,
-    required this.handle,
-    required this.avatarUrl,
-    this.isVerified = false,
-  });
-}
+// ============================================================
+// SearchScren — live API search with debounce + profile tap
+// ============================================================
 
 class SearchScren extends StatefulWidget {
   const SearchScren({super.key});
@@ -35,70 +28,82 @@ class _SearchScrenState extends State<SearchScren> {
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  String _query = '';
+  final UserSearchRx _rx = UserSearchRx();
 
-  // TODO: Replace with real search results from your backend.
-  final List<_SearchUser> _allUsers = const [
-    _SearchUser(
-      name: 'Smith Alex',
-      handle: '@smith_alex',
-      avatarUrl: 'https://i.pravatar.cc/150?img=12',
-      isVerified: true,
-    ),
-    _SearchUser(
-      name: 'Johnson Emily',
-      handle: '@johnson_emily',
-      avatarUrl: 'https://i.pravatar.cc/150?img=51',
-      isVerified: true,
-    ),
-    _SearchUser(
-      name: 'Williams John',
-      handle: '@williams_john',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
-      isVerified: true,
-    ),
-    _SearchUser(
-      name: 'Brown Sarah',
-      handle: '@brown_sarah',
-      avatarUrl: 'https://i.pravatar.cc/150?img=47',
-      isVerified: true,
-    ),
-  ];
+  String _query = '';
+  List<SearchedUser> _results = [];
+  bool _isLoading = false;
+  bool _hasSearched = false;
+
+  Timer? _debounce;
+
+  // ──────────────────────────────────────────────────────────
+  // Lifecycle
+  // ──────────────────────────────────────────────────────────
 
   @override
   void dispose() {
     _searchController.dispose();
     _focusNode.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
-  List<_SearchUser> get _filtered {
-    if (_query.trim().isEmpty) return _allUsers;
-    final q = _query.toLowerCase();
-    return _allUsers
-        .where((u) =>
-            u.name.toLowerCase().contains(q) ||
-            u.handle.toLowerCase().contains(q))
-        .toList();
+  // ──────────────────────────────────────────────────────────
+  // Search with 500ms debounce
+  // ──────────────────────────────────────────────────────────
+
+  void _onQueryChanged(String value) {
+    setState(() => _query = value);
+
+    _debounce?.cancel();
+
+    if (value.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _hasSearched = false;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      final users = await _rx.searchUsers(query: value.trim());
+      if (!mounted) return;
+      setState(() {
+        _results = users;
+        _isLoading = false;
+        _hasSearched = true;
+      });
+    });
   }
 
   void _clearSearch() {
     _searchController.clear();
-    setState(() => _query = '');
+    _onQueryChanged('');
   }
 
-  void _onBack() {
-    Navigator.of(context).maybePop();
+  void _onBack() => Navigator.of(context).maybePop();
+
+  // ──────────────────────────────────────────────────────────
+  // Navigate to user profile
+  // ──────────────────────────────────────────────────────────
+
+  void _onUserTap(SearchedUser user) {
+    NavigationService.navigateTo(
+      Routes.profileScreen,
+      arguments: {'userId': user.id},
+    );
   }
 
-  void _onUserTap(_SearchUser user) {
-    // TODO: Navigate to UserProfileScreen if needed
-  }
+  // ──────────────────────────────────────────────────────────
+  // Build
+  // ──────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -111,7 +116,7 @@ class _SearchScrenState extends State<SearchScren> {
         child: SafeArea(
           child: Column(
             children: [
-              // ---- Header with Back button + Search field
+              // ── Header: back + search field ─────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 16, 20, 8),
                 child: Row(
@@ -139,7 +144,7 @@ class _SearchScrenState extends State<SearchScren> {
                                 controller: _searchController,
                                 focusNode: _focusNode,
                                 autofocus: true,
-                                onChanged: (v) => setState(() => _query = v),
+                                onChanged: _onQueryChanged,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16.sp,
@@ -147,7 +152,7 @@ class _SearchScrenState extends State<SearchScren> {
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   isDense: true,
-                                  hintText: 'Search..',
+                                  hintText: 'Search users...',
                                   hintStyle: TextStyle(
                                     color: _hintColor,
                                     fontSize: 18.sp,
@@ -155,7 +160,18 @@ class _SearchScrenState extends State<SearchScren> {
                                 ),
                               ),
                             ),
-                            if (_query.isNotEmpty)
+                            if (_isLoading)
+                              SizedBox(
+                                width: 20.w,
+                                height: 20.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    const Color(0xFF7C3AED),
+                                  ),
+                                ),
+                              )
+                            else if (_query.isNotEmpty)
                               GestureDetector(
                                 onTap: _clearSearch,
                                 behavior: HitTestBehavior.opaque,
@@ -175,29 +191,12 @@ class _SearchScrenState extends State<SearchScren> {
                   ],
                 ),
               ),
+
               SizedBox(height: 12.h),
 
-              // ---- Results list
+              // ── Results ────────────────────────────────────
               Expanded(
-                child: results.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No results found',
-                          style: TextStyle(color: _hintColor, fontSize: 15.sp),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                        itemCount: results.length,
-                        separatorBuilder: (context, index) => SizedBox(height: 24.h),
-                        itemBuilder: (context, index) {
-                          final user = results[index];
-                          return _SearchResultRow(
-                            user: user,
-                            onTap: () => _onUserTap(user),
-                          );
-                        },
-                      ),
+                child: _buildBody(),
               ),
             ],
           ),
@@ -205,14 +204,73 @@ class _SearchScrenState extends State<SearchScren> {
       ),
     );
   }
+
+  Widget _buildBody() {
+    // Empty query — show hint
+    if (_query.trim().isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search, color: _hintColor, size: 48.sp),
+            SizedBox(height: 12.h),
+            Text(
+              'Type a name or username to search',
+              style: TextStyle(color: _hintColor, fontSize: 14.sp),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Loading
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7C3AED)),
+        ),
+      );
+    }
+
+    // No results after search
+    if (_hasSearched && _results.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.person_search, color: _hintColor, size: 48.sp),
+            SizedBox(height: 12.h),
+            Text(
+              'No users found for "$_query"',
+              style: TextStyle(color: _hintColor, fontSize: 14.sp),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Results list
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+      itemCount: _results.length,
+      separatorBuilder: (_, __) => SizedBox(height: 24.h),
+      itemBuilder: (context, index) {
+        final user = _results[index];
+        return _SearchResultRow(
+          user: user,
+          onTap: () => _onUserTap(user),
+        );
+      },
+    );
+  }
 }
 
 // ============================================================
-// Reusable row
+// Reusable row widget
 // ============================================================
 
 class _SearchResultRow extends StatelessWidget {
-  final _SearchUser user;
+  final SearchedUser user;
   final VoidCallback onTap;
 
   const _SearchResultRow({required this.user, required this.onTap});
@@ -229,55 +287,83 @@ class _SearchResultRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         child: Row(
           children: [
+            // ── Avatar ──────────────────────────────────────
             ClipOval(
-              child: Image.network(
-                user.avatarUrl,
+              child: CachedNetworkImage(
+                imageUrl: user.avatar ?? '',
                 width: 64.w,
-                height: 64.h,
+                height: 64.w,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                placeholder: (_, __) => Container(
                   width: 64.w,
-                  height: 64.h,
+                  height: 64.w,
+                  color: const Color(0xFF2A2A3A),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF7C3AED)),
+                    ),
+                  ),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  width: 64.w,
+                  height: 64.w,
                   color: const Color(0xFF2A2A3A),
                   child: const Icon(Icons.person, color: Colors.white54),
                 ),
               ),
             ),
+
             SizedBox(width: 16.w),
+
+            // ── Name + Username ──────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          user.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      if (user.isVerified) ...[
-                        SizedBox(width: 8.w),
-                        Icon(Icons.verified, color: _purple, size: 20.sp),
-                      ],
-                    ],
+                  Text(
+                    user.name ?? '',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    user.handle,
+                    '@${user.username ?? ''}',
                     style: TextStyle(
                       color: _hintColor,
-                      fontSize: 16.sp,
+                      fontSize: 14.sp,
                     ),
                   ),
                 ],
               ),
             ),
+
+            // ── Follow indicator ─────────────────────────────
+            if (user.isFollow == true)
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: _purple.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: _purple.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  'Following',
+                  style: TextStyle(
+                    color: _purple,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

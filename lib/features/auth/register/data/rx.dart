@@ -6,6 +6,7 @@ import 'package:rxdart/rxdart.dart';
 
 import '../../../../constants/app_constants.dart';
 import '../../../../helpers/di.dart';
+import '../../../../helpers/secure_storage_helper.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/dio/dio.dart';
 import '../../../../networks/rx_base.dart';
@@ -128,6 +129,7 @@ final class VerifyOtpRx extends RxResponseInt<PostVerifyOtpModel> {
         appData.write(kKeyIsLoggedIn, true);
         appData.write(kKeyAccessToken, token);
         appData.write('is_guest', false);
+        SecureStorageHelper.saveAccessToken(token);
         if (userId != null && userId.isNotEmpty) {
           appData.write('user_id', userId);
         }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
 import '../../../../helpers/di.dart';
+import '../../../../helpers/secure_storage_helper.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/dio/dio.dart';
 import '../../../../networks/rx_base.dart';
@@ -36,6 +37,7 @@ class LogoutRx extends RxResponseInt<Map<String, dynamic>> {
     String message =
         data["message"] ?? data["vendor_message"] ?? "Logged out successfully";
 
+    await SecureStorageHelper.clearAccessToken();
     await appData.erase();
 
     DioSingleton.instance.update('');
@@ -63,6 +65,7 @@ class LogoutRx extends RxResponseInt<Map<String, dynamic>> {
 
       if (errorMessage == 'Unauthenticated.') {
         DioSingleton.instance.update('');
+        SecureStorageHelper.clearAccessToken();
         appData.erase();
         Get.offAll(() => const LoginScreen());
         return false;

@@ -10,24 +10,28 @@ import '../exception_handler/data_source.dart';
 final class Logger extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    log("= = = Dio Request = = =");
-    log("${options.headers}");
-    log("${options.data}");
-    log("${options.contentType}");
-    log("${options.extra}");
-    log("${options.baseUrl}${options.path}");
+    if (kDebugMode) {
+      log("= = = Dio Request = = =");
+      log("${options.headers}");
+      log("${options.data}");
+      log("${options.contentType}");
+      log("${options.extra}");
+      log("${options.baseUrl}${options.path}");
+    }
     return super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    log("= = = Dio Success Response = = =");
-    log(json.encode(response.data));
-    log("${response.requestOptions}");
-    log("${response.statusCode}");
-    log("${response.statusMessage}");
-    log("${response.headers}");
-    log("${response.extra}");
+    if (kDebugMode) {
+      log("= = = Dio Success Response = = =");
+      log(json.encode(response.data));
+      log("${response.requestOptions}");
+      log("${response.statusCode}");
+      log("${response.statusMessage}");
+      log("${response.headers}");
+      log("${response.extra}");
+    }
 
     return super.onResponse(response, handler);
   }

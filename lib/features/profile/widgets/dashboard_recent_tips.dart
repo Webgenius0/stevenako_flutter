@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../model/get_payment_dashboard_model.dart';
 
 class DashboardRecentTips extends StatelessWidget {
   final List<dynamic>? recentTips;
@@ -78,16 +79,54 @@ class DashboardRecentTips extends StatelessWidget {
               separatorBuilder: (context, index) => SizedBox(height: 16.h),
               itemBuilder: (context, index) {
                 final item = items[index];
-                final Map<String, dynamic> tip = item is Map<String, dynamic>
-                    ? item
-                    : <String, dynamic>{};
+                String name = 'Anonymous Supporter';
+                String time = 'Recently';
+                String amount = '+€0.00';
+                String avatar = '';
 
-                final String name =
-                    tip['name'] ?? tip['username'] ?? 'Anonymous Supporter';
-                final String time = tip['time'] ?? tip['created_at'] ?? 'Recently';
-                final String amount =
-                    tip['amount'] ?? tip['formatted_amount'] ?? '+€0.00';
-                final String avatar = tip['avatar'] ?? tip['avatar_url'] ?? '';
+                if (item is RecentTip) {
+                  final senderName = item.sender?.name?.trim();
+                  final senderUsername = item.sender?.username?.trim();
+                  if (senderName != null && senderName.isNotEmpty) {
+                    name = senderName;
+                  } else if (senderUsername != null && senderUsername.isNotEmpty) {
+                    name = senderUsername;
+                  }
+
+                  time = item.timeAgo ?? item.createdAt ?? 'Recently';
+                  amount = item.formattedAmount ??
+                      (item.amount != null ? '+€${item.amount}' : '+€0.00');
+                  avatar = item.sender?.avatar ?? '';
+                } else if (item is Map) {
+                  final sender = item['sender'] is Map ? item['sender'] as Map : null;
+                  final senderName = sender?['name']?.toString().trim();
+                  final senderUsername = sender?['username']?.toString().trim();
+                  final tipName = item['name']?.toString().trim();
+                  final tipUsername = item['username']?.toString().trim();
+
+                  if (senderName != null && senderName.isNotEmpty) {
+                    name = senderName;
+                  } else if (senderUsername != null && senderUsername.isNotEmpty) {
+                    name = senderUsername;
+                  } else if (tipName != null && tipName.isNotEmpty) {
+                    name = tipName;
+                  } else if (tipUsername != null && tipUsername.isNotEmpty) {
+                    name = tipUsername;
+                  }
+
+                  time = item['time_ago']?.toString() ??
+                      item['time']?.toString() ??
+                      item['created_at']?.toString() ??
+                      'Recently';
+
+                  amount = item['formatted_amount']?.toString() ??
+                      (item['amount'] != null ? '+€${item['amount']}' : '+€0.00');
+
+                  avatar = sender?['avatar']?.toString() ??
+                      item['avatar']?.toString() ??
+                      item['avatar_url']?.toString() ??
+                      '';
+                }
 
                 return Row(
                   children: [

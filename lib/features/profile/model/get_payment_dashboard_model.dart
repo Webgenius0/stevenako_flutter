@@ -53,26 +53,34 @@ class DashboardData {
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
-      stats: json['stats'] != null ? DashboardStats.fromJson(json['stats']) : null,
-      graphData: json['graph_data'] != null
+      stats: json['stats'] != null && json['stats'] is Map<String, dynamic>
+          ? DashboardStats.fromJson(json['stats'])
+          : null,
+      graphData: json['graph_data'] != null && json['graph_data'] is List
           ? (json['graph_data'] as List)
+              .whereType<Map<String, dynamic>>()
               .map((v) => GraphData.fromJson(v))
               .toList()
           : [],
-      recentTips: json['recent_tips'] ?? [],
-      topContent: json['top_content'] != null
+      recentTips: json['recent_tips'] != null && json['recent_tips'] is List
+          ? (json['recent_tips'] as List)
+              .map((v) => v is Map<String, dynamic> ? RecentTip.fromJson(v) : v)
+              .toList()
+          : [],
+      topContent: json['top_content'] != null && json['top_content'] is List
           ? (json['top_content'] as List)
+              .whereType<Map<String, dynamic>>()
               .map((v) => TopContent.fromJson(v))
               .toList()
           : [],
-      totalGift: json['total_gift'] != null
+      totalGift: json['total_gift'] != null && json['total_gift'] is Map<String, dynamic>
           ? TotalGift.fromJson(json['total_gift'])
           : null,
-      settings: json['settings'] != null
+      settings: json['settings'] != null && json['settings'] is Map<String, dynamic>
           ? DashboardSettings.fromJson(json['settings'])
           : null,
       recentWithdrawals: json['recent_withdrawals'] ?? [],
-      stripeStatus: json['stripe_status'] != null
+      stripeStatus: json['stripe_status'] != null && json['stripe_status'] is Map<String, dynamic>
           ? StripeStatus.fromJson(json['stripe_status'])
           : null,
     );
@@ -217,15 +225,15 @@ class TopContent {
 
   factory TopContent.fromJson(Map<String, dynamic> json) {
     return TopContent(
-      rank: json['rank'],
-      id: json['id'],
-      title: json['title'],
-      type: json['type'],
-      typeLabel: json['type_label'],
-      viewsCount: json['views_count'],
-      formattedViews: json['formatted_views'],
-      earnings: json['earnings'],
-      formattedEarnings: json['formatted_earnings'],
+      rank: json['rank'] is int ? json['rank'] : int.tryParse(json['rank']?.toString() ?? ''),
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
+      title: json['title']?.toString(),
+      type: json['type']?.toString(),
+      typeLabel: json['type_label']?.toString(),
+      viewsCount: json['views_count'] is num ? json['views_count'] : num.tryParse(json['views_count']?.toString() ?? ''),
+      formattedViews: json['formatted_views']?.toString(),
+      earnings: json['earnings'] is num ? json['earnings'] : num.tryParse(json['earnings']?.toString() ?? ''),
+      formattedEarnings: json['formatted_earnings']?.toString(),
     );
   }
 
@@ -257,9 +265,9 @@ class TotalGift {
 
   factory TotalGift.fromJson(Map<String, dynamic> json) {
     return TotalGift(
-      amount: json['amount'],
-      formatted: json['formatted'],
-      formattedEur: json['formatted_eur'],
+      amount: json['amount'] is num ? json['amount'] : num.tryParse(json['amount']?.toString() ?? ''),
+      formatted: json['formatted']?.toString(),
+      formattedEur: json['formatted_eur']?.toString(),
     );
   }
 
@@ -287,10 +295,10 @@ class DashboardSettings {
 
   factory DashboardSettings.fromJson(Map<String, dynamic> json) {
     return DashboardSettings(
-      earningsRate: json['earnings_rate'],
-      formattedEarningsRate: json['formatted_earnings_rate'],
-      platformTipFee: json['platform_tip_fee'],
-      formattedPlatformTipFee: json['formatted_platform_tip_fee'],
+      earningsRate: json['earnings_rate'] is num ? json['earnings_rate'] : num.tryParse(json['earnings_rate']?.toString() ?? ''),
+      formattedEarningsRate: json['formatted_earnings_rate']?.toString(),
+      platformTipFee: json['platform_tip_fee'] is num ? json['platform_tip_fee'] : num.tryParse(json['platform_tip_fee']?.toString() ?? ''),
+      formattedPlatformTipFee: json['formatted_platform_tip_fee']?.toString(),
     );
   }
 
@@ -328,6 +336,84 @@ class StripeStatus {
       'stripe_connect_id': stripeConnectId,
       'stripe_onboarding_completed': stripeOnboardingCompleted,
       'is_eligible_for_withdrawal': isEligibleForWithdrawal,
+    };
+  }
+}
+
+class RecentTip {
+  int? id;
+  num? amount;
+  num? netAmount;
+  String? formattedAmount;
+  String? timeAgo;
+  String? createdAt;
+  TipSender? sender;
+
+  RecentTip({
+    this.id,
+    this.amount,
+    this.netAmount,
+    this.formattedAmount,
+    this.timeAgo,
+    this.createdAt,
+    this.sender,
+  });
+
+  factory RecentTip.fromJson(Map<String, dynamic> json) {
+    return RecentTip(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
+      amount: json['amount'] is num ? json['amount'] : num.tryParse(json['amount']?.toString() ?? ''),
+      netAmount: json['net_amount'] is num ? json['net_amount'] : num.tryParse(json['net_amount']?.toString() ?? ''),
+      formattedAmount: json['formatted_amount']?.toString(),
+      timeAgo: json['time_ago']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      sender: json['sender'] != null && json['sender'] is Map<String, dynamic>
+          ? TipSender.fromJson(json['sender'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'net_amount': netAmount,
+      'formatted_amount': formattedAmount,
+      'time_ago': timeAgo,
+      'created_at': createdAt,
+      'sender': sender?.toJson(),
+    };
+  }
+}
+
+class TipSender {
+  int? id;
+  String? name;
+  String? username;
+  String? avatar;
+
+  TipSender({
+    this.id,
+    this.name,
+    this.username,
+    this.avatar,
+  });
+
+  factory TipSender.fromJson(Map<String, dynamic> json) {
+    return TipSender(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
+      name: json['name']?.toString(),
+      username: json['username']?.toString(),
+      avatar: json['avatar']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'username': username,
+      'avatar': avatar,
     };
   }
 }

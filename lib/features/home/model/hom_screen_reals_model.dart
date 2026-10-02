@@ -746,6 +746,7 @@ class ReelItem {
   final int? sharesCount;
   final bool? isLiked;
   final bool? isViewed;
+  final bool? isMyPost;
   final ReelUser? user;
   final List<Media>? media;
   final List<ReelUser>? taggedUsers;
@@ -777,6 +778,7 @@ class ReelItem {
     this.sharesCount,
     this.isLiked,
     this.isViewed,
+    this.isMyPost,
     this.user,
     this.media,
     this.taggedUsers,
@@ -793,7 +795,17 @@ class ReelItem {
       return mediaUrl;
     }
     if (media != null && media!.isNotEmpty) {
-      return media!.first.mediaUrl;
+      final validMedia = media!.firstWhere(
+        (m) =>
+            m.mediaUrl != null &&
+            m.mediaUrl!.trim().isNotEmpty &&
+            !m.mediaUrl!.contains('mixkit.co'),
+        orElse: () => media!.lastWhere(
+          (m) => m.mediaUrl != null && m.mediaUrl!.trim().isNotEmpty,
+          orElse: () => media!.first,
+        ),
+      );
+      return validMedia.mediaUrl;
     }
     return null;
   }
@@ -826,6 +838,7 @@ class ReelItem {
     sharesCount: _toIntSafe(json["shares_count"]),
     isLiked: _toBoolSafe(json["is_liked"]),
     isViewed: _toBoolSafe(json["is_viewed"]),
+    isMyPost: _toBoolSafe(json["is_my_post"]),
     user: json["user"] == null ? null : ReelUser.fromJson(json["user"]),
     media: json["media"] == null
         ? []
@@ -843,6 +856,7 @@ class ReelItem {
     "id": id,
     "item_type": itemType,
     "type": type,
+    "is_my_post": isMyPost,
     "caption": caption,
     "title": title,
     "media_url": mediaUrl,
