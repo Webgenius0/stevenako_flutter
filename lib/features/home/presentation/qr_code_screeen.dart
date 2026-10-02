@@ -70,8 +70,9 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
 
       if (boundary != null) {
         final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-        final ByteData? byteData =
-            await image.toByteData(format: ui.ImageByteFormat.png);
+        final ByteData? byteData = await image.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
 
         if (byteData != null) {
           ToastUtil.showShortToast('QR code saved successfully!');
@@ -117,15 +118,18 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
     return StreamBuilder(
       stream: getUserProfileRxObj.stream,
       builder: (context, snapshot) {
-        final user = snapshot.data?.data?.user ??
+        final user =
+            snapshot.data?.data?.user ??
             getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user;
 
         final String name = widget.displayName ?? user?.name ?? 'User Profile';
-        final String userHandle = widget.handle ??
+        final String userHandle =
+            widget.handle ??
             (user?.username != null ? '@${user!.username}' : '@stevenako');
         final String avatar = widget.avatarUrl ?? user?.avatar ?? '';
-        final String encodedQrData = widget.profileUrl ??
-            'https://stevenako.thesyndicates.team/u/${user?.username ?? user?.id ?? "profile"}';
+        final String encodedQrData =
+            widget.profileUrl ??
+            'https://dashboard.realmworldapp.live/u/${user?.username ?? user?.id ?? "profile"}';
 
         return Scaffold(
           body: Container(
@@ -133,10 +137,7 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1B182B),
-                  Color(0xFF0F0E17),
-                ],
+                colors: [Color(0xFF1B182B), Color(0xFF0F0E17)],
               ),
             ),
             child: SafeArea(
@@ -200,8 +201,9 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF9F75FF)
-                                      .withValues(alpha: 0.3),
+                                  color: const Color(
+                                    0xFF9F75FF,
+                                  ).withValues(alpha: 0.3),
                                   blurRadius: 16,
                                   spreadRadius: 2,
                                 ),
@@ -216,25 +218,27 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
                                       fit: BoxFit.cover,
                                       placeholder: (context, url) =>
                                           Shimmer.fromColors(
-                                        baseColor: const Color(0xFF1E1E2C),
-                                        highlightColor: const Color(0xFF2E2E42),
-                                        child: Container(
-                                          width: 90.r,
-                                          height: 90.r,
-                                          color: const Color(0xFF1E1E2C),
-                                        ),
-                                      ),
+                                            baseColor: const Color(0xFF1E1E2C),
+                                            highlightColor: const Color(
+                                              0xFF2E2E42,
+                                            ),
+                                            child: Container(
+                                              width: 90.r,
+                                              height: 90.r,
+                                              color: const Color(0xFF1E1E2C),
+                                            ),
+                                          ),
                                       errorWidget: (context, url, error) =>
                                           Container(
-                                        width: 90.r,
-                                        height: 90.r,
-                                        color: const Color(0xFF242238),
-                                        child: Icon(
-                                          Icons.person_rounded,
-                                          color: Colors.white54,
-                                          size: 44.r,
-                                        ),
-                                      ),
+                                            width: 90.r,
+                                            height: 90.r,
+                                            color: const Color(0xFF242238),
+                                            child: Icon(
+                                              Icons.person_rounded,
+                                              color: Colors.white54,
+                                              size: 44.r,
+                                            ),
+                                          ),
                                     )
                                   : Container(
                                       width: 90.r,
@@ -341,7 +345,8 @@ class _QrCodeScreeenState extends State<QrCodeScreeen> {
                                 icon: Icons.share_outlined,
                                 label: 'Share',
                                 isLoading: _isSharing,
-                                onTap: () => _onShare(encodedQrData, userHandle),
+                                onTap: () =>
+                                    _onShare(encodedQrData, userHandle),
                               ),
                             ],
                           ),
@@ -393,15 +398,12 @@ class _CircleActionButton extends StatelessWidget {
                       padding: EdgeInsets.all(18.r),
                       child: const CircularProgressIndicator(
                         strokeWidth: 2.2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF9F75FF)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF9F75FF),
+                        ),
                       ),
                     )
-                  : Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 24.r,
-                    ),
+                  : Icon(icon, color: Colors.white, size: 24.r),
             ),
           ),
         ),
