@@ -34,7 +34,7 @@ final class NetworkConstants {
   static const APP_KEY_VALUE = String.fromEnvironment("APP_KEY_VALUE");
   static const ACCEPT_TYPE = "application/json";
   static const AUTHORIZATION = "Authorization";
-  static const CONTENT_TYPE = "content-Type";
+  static const CONTENT_TYPE = "content-Type"; 
 }
 
 final class Endpoints {
