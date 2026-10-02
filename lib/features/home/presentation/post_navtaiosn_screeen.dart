@@ -404,9 +404,9 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       return trimmed;
     }
     if (trimmed.startsWith('/')) {
-      return 'https://stevenako.thesyndicates.team$trimmed';
+      return 'https://dashboard.realmworldapp.live$trimmed';
     }
-    return 'https://stevenako.thesyndicates.team/$trimmed';
+    return 'https://dashboard.realmworldapp.live/$trimmed';
   }
 
   bool _isVideoUrl(String? url) {
@@ -872,13 +872,12 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E2C),
         borderRadius: BorderRadius.circular(hasImage ? 16.r : 12.r),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // Ensures tight fitting around text for text-only posts
+        mainAxisSize: MainAxisSize
+            .min, // Ensures tight fitting around text for text-only posts
         children: [
           // Header
           Row(
@@ -968,9 +967,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
           ],
 
           // Media Content (ONLY rendered if valid image exists, NO dummy boxes)
-          if (hasImage) ...[
-            _buildPostMediaImage(resolvedMediaUrl),
-          ],
+          if (hasImage) ...[_buildPostMediaImage(resolvedMediaUrl)],
 
           SizedBox(height: hasImage ? 12.h : 8.h),
 

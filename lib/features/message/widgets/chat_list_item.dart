@@ -28,7 +28,7 @@ class ChatListItem extends StatelessWidget {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    const String baseUrl = 'https://stevenako.thesyndicates.team';
+    const String baseUrl = 'https://dashboard.realmworldapp.live';
     if (url.startsWith('/')) {
       return '$baseUrl$url';
     }
