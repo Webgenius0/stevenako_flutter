@@ -13,6 +13,8 @@ class ProfileSavePostCard extends StatelessWidget {
   final String likes;
   final String comments;
   final String shares;
+  final VoidCallback? onDeleteTap;
+  final VoidCallback? onMoreTap;
 
   const ProfileSavePostCard({
     super.key,
@@ -24,6 +26,8 @@ class ProfileSavePostCard extends StatelessWidget {
     required this.likes,
     required this.comments,
     required this.shares,
+    this.onDeleteTap,
+    this.onMoreTap,
   });
 
   bool _isValidImageUrl(String? url) {
@@ -97,6 +101,29 @@ class ProfileSavePostCard extends StatelessWidget {
                 ),
               ],
             ),
+            const Spacer(),
+            if (onDeleteTap != null)
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF4D4D),
+                  size: 20,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: onDeleteTap,
+              )
+            else if (onMoreTap != null)
+              IconButton(
+                icon: const Icon(
+                  Icons.more_vert_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: onMoreTap,
+              ),
           ],
         ),
 

@@ -6,12 +6,15 @@ import 'package:stevenako_flutter/features/home/data/rx_get_commatns_api/rx.dart
 import 'package:stevenako_flutter/features/home/data/rx_get_user_info_api/rx.dart';
 import 'package:stevenako_flutter/features/home/data/rx_post_sent_commatn_api/rx.dart';
 import 'package:stevenako_flutter/features/home/data/rx_user_post_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/repot_user/data/rx.dart';
+import 'package:stevenako_flutter/features/home/data/repot_user/model/repot_user_model.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
 import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dart';
 import 'package:stevenako_flutter/features/home/model/post_my_commants_model.dart';
 import 'package:stevenako_flutter/features/home/model/start_convergatosn_model.dart';
 import 'package:stevenako_flutter/features/home/rx_post_start_convergatosn_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_delete_post/rx.dart';
 
 import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
 
@@ -21,6 +24,19 @@ import 'package:stevenako_flutter/features/profile/data/rx_get_my_post_vidio_api
 import 'package:stevenako_flutter/features/profile/data/rx_get_post_data/rx.dart';
 import 'package:stevenako_flutter/features/profile/model/get_my_vidoe_post_model.dart';
 import 'package:stevenako_flutter/features/profile/model/get_post_model.dart';
+import 'package:stevenako_flutter/features/profile/payment/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/model/get_walit_model.dart';
+import 'package:stevenako_flutter/features/profile/payment/top_up_stripe/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/top_up_stripe/model/top_up_stripe_model.dart';
+import 'package:stevenako_flutter/features/profile/payment/stripe_connat/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/stripe_connat/model/post_stripe_connat_mode.dart';
+import 'package:stevenako_flutter/features/profile/payment/stripe_witorw_api/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/stripe_witorw_api/modle/creator_withdraw_model.dart';
+import 'package:stevenako_flutter/features/profile/payment/sent_tip_api/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/discouetn_stripe/data/rx.dart';
+import 'package:stevenako_flutter/features/profile/payment/discouetn_stripe/model/disconnect_stripe_model.dart';
+import 'package:stevenako_flutter/features/home/data/reals_count_api/data/rx.dart';
+import 'package:stevenako_flutter/features/home/data/reals_count_api/model/relas_caount_model.dart';
 
 
 
@@ -405,6 +421,48 @@ final BlockOrUnblockUserRx blockOrUnblockUserRxObj = BlockOrUnblockUserRx(
 final ReportUserRx reportUserRxObj = ReportUserRx(
   empty: {},
   dataFetcher: BehaviorSubject<Map<String, dynamic>>(),
+);
+
+final ReportPostRx reportPostRxObj = ReportPostRx(
+  empty: ReportPostModel(),
+  dataFetcher: BehaviorSubject<ReportPostModel>(),
+);
+
+final GetWalletRx getWalletRxObj = GetWalletRx(
+  empty: GetWalletModel(),
+  dataFetcher: BehaviorSubject<GetWalletModel>(),
+);
+
+final TopUpStripeRx topUpStripeRxObj = TopUpStripeRx(
+  empty: TopUpStripeModel(),
+  dataFetcher: BehaviorSubject<TopUpStripeModel>(),
+);
+
+final PostStripeConnectRx postStripeConnectRxObj = PostStripeConnectRx(
+  empty: PostStripeConnectModel(),
+  dataFetcher: BehaviorSubject<PostStripeConnectModel>(),
+);
+
+final CreatorWithdrawRx creatorWithdrawRxObj = CreatorWithdrawRx(
+  empty: CreatorWithdrawModel(),
+  dataFetcher: BehaviorSubject<CreatorWithdrawModel>(),
+);
+
+final SentTipRx sentTipRxObj = SentTipRx();
+
+final DisconnectStripeRx disconnectStripeRxObj = DisconnectStripeRx(
+  empty: DisconnectStripeModel(),
+  dataFetcher: BehaviorSubject<DisconnectStripeModel>(),
+);
+
+final ReelsCountRx reelsCountRxObj = ReelsCountRx(
+  empty: ReelsCountModel(),
+  dataFetcher: BehaviorSubject<ReelsCountModel>(),
+);
+
+final DeletePostRx deletePostRxObj = DeletePostRx(
+  empty: false,
+  dataFetcher: BehaviorSubject<bool>(),
 );
 
 

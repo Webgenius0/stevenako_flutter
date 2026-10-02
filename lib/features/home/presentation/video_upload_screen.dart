@@ -37,6 +37,10 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   int? _selectedSoundId;
   Sound? _selectedSound;
 
+  File? _preMergedVideoFile;
+  File? _cachedAudioFile;
+  Future<void>? _backgroundMergeTask;
+
   bool get _isVideoMode => widget.tap == 'Upload Video';
 
   String get _continueLabel {
@@ -95,6 +99,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       setState(() {
         _isVideoInitialized = true;
       });
+
+      // If a soundtrack is already selected, start pre-merging with the new video in the background
+      if (_selectedSound?.audioUrl != null &&
+          _selectedSound!.audioUrl!.isNotEmpty) {
+        _startBackgroundPremerge(_selectedSound!.audioUrl!);
+      }
     } catch (e) {
       debugPrint('Video init error: $e');
       if (!mounted) return;
@@ -133,9 +143,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         setState(() {
           _selectedSound = result;
           _selectedSoundId = result.id;
+          _preMergedVideoFile = null;
         });
         if (result.audioUrl != null && result.audioUrl!.isNotEmpty) {
           _audioPlayer?.play(UrlSource(result.audioUrl!));
+          // Start background pre-caching & merging immediately
+          _startBackgroundPremerge(result.audioUrl!);
         }
       } else if (result is int) {
         setState(() {
@@ -163,35 +176,77 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  /// Merges audio into video file using FFmpegKit
+  void _startBackgroundPremerge(String audioUrl) {
+    if (_pickedVideo == null) return;
+    _backgroundMergeTask = _doBackgroundPremerge(_pickedVideo!, audioUrl);
+  }
+
+  Future<void> _doBackgroundPremerge(File videoFile, String audioUrl) async {
+    try {
+      final merged = await _mergeAudioWithVideo(videoFile, audioUrl);
+      if (merged != null && mounted) {
+        _preMergedVideoFile = merged;
+      }
+    } catch (e) {
+      debugPrint('Background audio pre-merge error: $e');
+    }
+  }
+
+  /// Ultrafast audio-video merger using cached audio, exact duration cut, and multi-core FFmpeg parameters
   Future<File?> _mergeAudioWithVideo(File videoFile, String audioUrl) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      final String tempAudioPath =
-          '${tempDir.path}/temp_sound_${DateTime.now().millisecondsSinceEpoch}.mp3';
-      final String outputPath =
-          '${tempDir.path}/merged_video_${DateTime.now().millisecondsSinceEpoch}.mp4';
 
-      // 1. Download audio file from audioUrl
-      final dio = Dio();
-      await dio.download(audioUrl, tempAudioPath);
+      // 1. Download or use cached audio file (download only once!)
+      File? audioFile = _cachedAudioFile;
+      if (audioFile == null || !await audioFile.exists()) {
+        final String safeName = 'sound_${audioUrl.hashCode.abs()}.mp3';
+        final String tempAudioPath = '${tempDir.path}/$safeName';
+        final existingFile = File(tempAudioPath);
 
-      final audioFile = File(tempAudioPath);
-      if (!await audioFile.exists()) {
+        if (await existingFile.exists() && await existingFile.length() > 0) {
+          audioFile = existingFile;
+        } else {
+          final dio = Dio();
+          await dio.download(audioUrl, tempAudioPath);
+          audioFile = File(tempAudioPath);
+        }
+        _cachedAudioFile = audioFile;
+      }
+
+      if (!await audioFile.exists() || await audioFile.length() == 0) {
         return videoFile;
       }
 
-      // 2. FFmpeg command: replace/mix audio with video
-      // -y -i video.mp4 -i audio.mp3 -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest output.mp4
+      final String outputPath =
+          '${tempDir.path}/merged_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+      // 2. Compute exact video duration so FFmpeg cuts off immediately without scanning entire music file
+      double? videoDurationSec;
+      if (_videoController != null && _videoController!.value.isInitialized) {
+        videoDurationSec =
+            _videoController!.value.duration.inMilliseconds / 1000.0;
+      }
+
+      final String durationFlag =
+          (videoDurationSec != null && videoDurationSec > 0.1)
+              ? '-t ${videoDurationSec.toStringAsFixed(2)}'
+              : '-shortest';
+
+      // 3. Fast FFmpeg command:
+      // -c:v copy  -> Zero re-encoding for video stream (instant)
+      // -c:a aac -b:a 128k -ar 44100 -> Fast AAC audio encode
+      // -threads 0 -> Multi-core CPU utilization
+      // -movflags +faststart -> Fast MP4 container creation
       final String ffmpegCmd =
-          '-y -i "${videoFile.path}" -i "$tempAudioPath" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest "$outputPath"';
+          '-y -i "${videoFile.path}" -i "${audioFile.path}" -c:v copy -c:a aac -b:a 128k -ar 44100 -map 0:v:0 -map 1:a:0 $durationFlag -threads 0 -movflags +faststart "$outputPath"';
 
       final session = await FFmpegKit.execute(ffmpegCmd);
       final returnCode = await session.getReturnCode();
 
       if (ReturnCode.isSuccess(returnCode)) {
         final outputFile = File(outputPath);
-        if (await outputFile.exists()) {
+        if (await outputFile.exists() && await outputFile.length() > 0) {
           return outputFile;
         }
       } else {
@@ -211,22 +266,36 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
     File finalVideoFile = _pickedVideo!;
 
-    // If a music track was selected, merge audio into video file using FFmpegKit
+    // If a music track was selected, use the merged video file
     if (_selectedSound?.audioUrl != null &&
         _selectedSound!.audioUrl!.isNotEmpty) {
-      setState(() => _isProcessingAudio = true);
+      // Check if already pre-merged in background
+      if (_preMergedVideoFile != null && await _preMergedVideoFile!.exists()) {
+        finalVideoFile = _preMergedVideoFile!;
+      } else {
+        setState(() => _isProcessingAudio = true);
 
-      final mergedFile = await _mergeAudioWithVideo(
-        _pickedVideo!,
-        _selectedSound!.audioUrl!,
-      );
+        // Await background task if it was in flight
+        if (_backgroundMergeTask != null) {
+          await _backgroundMergeTask;
+        }
 
-      if (mergedFile != null) {
-        finalVideoFile = mergedFile;
-      }
+        if (_preMergedVideoFile != null && await _preMergedVideoFile!.exists()) {
+          finalVideoFile = _preMergedVideoFile!;
+        } else {
+          final mergedFile = await _mergeAudioWithVideo(
+            _pickedVideo!,
+            _selectedSound!.audioUrl!,
+          );
+          if (mergedFile != null) {
+            finalVideoFile = mergedFile;
+            _preMergedVideoFile = mergedFile;
+          }
+        }
 
-      if (mounted) {
-        setState(() => _isProcessingAudio = false);
+        if (mounted) {
+          setState(() => _isProcessingAudio = false);
+        }
       }
     }
 
@@ -236,6 +305,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     Get.to(() => UploadPostScreen(
           videoFile: finalVideoFile,
           soundId: _selectedSoundId,
+          postType: 'video',
         ));
   }
 

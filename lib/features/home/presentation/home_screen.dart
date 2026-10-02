@@ -7,6 +7,7 @@ import 'package:stevenako_flutter/features/home/presentation/photo_scree.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_navtaiosn_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/releas_screen.dart';
 import 'package:stevenako_flutter/features/home/presentation/search_scren.dart';
+import 'package:stevenako_flutter/features/setting/presentation/setting_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isActive;
@@ -93,9 +94,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           top: MediaQuery.of(context).padding.top + 8.h,
           left: 16.w,
           right: 16.w,
-          child: SafeArea(
-            bottom: false,
-            child: FadeTransition(
+          child: FadeTransition(
               opacity: _entranceFade,
               child: SlideTransition(
                 position: _entranceSlide,
@@ -133,7 +132,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         SizedBox(width: 24.w),
                         _buildTopActionButton(
                           'assets/images/Settings.png',
-                          () {},
+                          () {
+                            Get.to(() => const SettingScreen());
+                          },
                         ),
                       ],
                     ),
@@ -141,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          ),
         ),
       ],
     );

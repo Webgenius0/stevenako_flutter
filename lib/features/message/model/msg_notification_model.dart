@@ -77,8 +77,8 @@ class MsgNotificationModelData {
 class Notification {
   String? id;
   String? type;
-  NotifiableType? notifiableType;
-  int? notifiableId;
+  dynamic notifiableType;
+  dynamic notifiableId;
   NotificationData? data;
   DateTime? readAt;
   DateTime? createdAt;
@@ -98,8 +98,8 @@ class Notification {
   Notification copyWith({
     String? id,
     String? type,
-    NotifiableType? notifiableType,
-    int? notifiableId,
+    dynamic notifiableType,
+    dynamic notifiableId,
     NotificationData? data,
     DateTime? readAt,
     DateTime? createdAt,
@@ -121,24 +121,28 @@ class Notification {
   String toRawJson() => json.encode(toJson());
 
   factory Notification.fromJson(Map<String, dynamic> json) => Notification(
-    id: json["id"],
-    type: json["type"],
-    notifiableType: notifiableTypeValues.map[json["notifiable_type"]],
+    id: json["id"]?.toString(),
+    type: json["type"]?.toString(),
+    notifiableType: json["notifiable_type"]?.toString(),
     notifiableId: json["notifiable_id"],
-    data: json["data"] == null ? null : NotificationData.fromJson(json["data"]),
-    readAt: json["read_at"] == null ? null : DateTime.parse(json["read_at"]),
+    data: json["data"] == null || json["data"] is! Map<String, dynamic>
+        ? null
+        : NotificationData.fromJson(json["data"] as Map<String, dynamic>),
+    readAt: json["read_at"] == null
+        ? null
+        : DateTime.tryParse(json["read_at"].toString()),
     createdAt: json["created_at"] == null
         ? null
-        : DateTime.parse(json["created_at"]),
+        : DateTime.tryParse(json["created_at"].toString()),
     updatedAt: json["updated_at"] == null
         ? null
-        : DateTime.parse(json["updated_at"]),
+        : DateTime.tryParse(json["updated_at"].toString()),
   );
 
   Map<String, dynamic> toJson() => {
     "id": id,
     "type": type,
-    "notifiable_type": notifiableTypeValues.reverse[notifiableType],
+    "notifiable_type": notifiableType?.toString(),
     "notifiable_id": notifiableId,
     "data": data?.toJson(),
     "read_at": readAt?.toIso8601String(),
@@ -151,12 +155,13 @@ class NotificationData {
   String? title;
   String? message;
   String? type;
-  int? senderId;
+  dynamic senderId;
   String? senderUsername;
-  int? postId;
-  int? commentId;
-  int? amount;
-  int? withdrawalRequestId;
+  dynamic postId;
+  dynamic commentId;
+  dynamic amount;
+  dynamic withdrawalRequestId;
+  dynamic depositId;
 
   NotificationData({
     this.title,
@@ -168,18 +173,20 @@ class NotificationData {
     this.commentId,
     this.amount,
     this.withdrawalRequestId,
+    this.depositId,
   });
 
   NotificationData copyWith({
     String? title,
     String? message,
     String? type,
-    int? senderId,
+    dynamic senderId,
     String? senderUsername,
-    int? postId,
-    int? commentId,
-    int? amount,
-    int? withdrawalRequestId,
+    dynamic postId,
+    dynamic commentId,
+    dynamic amount,
+    dynamic withdrawalRequestId,
+    dynamic depositId,
   }) => NotificationData(
     title: title ?? this.title,
     message: message ?? this.message,
@@ -190,6 +197,7 @@ class NotificationData {
     commentId: commentId ?? this.commentId,
     amount: amount ?? this.amount,
     withdrawalRequestId: withdrawalRequestId ?? this.withdrawalRequestId,
+    depositId: depositId ?? this.depositId,
   );
 
   factory NotificationData.fromRawJson(String str) =>
@@ -199,15 +207,16 @@ class NotificationData {
 
   factory NotificationData.fromJson(Map<String, dynamic> json) =>
       NotificationData(
-        title: json["title"],
-        message: json["message"],
-        type: json["type"],
+        title: json["title"]?.toString(),
+        message: json["message"]?.toString(),
+        type: json["type"]?.toString(),
         senderId: json["sender_id"],
-        senderUsername: json["sender_username"],
+        senderUsername: json["sender_username"]?.toString(),
         postId: json["post_id"],
         commentId: json["comment_id"],
         amount: json["amount"],
         withdrawalRequestId: json["withdrawal_request_id"],
+        depositId: json["deposit_id"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -220,23 +229,6 @@ class NotificationData {
     "comment_id": commentId,
     "amount": amount,
     "withdrawal_request_id": withdrawalRequestId,
+    "deposit_id": depositId,
   };
-}
-
-enum NotifiableType { APP_MODELS_USER }
-
-final notifiableTypeValues = EnumValues({
-  "App\\Models\\User": NotifiableType.APP_MODELS_USER,
-});
-
-class EnumValues<T> {
-  Map<String, T> map;
-  late Map<T, String> reverseMap;
-
-  EnumValues(this.map);
-
-  Map<T, String> get reverse {
-    reverseMap = map.map((k, v) => MapEntry(v, k));
-    return reverseMap;
-  }
 }

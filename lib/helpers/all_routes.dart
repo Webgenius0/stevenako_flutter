@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:stevenako_flutter/features/auth/login/presentation/login_screen.dart';
+import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
 
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
 import 'package:stevenako_flutter/features/message/presentation/contact_info_screen.dart';
@@ -75,6 +76,7 @@ final class Routes {
   static const String notificationsActivityScreen =
       '/notificationsActivityScreen';
   static const String editProfileScreen = '/editProfileScreen';
+  static const String profileScreen = '/profileScreen';
   static const String dashboardScreen = '/dashboardScreen';
   static const String messageNotificationScreen = '/messageNotificationScreen';
   static const String reportUserScreen = '/reportUserScreen';
@@ -412,6 +414,23 @@ final class RouteGenerator {
                 builder: (context) => const MessageNotificationScreen(),
               );
 
+      case Routes.profileScreen:
+        {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final userIdRaw = args?['userId'];
+          final userId = userIdRaw is int
+              ? userIdRaw
+              : int.tryParse(userIdRaw?.toString() ?? '');
+          return Platform.isAndroid
+              ? _FadedTransitionRoute(
+                  widget: ProfileScreen(userId: userId),
+                  settings: settings,
+                )
+              : CupertinoPageRoute(
+                  builder: (context) => ProfileScreen(userId: userId),
+                );
+        }
+
       case Routes.editProfileScreen:
         return Platform.isAndroid
             ? _FadedTransitionRoute(
@@ -423,12 +442,21 @@ final class RouteGenerator {
               );
 
       case Routes.dashboardScreen:
-        return Platform.isAndroid
-            ? _FadedTransitionRoute(
-                widget: const DashboardScreen(),
-                settings: settings,
-              )
-            : CupertinoPageRoute(builder: (context) => const DashboardScreen());
+        {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final userIdRaw = args?['userId'];
+          final userId = userIdRaw is int
+              ? userIdRaw
+              : int.tryParse(userIdRaw?.toString() ?? '');
+          return Platform.isAndroid
+              ? _FadedTransitionRoute(
+                  widget: DashboardScreen(userId: userId),
+                  settings: settings,
+                )
+              : CupertinoPageRoute(
+                  builder: (context) => DashboardScreen(userId: userId),
+                );
+        }
 
       default:
         return null;

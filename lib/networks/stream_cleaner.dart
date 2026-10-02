@@ -1,7 +1,10 @@
 import '../constants/app_constants.dart';
 import '../helpers/di.dart';
+import '../helpers/secure_storage_helper.dart';
 
 Future<void> totalDataClean() async {
+  await SecureStorageHelper.clearAccessToken();
+  await appData.remove(kKeyAccessToken);
   await appData.write(kKeyIsLoggedIn, false);
   await appData.write(kKeyIsExploring, false);
   appData.write(kKeyLanguage, kKeyPortuguese);

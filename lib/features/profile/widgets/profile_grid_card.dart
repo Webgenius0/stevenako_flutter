@@ -14,6 +14,9 @@ class ProfileGridCard extends StatefulWidget {
   final bool showStatsUnder;
   final String overlayIconPath;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onDeleteTap;
+  final VoidCallback? onMoreTap;
   final String? caption;
   final int index;
 
@@ -27,6 +30,9 @@ class ProfileGridCard extends StatefulWidget {
     this.showStatsUnder = false,
     this.overlayIconPath = 'assets/images/play_icon.png',
     this.onTap,
+    this.onLongPress,
+    this.onDeleteTap,
+    this.onMoreTap,
     this.caption,
     this.index = 0,
   });
@@ -130,6 +136,7 @@ class _ProfileGridCardState extends State<ProfileGridCard> {
 
     final imageCard = InkWell(
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress ?? widget.onDeleteTap,
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         decoration: BoxDecoration(
@@ -272,6 +279,37 @@ class _ProfileGridCardState extends State<ProfileGridCard> {
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+              // ---------------- Top Right Delete / Options Icon ----------------
+              if (widget.onDeleteTap != null || widget.onMoreTap != null)
+                Positioned(
+                  top: 6.h,
+                  right: 6.w,
+                  child: GestureDetector(
+                    onTap: widget.onDeleteTap ?? widget.onMoreTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: EdgeInsets.all(5.r),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        widget.onDeleteTap != null
+                            ? Icons.delete_outline_rounded
+                            : Icons.more_vert_rounded,
+                        color: widget.onDeleteTap != null
+                            ? const Color(0xFFFF4D4D)
+                            : Colors.white,
+                        size: 15.r,
+                      ),
                     ),
                   ),
                 ),

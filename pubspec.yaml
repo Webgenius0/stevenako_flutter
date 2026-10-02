@@ -53,12 +53,16 @@ dependencies:
   intl: ^0.20.2
   # -------- Get It --------
   get_it: ^8.0.0
+  firebase_core: ^4.15.0
   # -------- Google Fonts --------
   google_fonts: ^6.2.1
   # -------- Flutter SVG --------
   flutter_svg: ^2.0.17
   # -------- Flutter Toast --------
   fluttertoast: ^9.0.0
+
+  firebase_auth: ^6.1.0
+  google_sign_in: ^6.1.1
   # -------- Image Picker --------
   image_picker: ^1.2.1
   # -------- Lottie --------
@@ -71,6 +75,7 @@ dependencies:
   cached_network_image: ^3.4.1
   # -------- Shimmer --------
   shimmer: ^3.0.0
+  change_app_package_name: ^1.5.0
   rxdart: ^0.28.0
   # -------- Screen Size --------
   flutter_screenutil: ^5.9.3
