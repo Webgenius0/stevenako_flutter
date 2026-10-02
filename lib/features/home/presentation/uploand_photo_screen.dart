@@ -1,11 +1,11 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:get/get.dart';
 
-import 'package:vector_math/vector_math_64.dart' as vector;
 import 'package:stevenako_flutter/features/home/model/get_soudn_modle.dart';
 import 'package:stevenako_flutter/features/home/presentation/sound_track_screeen.dart';
 import 'package:stevenako_flutter/features/home/presentation/upload_post_screen.dart';
@@ -23,10 +23,13 @@ class UploadPhotoScreen extends StatefulWidget {
 class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTickerProviderStateMixin {
   File? _croppedImage;
   File? _selectedRawImage;
+  List<File> _selectedImages = [];
+  int _currentImageIndex = 0;
   bool _isPicking = false;
   bool _isCropping = false;
   PhotoAspectRatio _selectedAspectRatio = PhotoAspectRatio.original;
   bool _showAspectRatioBar = false;
+
 
   int? _selectedSoundId;
   Sound? _selectedSound;
@@ -77,8 +80,9 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
       final double x = -position.dx * 1.5;
       final double y = -position.dy * 1.5;
       final Matrix4 zoomed = Matrix4.identity()
-        ..translateByVector3(vector.Vector3(x, y, 0.0))
-        ..scaleByVector3(vector.Vector3(2.5, 2.5, 1.0));
+        ..setTranslationRaw(x, y, 0.0)
+        ..setEntry(0, 0, 2.5)
+        ..setEntry(1, 1, 2.5);
 
       _zoomAnimation = Matrix4Tween(
         begin: _transformationController.value,
@@ -89,84 +93,147 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
   }
 
   void _showImageSourcePicker() {
-    showModalBottomSheet(
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1B2E),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24.r),
-              topRight: Radius.circular(24.r),
+      builder: (BuildContext sheetContext) {
+        return CupertinoActionSheet(
+          title: const Text(
+            'Select Photos',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            border: Border.all(color: const Color(0xFF2E2C3E)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+          message: const Text('Choose how you want to add photos to your post'),
+          actions: <CupertinoActionSheetAction>[
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _pickMultiImages();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.photo_on_rectangle, size: 22, color: CupertinoColors.activeBlue),
+                  SizedBox(width: 10),
+                  Text('Select Multiple Photos (Gallery)'),
+                ],
               ),
-              SizedBox(height: 16.h),
-              Text(
-                'Select Photo Source',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _pickAndCropImage(ImageSource.gallery);
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.photo, size: 22, color: CupertinoColors.activeBlue),
+                  SizedBox(width: 10),
+                  Text('Choose Single Photo (Gallery)'),
+                ],
               ),
-              SizedBox(height: 20.h),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.camera_alt_rounded, color: const Color(0xFF9F75FF), size: 24.sp),
-                ),
-                title: Text(
-                  'Take Photo (Camera)',
-                  style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickAndCropImage(ImageSource.camera);
-                },
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _pickAndCropImage(ImageSource.camera);
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.camera, size: 22, color: CupertinoColors.activeBlue),
+                  SizedBox(width: 10),
+                  Text('Take Photo (Camera)'),
+                ],
               ),
-              Divider(color: Colors.white10, height: 1.h),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.photo_library_rounded, color: const Color(0xFF9F75FF), size: 24.sp),
-                ),
-                title: Text(
-                  'Choose from Gallery',
-                  style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickAndCropImage(ImageSource.gallery);
-                },
-              ),
-              SizedBox(height: 12.h),
-            ],
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
         );
       },
     );
+  }
+
+  Future<void> _pickMultiImages() async {
+    if (_isPicking) return;
+    _isPicking = true;
+    try {
+      final picker = ImagePicker();
+      final List<XFile> pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isNotEmpty) {
+        final List<File> files = pickedFiles.map((x) => File(x.path)).toList();
+        setState(() {
+          _selectedImages = files;
+          _currentImageIndex = 0;
+          _selectedRawImage = files.first;
+          _croppedImage = files.first;
+        });
+      }
+    } catch (e) {
+      debugPrint('Multi-image pick error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick images: $e')),
+        );
+      }
+    } finally {
+      _isPicking = false;
+    }
+  }
+
+  Future<void> _pickMoreImages() async {
+    if (_isPicking) return;
+    _isPicking = true;
+    try {
+      final picker = ImagePicker();
+      final List<XFile> pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isNotEmpty) {
+        final List<File> newFiles = pickedFiles.map((x) => File(x.path)).toList();
+        setState(() {
+          _selectedImages.addAll(newFiles);
+        });
+      }
+    } catch (e) {
+      debugPrint('Pick more images error: $e');
+    } finally {
+      _isPicking = false;
+    }
+  }
+
+  void _selectImageAtIndex(int index) {
+    if (index >= 0 && index < _selectedImages.length) {
+      setState(() {
+        _currentImageIndex = index;
+        _selectedRawImage = _selectedImages[index];
+        _croppedImage = _selectedImages[index];
+      });
+      _resetZoom();
+    }
+  }
+
+  void _removeImageAtIndex(int index) {
+    if (index >= 0 && index < _selectedImages.length) {
+      setState(() {
+        _selectedImages.removeAt(index);
+        if (_selectedImages.isEmpty) {
+          _selectedRawImage = null;
+          _croppedImage = null;
+          _currentImageIndex = 0;
+        } else {
+          if (_currentImageIndex >= _selectedImages.length) {
+            _currentImageIndex = _selectedImages.length - 1;
+          }
+          _selectedRawImage = _selectedImages[_currentImageIndex];
+          _croppedImage = _selectedImages[_currentImageIndex];
+        }
+      });
+      _resetZoom();
+    }
   }
 
   Future<void> _pickAndCropImage(ImageSource source) async {
@@ -180,6 +247,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
         setState(() {
           _selectedRawImage = file;
           _croppedImage = file;
+          _selectedImages = [file];
+          _currentImageIndex = 0;
         });
         await _cropImage(file);
       }
@@ -244,8 +313,12 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
       );
 
       if (croppedFile != null) {
+        final cropped = File(croppedFile.path);
         setState(() {
-          _croppedImage = File(croppedFile.path);
+          _croppedImage = cropped;
+          if (_selectedImages.isNotEmpty && _currentImageIndex < _selectedImages.length) {
+            _selectedImages[_currentImageIndex] = cropped;
+          }
         });
         _resetZoom();
       }
@@ -303,15 +376,23 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
   }
 
   void _onContinue() {
-    final displayImage = _croppedImage ?? _selectedRawImage;
-    if (displayImage == null) {
+    final List<File> imagesToPass = _selectedImages.isNotEmpty
+        ? _selectedImages
+        : (_croppedImage != null
+            ? [_croppedImage!]
+            : (_selectedRawImage != null ? [_selectedRawImage!] : []));
+
+    if (imagesToPass.isEmpty) {
       _showImageSourcePicker();
       return;
     }
+
     Get.to(() => UploadPostScreen(
-          photoFile: displayImage,
-          thumbnailPath: displayImage.path,
+          photoFile: imagesToPass.first,
+          photoFiles: imagesToPass,
+          thumbnailPath: imagesToPass.first.path,
           soundId: _selectedSoundId,
+          postType: 'photo',
         ));
   }
 
@@ -482,11 +563,13 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
                       ),
                       Expanded(
                         child: Text(
-                          'Upload Photo',
+                          _selectedImages.length > 1
+                              ? 'Upload Photos (${_currentImageIndex + 1}/${_selectedImages.length})'
+                              : 'Upload Photo',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 20.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -595,6 +678,100 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
 
                 const Spacer(),
 
+                // Multi-Image Preview Strip (if user selected multiple images)
+                if (_selectedImages.length > 1)
+                  Container(
+                    height: 74.h,
+                    margin: EdgeInsets.only(bottom: 12.h, left: 16.w, right: 16.w),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _selectedImages.length + 1,
+                      separatorBuilder: (context, index) => SizedBox(width: 8.w),
+                      itemBuilder: (context, idx) {
+                        if (idx == _selectedImages.length) {
+                          return GestureDetector(
+                            onTap: _pickMoreImages,
+                            child: Container(
+                              width: 58.w,
+                              height: 74.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white12,
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(color: Colors.white24),
+                              ),
+                              child: Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: Colors.white70,
+                                size: 24.sp,
+                              ),
+                            ),
+                          );
+                        }
+                        final file = _selectedImages[idx];
+                        final isCurrent = idx == _currentImageIndex;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _selectImageAtIndex(idx),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 58.w,
+                                height: 74.h,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: isCurrent ? const Color(0xFF9F75FF) : Colors.transparent,
+                                    width: 2.2,
+                                  ),
+                                  image: DecorationImage(
+                                    image: FileImage(file),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () => _removeImageAtIndex(idx),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF3F55),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, size: 12, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                            if (isCurrent)
+                              Positioned(
+                                bottom: 4,
+                                left: 4,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF7C3AED),
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                  child: Text(
+                                    '${idx + 1}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
                 // Aspect Ratio Selector Bar (Shows on Crop tap or when tweaking ratio format)
                 if (activeImage != null && _showAspectRatioBar)
                   Padding(
@@ -679,7 +856,11 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> with SingleTicker
                           ),
                         ),
                       _ContinueButton(
-                        label: activeImage == null ? 'Select Photo' : 'Continue',
+                        label: activeImage == null
+                            ? 'Select Photo'
+                            : (_selectedImages.length > 1
+                                ? 'Continue (${_selectedImages.length} Photos)'
+                                : 'Continue'),
                         onTap: _onContinue,
                       ),
                     ],

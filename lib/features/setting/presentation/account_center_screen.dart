@@ -9,8 +9,10 @@ import 'package:stevenako_flutter/features/auth/sign_up/presentation/sign_up_scr
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
 import 'package:stevenako_flutter/features/setting/model/user_profile_model.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
+import 'package:stevenako_flutter/networks/dio/dio.dart';
 
 class AccountCenterScreen extends StatefulWidget {
   const AccountCenterScreen({super.key});
@@ -29,6 +31,8 @@ class _AccountCenterScreenState extends State<AccountCenterScreen> {
   Future<void> _handleDeleteAccount() async {
     final response = await deleteUserRxObj.deleteUserFun();
     if (response != null && mounted) {
+      await appData.erase();
+      DioSingleton.instance.update('');
       Get.offAll(() => const SignUpScreen());
     }
   }

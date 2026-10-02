@@ -55,6 +55,7 @@ class _MessageNotificationScreenState extends State<MessageNotificationScreen> {
         return Icons.comment_outlined;
       case 'withdrawal':
       case 'payment':
+      case 'deposit':
         return Icons.account_balance_wallet_outlined;
       default:
         return Icons.notifications_none_rounded;

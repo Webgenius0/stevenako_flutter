@@ -186,6 +186,7 @@ class Post {
   final int? sharesCount;
   final bool? isLiked;
   final bool? isViewed;
+  final bool? isMyPost;
   final User? user;
   final List<Media>? media;
   final List<dynamic>? taggedUsers;
@@ -213,6 +214,7 @@ class Post {
     this.sharesCount,
     this.isLiked,
     this.isViewed,
+    this.isMyPost,
     this.user,
     this.media,
     this.taggedUsers,
@@ -245,6 +247,7 @@ class Post {
     sharesCount: _toIntSafe(json["shares_count"]),
     isLiked: _toBoolSafe(json["is_liked"]),
     isViewed: _toBoolSafe(json["is_viewed"]),
+    isMyPost: _toBoolSafe(json["is_my_post"]),
     user: json["user"] == null ? null : User.fromJson(json["user"]),
     media: json["media"] == null
         ? []
@@ -281,6 +284,7 @@ class Post {
     "shares_count": sharesCount,
     "is_liked": isLiked,
     "is_viewed": isViewed,
+    "is_my_post": isMyPost,
     "user": user?.toJson(),
     "media": media == null ? [] : List<dynamic>.from(media!.map((x) => x.toJson())),
     "tagged_users": taggedUsers == null ? [] : List<dynamic>.from(taggedUsers!.map((x) => x)),

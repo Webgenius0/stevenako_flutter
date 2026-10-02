@@ -152,6 +152,7 @@ class PostItem {
   final UserSummary? user;
   final List<Media>? media;
   final List<UserSummary>? taggedUsers;
+  final SoundInfo? sound;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -177,6 +178,7 @@ class PostItem {
     this.user,
     this.media,
     this.taggedUsers,
+    this.sound,
     this.createdAt,
     this.updatedAt,
   });
@@ -213,6 +215,9 @@ class PostItem {
         ? []
         : List<UserSummary>.from(
         json["tagged_users"]!.map((x) => UserSummary.fromJson(x))),
+    sound: json["sound"] == null || json["sound"] is! Map<String, dynamic>
+        ? null
+        : SoundInfo.fromJson(json["sound"]),
     createdAt: _toDateSafe(json["created_at"]),
     updatedAt: _toDateSafe(json["updated_at"]),
   );
@@ -239,6 +244,7 @@ class PostItem {
     "user": user?.toJson(),
     "media": media == null ? [] : List<dynamic>.from(media!.map((x) => x.toJson())),
     "tagged_users": taggedUsers == null ? [] : List<dynamic>.from(taggedUsers!.map((x) => x.toJson())),
+    "sound": sound?.toJson(),
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
   };
@@ -399,6 +405,42 @@ class DataUser {
     "is_follow": isFollow,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
+  };
+}
+
+class SoundInfo {
+  final int? id;
+  final String? title;
+  final String? artist;
+  final String? audioUrl;
+  final String? thumbnailUrl;
+  final int? duration;
+
+  SoundInfo({
+    this.id,
+    this.title,
+    this.artist,
+    this.audioUrl,
+    this.thumbnailUrl,
+    this.duration,
+  });
+
+  factory SoundInfo.fromJson(Map<String, dynamic> json) => SoundInfo(
+    id: _toIntSafe(json["id"]),
+    title: json["title"]?.toString(),
+    artist: json["artist"]?.toString(),
+    audioUrl: json["audio_url"]?.toString(),
+    thumbnailUrl: json["thumbnail_url"]?.toString(),
+    duration: _toIntSafe(json["duration"]),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "title": title,
+    "artist": artist,
+    "audio_url": audioUrl,
+    "thumbnail_url": thumbnailUrl,
+    "duration": duration,
   };
 }
 

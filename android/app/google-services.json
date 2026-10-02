@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "49258867436",
+    "project_id": "realm-f1966",
+    "storage_bucket": "realm-f1966.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49258867436:android:f72d7df95bb0c72a7f53c9",
+        "android_client_info": {
+          "package_name": "com.realmworldapp.realm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAF_naYBAIx-GCEiLpYMuRdXTLc2_nP2yg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

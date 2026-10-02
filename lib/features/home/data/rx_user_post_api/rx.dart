@@ -71,17 +71,9 @@ final class UserPostRx extends RxResponseInt<UserPostModel> {
 
   @override
   UserPostModel handleSuccessWithReturn(
-      UserPostModel data,
-      ) {
-    final String message =
-        data.message ?? 'Post created successfully';
-
-    if (message.isNotEmpty) {
-      ToastUtil.showShortToast(message);
-    }
-
+    UserPostModel data,
+  ) {
     dataFetcher.sink.add(data);
-
     return data;
   }
 

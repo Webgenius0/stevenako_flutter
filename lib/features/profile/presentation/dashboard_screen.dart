@@ -122,6 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     DashboardTotalGift(
                                       totalGift: totalGift,
                                       stripeStatus: stripeStatus,
+                                      onWithdrawSuccess: _refreshDashboard,
                                     ),
                                     SizedBox(height: 20.h),
                                     _buildFooterStats(settings),

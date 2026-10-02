@@ -58,29 +58,15 @@ final class UserPostApi {
       }
 
       if (allPhotos.isNotEmpty) {
-        for (int i = 0; i < allPhotos.length; i++) {
-          final file = allPhotos[i];
+        for (final file in allPhotos) {
           final filename = file.path.split('/').last;
-          data.files.add(MapEntry(
-            'photos[$i]',
-            await MultipartFile.fromFile(file.path, filename: filename),
-          ));
           data.files.add(MapEntry(
             'photos[]',
             await MultipartFile.fromFile(file.path, filename: filename),
           ));
         }
-        final firstFile = allPhotos.first;
-        final firstFilename = firstFile.path.split('/').last;
-        data.files.add(MapEntry(
-          'photo',
-          await MultipartFile.fromFile(firstFile.path, filename: firstFilename),
-        ));
-        data.files.add(MapEntry(
-          'photos',
-          await MultipartFile.fromFile(firstFile.path, filename: firstFilename),
-        ));
       }
+
 
       if (video != null) {
         final filename = video.path.split('/').last;

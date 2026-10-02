@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stevenako_flutter/provider/address.dart';
 import 'package:stevenako_flutter/provider/auth_provider.dart';
 import 'package:stevenako_flutter/provider/email.dart';
+import 'package:stevenako_flutter/provider/post_comments_provider.dart';
 
 var providers = [
   //New
@@ -12,5 +13,8 @@ var providers = [
   ChangeNotifierProvider<AddressProvider>(
     create: ((context) => AddressProvider()),
   ),
-  
+  ChangeNotifierProvider<PostCommentsProvider>(
+    create: ((context) => PostCommentsProvider()),
+  ),
 ];
+
