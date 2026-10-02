@@ -6,10 +6,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:stevenako_flutter/features/message/presentation/all_chat_screen.dart';
-import 'features/home/presentation/creat_a_post_screen.dart';
 import 'features/home/presentation/home_screen.dart';
- import 'features/home/presentation/post_navtaiosn_screeen.dart';
- import 'features/home/presentation/uploand_photo_screen.dart';
+import 'features/home/presentation/post_navtaiosn_screeen.dart';
+import 'features/home/presentation/upload_post_screen.dart';
+import 'features/home/presentation/uploand_photo_screen.dart';
 import 'features/home/presentation/video_upload_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 
@@ -278,14 +278,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                       delay: const Duration(milliseconds: 80),
                       onTap: () {
                         _closeMenuThen(() {
-                          // Get.to(UploadPostScreen());
-                          Get.to(() =>   UploadPhotoScreen(tap: 'Upload Photos',));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Upload Photos tapped!'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
+                          Get.to(() => const UploadPhotoScreen(tap: 'Upload Photos'));
                         });
                       },
                       child: _buildMenuButton(
@@ -299,13 +292,7 @@ class _NavigationMenuState extends State<NavigationMenu> {
                       delay: const Duration(milliseconds: 0),
                       onTap: () {
                         _closeMenuThen(() {
-                          Get.to(() =>   CreatAPostScreeen(thumbnailPath: 'Create a Post',));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Create a Post tapped!'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
+                          Get.to(() => const UploadPostScreen(postType: 'post'));
                         });
                       },
                       child: _buildMenuButton(

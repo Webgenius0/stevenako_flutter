@@ -6,9 +6,7 @@ final class SecureStorageHelper {
   SecureStorageHelper._();
 
   static const FlutterSecureStorage _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock,
     ),
@@ -60,5 +58,43 @@ final class SecureStorageHelper {
 
   static Future<void> clearAccessToken() async {
     await delete(key: kKeyAccessToken);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Remember Me & Login Credentials (Encrypted)
+  // ---------------------------------------------------------------------------
+  static const String keyRememberMe = 'remember_me_state';
+  static const String keyRememberEmail = 'remember_me_email';
+  static const String keyRememberPassword = 'remember_me_password';
+
+  static Future<void> saveCredentials({
+    required String email,
+    required String password,
+    required bool rememberMe,
+  }) async {
+    if (rememberMe) {
+      await write(key: keyRememberMe, value: 'true');
+      await write(key: keyRememberEmail, value: email);
+      await write(key: keyRememberPassword, value: password);
+    } else {
+      await clearSavedCredentials();
+    }
+  }
+
+  static Future<Map<String, String?>> getSavedCredentials() async {
+    final rememberMe = await read(key: keyRememberMe);
+    final email = await read(key: keyRememberEmail);
+    final password = await read(key: keyRememberPassword);
+    return {
+      'remember_me': rememberMe,
+      'email': email,
+      'password': password,
+    };
+  }
+
+  static Future<void> clearSavedCredentials() async {
+    await delete(key: keyRememberMe);
+    await delete(key: keyRememberEmail);
+    await delete(key: keyRememberPassword);
   }
 }

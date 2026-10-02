@@ -5,16 +5,23 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
-import 'package:stevenako_flutter/features/profile/model/get_my_vidoe_post_model.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
+import 'package:stevenako_flutter/networks/api_acess.dart';
+import 'package:stevenako_flutter/features/home/presentation/widgets/reel_comments_bottom_sheet.dart';
 
 class ProfileVideoPreviewDialog extends StatefulWidget {
   final List<dynamic> posts;
   final int initialIndex;
+  final VoidCallback? onDelete;
 
   const ProfileVideoPreviewDialog({
     super.key,
     required this.posts,
     this.initialIndex = 0,
+    this.onDelete,
   });
 
   @override
@@ -155,6 +162,7 @@ class _ProfileVideoPreviewDialogState extends State<ProfileVideoPreviewDialog> {
                   isInitialized: _initializedStates[index] ?? false,
                   hasError: _errorStates[index] ?? false,
                   onRetry: () => _initControllerForIndex(index),
+                  onDelete: widget.onDelete,
                 );
               },
             ),
@@ -215,6 +223,7 @@ class ProfileReelItem extends StatefulWidget {
   final bool isInitialized;
   final bool hasError;
   final VoidCallback onRetry;
+  final VoidCallback? onDelete;
 
   const ProfileReelItem({
     super.key,
@@ -224,6 +233,7 @@ class ProfileReelItem extends StatefulWidget {
     required this.isInitialized,
     required this.hasError,
     required this.onRetry,
+    this.onDelete,
   });
 
   @override
@@ -243,6 +253,7 @@ class _ProfileReelItemState extends State<ProfileReelItem>
 
   bool _isLiked = false;
   int _likeCount = 0;
+  int _commentsCount = 0;
 
   double? _heartPopX;
   double? _heartPopY;
@@ -251,8 +262,21 @@ class _ProfileReelItemState extends State<ProfileReelItem>
   @override
   void initState() {
     super.initState();
-    _isLiked = widget.post.isLiked ?? false;
-    _likeCount = widget.post.likesCount ?? 0;
+    try {
+      _isLiked = widget.post.isLiked ?? false;
+    } catch (_) {
+      _isLiked = false;
+    }
+    try {
+      _likeCount = widget.post.likesCount ?? 0;
+    } catch (_) {
+      _likeCount = 0;
+    }
+    try {
+      _commentsCount = widget.post.commentsCount ?? 0;
+    } catch (_) {
+      _commentsCount = 0;
+    }
 
     _playPauseAnimController = AnimationController(
       vsync: this,
@@ -351,151 +375,128 @@ class _ProfileReelItemState extends State<ProfileReelItem>
     }
   }
 
+  void _showVideoOptions(BuildContext context) {
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr =
+        widget.post.user?.id?.toString().trim() ?? widget.post.userId?.toString().trim();
+    final bool isOwnPost = widget.post.isSelf == true ||
+        widget.post.isMyPost == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (sheetContext) {
+        return CupertinoActionSheet(
+          title: const Text(
+            'Video Options',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _shareVideo();
+              },
+              child: const Text('Share Video'),
+            ),
+            if (isOwnPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  _confirmDeleteReel(widget.post.id);
+                },
+                child: const Text('Delete Reel'),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteReel(dynamic reelId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Reel?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this reel?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (reelId != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(reelId);
+                  if (success) {
+                    ToastUtil.showShortToast('Reel deleted successfully');
+                    widget.onDelete?.call();
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  } else {
+                    ToastUtil.showShortToast(
+                      'Failed to delete reel. Please try again.',
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showCommentsBottomSheet(BuildContext context) {
-    final TextEditingController commentController = TextEditingController();
-    final List<Map<String, dynamic>> commentsList = [
-      {
-        'handle': '@alex',
-        'avatar':
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        'text': 'Awesome content! 🔥',
-        'time': '2h',
-      },
-      {
-        'handle': '@maya',
-        'avatar':
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        'text': 'Love this vibe ✨',
-        'time': '1h',
-      },
-    ];
+    dynamic postId;
+    try {
+      postId = widget.post.id;
+    } catch (_) {
+      postId = null;
+    }
+
+    if (postId == null) return;
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E212D),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: Column(
-                  children: [
-                    SizedBox(height: 10.h),
-                    Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      'Comments (${widget.post.commentsCount ?? commentsList.length})',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Divider(color: Colors.white12),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: commentsList.length,
-                        itemBuilder: (context, index) {
-                          final item = commentsList[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: NetworkImage(item['avatar']),
-                              radius: 18.r,
-                            ),
-                            title: Text(
-                              item['handle'],
-                              style: GoogleFonts.inter(
-                                color: Colors.white70,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              item['text'],
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 13.5.sp,
-                              ),
-                            ),
-                            trailing: Text(
-                              item['time'],
-                              style: GoogleFonts.inter(
-                                color: Colors.white38,
-                                fontSize: 11.sp,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      color: const Color(0xFF141620),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: commentController,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: 'Add a comment...',
-                                hintStyle:
-                                    const TextStyle(color: Colors.white38),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 10.h,
-                                ),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.send_rounded,
-                              color: Color(0xFF9F75FF),
-                            ),
-                            onPressed: () {
-                              if (commentController.text.trim().isNotEmpty) {
-                                setSheetState(() {
-                                  commentsList.add({
-                                    'handle':
-                                        '@${widget.post.user?.username ?? 'you'}',
-                                    'avatar': widget.post.user?.avatar ??
-                                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-                                    'text': commentController.text.trim(),
-                                    'time': 'Just now',
-                                  });
-                                  commentController.clear();
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+      builder: (bottomSheetContext) {
+        return ReelCommentsBottomSheet(
+          postId: postId,
+          initialCommentsCount: _commentsCount,
+          onCommentCountChanged: (newCount) {
+            if (mounted) {
+              setState(() {
+                _commentsCount = newCount;
+              });
+            }
           },
         );
       },
@@ -561,10 +562,25 @@ class _ProfileReelItemState extends State<ProfileReelItem>
     );
   }
 
+  String? get _soundTitle {
+    try {
+      return (widget.post as dynamic).sound?.title?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? get _soundThumbnailUrl {
+    try {
+      return (widget.post as dynamic).sound?.thumbnailUrl?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String avatarUrl = widget.post.user?.avatar ??
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+    final String avatarUrl = widget.post.user?.avatar ?? '';
     final String userName = widget.post.user?.name ?? 'User';
     final String userHandle = '@${widget.post.user?.username ?? 'username'}';
     final String caption = widget.post.caption ?? '';
@@ -744,7 +760,13 @@ class _ProfileReelItemState extends State<ProfileReelItem>
                       children: [
                         CircleAvatar(
                           radius: 20.r,
-                          backgroundImage: NetworkImage(avatarUrl),
+                          backgroundColor: const Color(0xFF2A2A3A),
+                          backgroundImage: avatarUrl.isNotEmpty
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl.isEmpty
+                              ? const Icon(Icons.person, color: Colors.white70)
+                              : null,
                         ),
                         SizedBox(width: 8.w),
                         Expanded(
@@ -784,8 +806,7 @@ class _ProfileReelItemState extends State<ProfileReelItem>
                         style: TextStyle(color: Colors.white, fontSize: 14.sp),
                       ),
                     ],
-                    if (widget.post.sound != null &&
-                        widget.post.sound!.title != null) ...[
+                    if (_soundTitle != null && _soundTitle!.trim().isNotEmpty) ...[
                       SizedBox(height: 8.h),
                       Row(
                         children: [
@@ -797,7 +818,7 @@ class _ProfileReelItemState extends State<ProfileReelItem>
                           SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
-                              widget.post.sound!.title!,
+                              _soundTitle!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
@@ -845,7 +866,7 @@ class _ProfileReelItemState extends State<ProfileReelItem>
 
                   _buildActionItem(
                     imagePath: 'assets/images/mesagenva.png',
-                    label: '${widget.post.commentsCount ?? 0}',
+                    label: '$_commentsCount',
                     onTap: () => _showCommentsBottomSheet(context),
                   ),
                   const SizedBox(height: 16),
@@ -855,7 +876,7 @@ class _ProfileReelItemState extends State<ProfileReelItem>
                     icon: Icons.reply,
                     label: '${widget.post.sharesCount ?? ''}',
                     iconScaleX: -1.0,
-                    onTap: _shareVideo,
+                    onTap: () => _showVideoOptions(context),
                   ),
                   const SizedBox(height: 16),
 
@@ -869,12 +890,12 @@ class _ProfileReelItemState extends State<ProfileReelItem>
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white24),
                       ),
-                      child: widget.post.sound?.thumbnailUrl != null &&
-                              widget.post.sound!.thumbnailUrl!.isNotEmpty
+                      child: _soundThumbnailUrl != null &&
+                              _soundThumbnailUrl!.isNotEmpty
                           ? CircleAvatar(
                               radius: 10.r,
                               backgroundImage: NetworkImage(
-                                widget.post.sound!.thumbnailUrl!,
+                                _soundThumbnailUrl!,
                               ),
                             )
                           : const Icon(

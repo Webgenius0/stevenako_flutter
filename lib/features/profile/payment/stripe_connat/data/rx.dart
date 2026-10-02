@@ -37,11 +37,6 @@ final class PostStripeConnectRx extends RxResponseInt<PostStripeConnectModel> {
 
   @override
   PostStripeConnectModel handleSuccessWithReturn(PostStripeConnectModel data) {
-    final String message =
-        data.message ?? 'Stripe Connect onboarding URL generated successfully.';
-    if (message.isNotEmpty) {
-      ToastUtil.showShortToast(message);
-    }
     dataFetcher.sink.add(data);
     return data;
   }

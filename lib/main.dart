@@ -17,6 +17,8 @@ import 'helpers/di.dart';
 import 'helpers/language.dart';
 import 'helpers/navigation_service.dart';
 import 'helpers/register_provider.dart';
+import 'constants/app_constants.dart';
+import 'helpers/secure_storage_helper.dart';
 import 'networks/dio/dio.dart';
 
 void main() async {
@@ -24,7 +26,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("dotenv load warning: $e");
+  }
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -33,6 +39,22 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('msg_notification_box');
   diSetup();
+
+  // Sync auth token from secure storage
+  try {
+    final secureToken = await SecureStorageHelper.getAccessToken();
+    if (secureToken != null && secureToken.trim().isNotEmpty) {
+      appData.write(kKeyAccessToken, secureToken.trim());
+    } else {
+      final legacyToken = appData.read(kKeyAccessToken);
+      if (legacyToken != null && legacyToken.toString().trim().isNotEmpty) {
+        await SecureStorageHelper.saveAccessToken(legacyToken.toString().trim());
+      }
+    }
+  } catch (e) {
+    debugPrint("SecureStorage sync warning: $e");
+  }
+
   await InternetCheckerService.init();
   DioSingleton.instance.create();
 

@@ -141,93 +141,58 @@ class _CreatAPostScreeenState extends State<CreatAPostScreeen> {
     }
   }
 
-  // Show bottom sheet to choose between Gallery (multi-select) or Camera
+  // Show bottom sheet to choose between Gallery (multi-select) or Camera with Apple Cupertino style
   void _showAddImageSheet() {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1B2E),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24.r),
-              topRight: Radius.circular(24.r),
-            ),
-            border: Border.all(color: _cardBorder),
+      builder: (sheetContext) {
+        return CupertinoActionSheet(
+          title: const Text(
+            'Add Photos to Post',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'Add Photos to Post',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                ListTile(
-                  leading: Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: _purple.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.photo_library_rounded, color: _purpleLight, size: 24.sp),
-                  ),
-                  title: Text(
-                    'Select Multiple Photos (Gallery)',
-                    style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    'Choose multiple photos at once',
-                    style: TextStyle(color: _hintColor, fontSize: 12.sp),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickMultiImages();
-                  },
-                ),
-                Divider(color: Colors.white10, height: 1.h),
-                ListTile(
-                  leading: Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: _purple.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.camera_alt_rounded, color: _purpleLight, size: 24.sp),
-                  ),
-                  title: Text(
-                    'Take Photo (Camera)',
-                    style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _takePhotoWithCamera();
-                  },
-                ),
-                SizedBox(height: 8.h),
-              ],
+          message: const Text('Select multiple photos from your gallery or take a new one'),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _pickMultiImages();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.photo_on_rectangle, size: 20),
+                  SizedBox(width: 10),
+                  Text('Select Multiple Photos (Gallery)'),
+                ],
+              ),
             ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _takePhotoWithCamera();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.camera, size: 20),
+                  SizedBox(width: 10),
+                  Text('Take Photo (Camera)'),
+                ],
+              ),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
         );
       },
     );
   }
+
+
 
   void _removeImage(int index) {
     setState(() {

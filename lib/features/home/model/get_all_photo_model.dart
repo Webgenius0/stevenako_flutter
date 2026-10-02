@@ -163,6 +163,7 @@ class PhotoItem {
   final String? mediaType;
   final String? targetUrl;
   final int? clicksCount;
+  final bool? isMyPost;
 
   PhotoItem({
     this.id,
@@ -194,6 +195,7 @@ class PhotoItem {
     this.mediaType,
     this.targetUrl,
     this.clicksCount,
+    this.isMyPost,
   });
 
   bool get isAd => itemType == "ad";
@@ -247,10 +249,12 @@ class PhotoItem {
     mediaType: json["media_type"]?.toString(),
     targetUrl: json["target_url"]?.toString(),
     clicksCount: _toIntSafe(json["clicks_count"]),
+    isMyPost: _toBoolSafe(json["is_my_post"]),
   );
 
   Map<String, dynamic> toJson() => {
     "id": id,
+    "is_my_post": isMyPost,
     "item_type": itemType,
     "type": type,
     "caption": caption,

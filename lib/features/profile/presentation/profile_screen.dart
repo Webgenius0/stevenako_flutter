@@ -13,8 +13,11 @@ import 'package:stevenako_flutter/features/profile/widgets/profile_grid_card.dar
 import 'package:stevenako_flutter/features/profile/widgets/profile_save_post_card.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_stats_row.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_tab_button.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:stevenako_flutter/features/profile/widgets/profile_video_preview_dialog.dart';
- import 'package:stevenako_flutter/helpers/di.dart';
+import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -40,6 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (effectiveId != null) {
         getUserInfoRxObj.getUserInfo(id: effectiveId);
       }
+      getWalletRxObj.getWallet();
     });
   }
 
@@ -50,6 +54,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (effectiveId != null) {
       await getUserInfoRxObj.getUserInfo(id: effectiveId);
     }
+    await getWalletRxObj.getWallet();
+  }
+
+  void _refreshProfile() {
+    final effectiveId = widget.userId ?? appData.read('user_id');
+    if (effectiveId != null) {
+      getUserInfoRxObj.getUserInfo(id: effectiveId);
+    }
+  }
+
+  void _confirmDeleteProfilePost(dynamic postId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Post?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this content?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (postId != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(postId);
+                  if (success) {
+                    ToastUtil.showShortToast('Deleted successfully');
+                    _refreshProfile();
+                  } else {
+                    ToastUtil.showShortToast(
+                      'Failed to delete. Please try again.',
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildPhotoTabContent(List<PostItem> posts, bool isLoading) {
@@ -119,6 +173,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final String commentsCount = (post.commentsCount ?? 0).toString();
         final String viewsCount = (post.viewsCount ?? 0).toString();
 
+        final dynamic mySavedId = appData.read('user_id');
+        final bool isMyProfile = widget.userId == null ||
+            (mySavedId != null &&
+                widget.userId.toString().trim() == mySavedId.toString().trim());
+
         return ProfileGridCard(
           index: index,
           imageUrl: imageUrl,
@@ -127,6 +186,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           commentsCount: commentsCount,
           showStatsUnder: true,
           overlayIconPath: 'assets/images/gallery.png',
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostDetailsScreen(postId: post.id),
+              ),
+            );
+            _refreshProfile();
+          },
+          onDeleteTap:
+              isMyProfile ? () => _confirmDeleteProfilePost(post.id) : null,
         );
       },
     );
@@ -199,7 +269,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final String commentsCount = (post.commentsCount ?? 0).toString();
         final String viewsCount = (post.viewsCount ?? 0).toString();
 
-        return GestureDetector(
+        final dynamic mySavedId = appData.read('user_id');
+        final bool isMyProfile = widget.userId == null ||
+            (mySavedId != null &&
+                widget.userId.toString().trim() == mySavedId.toString().trim());
+
+        return ProfileGridCard(
+          index: index,
+          imageUrl: thumbnailUrl,
+          viewCount: viewsCount,
+          likesCount: likesCount,
+          commentsCount: commentsCount,
+          showStatsUnder: true,
+          overlayIconPath: 'assets/images/play.png',
           onTap: () {
             showDialog(
               context: context,
@@ -207,18 +289,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               builder: (context) => ProfileVideoPreviewDialog(
                 posts: posts,
                 initialIndex: index,
+                onDelete: _refreshProfile,
               ),
             );
           },
-          child: ProfileGridCard(
-            index: index,
-            imageUrl: thumbnailUrl,
-            viewCount: viewsCount,
-            likesCount: likesCount,
-            commentsCount: commentsCount,
-            showStatsUnder: true,
-            overlayIconPath: 'assets/images/play.png',
-          ),
+          onDeleteTap:
+              isMyProfile ? () => _confirmDeleteProfilePost(post.id) : null,
         );
       },
     );
@@ -362,15 +438,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
           imageUrl = post.media!.first.mediaUrl;
         }
 
-        return ProfileSavePostCard(
-          avatarUrl: avatarUrl,
-          username: username,
-          timeAgo: timeAgo,
-          content: content,
-          imageUrl: imageUrl,
-          likes: likes,
-          comments: comments,
-          shares: shares,
+        final dynamic mySavedId = appData.read('user_id');
+        final bool isMyProfile = widget.userId == null ||
+            (mySavedId != null &&
+                widget.userId.toString().trim() == mySavedId.toString().trim());
+
+        return GestureDetector(
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostDetailsScreen(postId: post.id),
+              ),
+            );
+            _refreshProfile();
+          },
+          child: ProfileSavePostCard(
+            avatarUrl: avatarUrl,
+            username: username,
+            timeAgo: timeAgo,
+            content: content,
+            imageUrl: imageUrl,
+            likes: likes,
+            comments: comments,
+            shares: shares,
+            onDeleteTap:
+                isMyProfile ? () => _confirmDeleteProfilePost(post.id) : null,
+          ),
         );
       },
     );
@@ -446,7 +540,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     ProfileAppBar(
                                       name: isMe ? 'My Profile' : 'User Profile',
-                                      balance: '0.00',
+                                      isMe: isMe,
                                     ),
                                     Expanded(
                                       child: SingleChildScrollView(
@@ -544,7 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Column(
       children: [
-        ProfileAppBar(name: name, balance: '250.00'),
+        ProfileAppBar(name: name, isMe: isMe),
         Expanded(
           child: RefreshIndicator(
             color: const Color(0xFF7C3AED),

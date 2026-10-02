@@ -11,6 +11,8 @@ import 'package:stevenako_flutter/networks/rx_base.dart';
 final class CreatorWithdrawRx extends RxResponseInt<CreatorWithdrawModel> {
   final CreatorWithdrawApi api = CreatorWithdrawApi.instance;
   final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
+  String? lastErrorMessage;
+  bool lastErrorIsStripeVerification = false;
 
   CreatorWithdrawRx({
     required super.empty,
@@ -22,6 +24,8 @@ final class CreatorWithdrawRx extends RxResponseInt<CreatorWithdrawModel> {
   Future<CreatorWithdrawModel?> requestWithdrawal({
     required num amount,
   }) async {
+    lastErrorMessage = null;
+    lastErrorIsStripeVerification = false;
     try {
       isLoading.value = true;
       final CreatorWithdrawModel result = await api.withdraw(amount: amount);
@@ -39,11 +43,8 @@ final class CreatorWithdrawRx extends RxResponseInt<CreatorWithdrawModel> {
 
   @override
   CreatorWithdrawModel handleSuccessWithReturn(CreatorWithdrawModel data) {
-    final String message = data.message ??
-        'Withdrawal request submitted successfully. Admin will process it shortly.';
-    if (message.isNotEmpty) {
-      ToastUtil.showShortToast(message);
-    }
+    lastErrorMessage = null;
+    lastErrorIsStripeVerification = false;
     dataFetcher.sink.add(data);
     return data;
   }
@@ -61,6 +62,17 @@ final class CreatorWithdrawRx extends RxResponseInt<CreatorWithdrawModel> {
       }
     } else if (error is Exception) {
       message = error.toString().replaceFirst('Exception: ', '');
+    }
+
+    lastErrorMessage = message;
+    final lower = message.toLowerCase();
+    if (lower.contains('stripe') ||
+        lower.contains('connect') ||
+        lower.contains('verification') ||
+        lower.contains('bank account')) {
+      lastErrorIsStripeVerification = true;
+    } else {
+      lastErrorIsStripeVerification = false;
     }
 
     ToastUtil.showShortToast(message);

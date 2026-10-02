@@ -23,6 +23,7 @@ import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
+import 'package:stevenako_flutter/networks/endpoints.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String name;
@@ -77,7 +78,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       // 1. Define options
       final options = PusherChannelsOptions.fromHost(
         scheme: 'wss',
-        host: 'dashboard.realmworldapp.live',
+        host: baseHost,
         key: 'stevenakoappkey12345',
         port: 443,
         metadata: PusherChannelsOptionsMetadata.byDefault(),
@@ -100,7 +101,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         authorizationDelegate:
             EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
               authorizationEndpoint: Uri.parse(
-                "https://dashboard.realmworldapp.live/api/user/broadcasting/auth",
+                "$url/user/broadcasting/auth",
               ),
               headers: {
                 "Authorization": "Bearer ${token ?? ''}",

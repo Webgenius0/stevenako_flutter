@@ -5,6 +5,7 @@ import 'package:rxdart/rxdart.dart';
 
 import '../../../../constants/app_constants.dart';
 import '../../../../helpers/di.dart';
+import '../../../../helpers/secure_storage_helper.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/dio/dio.dart';
 import '../../../../networks/rx_base.dart';
@@ -55,6 +56,10 @@ final class SigninRx extends RxResponseInt<PostLoginModel> {
     appData.write(kKeyIsLoggedIn, true);
     appData.write(kKeyAccessToken, token);
     appData.write('is_guest', false);
+
+    if (token.isNotEmpty) {
+      SecureStorageHelper.saveAccessToken(token);
+    }
 
     // Save user ID
     appData.write(

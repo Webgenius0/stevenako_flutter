@@ -45,11 +45,6 @@ final class TopUpStripeRx extends RxResponseInt<TopUpStripeModel> {
 
   @override
   TopUpStripeModel handleSuccessWithReturn(TopUpStripeModel data) {
-    final String message =
-        data.message ?? 'Deposit checkout session created successfully.';
-    if (message.isNotEmpty) {
-      ToastUtil.showShortToast(message);
-    }
     dataFetcher.sink.add(data);
     return data;
   }

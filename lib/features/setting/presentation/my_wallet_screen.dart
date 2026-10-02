@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -79,8 +80,13 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
         if (!mounted) return;
 
         if (result == true) {
-          ToastUtil.showShortToast('Payment completed successfully!');
           getWalletRxObj.getWallet();
+          // Stripe webhooks can take 1-2 seconds to hit the backend and update the DB balance
+          Future.delayed(const Duration(milliseconds: 2500), () {
+            if (mounted) {
+              getWalletRxObj.getWallet();
+            }
+          });
         } else if (result == false) {
           ToastUtil.showShortToast('Payment was cancelled');
           getWalletRxObj.getWallet();
@@ -104,17 +110,237 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
 
   void _handleWithdrawTap(BuildContext context, WalletInfo? wallet) {
     final stripeConnectId = wallet?.stripeConnectId;
+    final isEligible = wallet?.isEligibleForWithdrawal == true;
+
     if (stripeConnectId == null || stripeConnectId.trim().isEmpty) {
       _showConnectStripeSheet(context);
-    } else {
-      _showWithdrawBottomSheet(context, wallet);
+      return;
     }
+
+    if (!isEligible) {
+      _showStripeVerificationDialog(
+        context,
+        message:
+            'You must connect and complete verification of your Stripe bank account before requesting a withdrawal.',
+      );
+      return;
+    }
+
+    _showWithdrawBottomSheet(context, wallet);
   }
 
   String get _currencySymbol {
     final currency =
         getWalletRxObj.dataFetcher.valueOrNull?.data?.wallet?.currency ?? 'EUR';
     return currency == 'EUR' ? '€' : (currency == 'USD' ? '\$' : '$currency ');
+  }
+
+  Future<void> _startStripeConnectFlow(BuildContext context) async {
+    BuildContext? dialogCtx;
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (loadingContext) {
+        dialogCtx = loadingContext;
+        return CupertinoAlertDialog(
+          content: Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CupertinoActivityIndicator(),
+                SizedBox(width: 12.w),
+                Text(
+                  'Connecting to Stripe...',
+                  style: GoogleFonts.inter(fontSize: 13.5.sp),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final response = await postStripeConnectRxObj.createConnectAccount();
+      if (dialogCtx != null && dialogCtx!.mounted) {
+        Navigator.pop(dialogCtx!);
+      }
+
+      final url = response?.data?.url;
+      if (url != null && url.isNotEmpty && context.mounted) {
+        await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StripeCheckoutWebViewScreen(
+              checkoutUrl: url,
+              title: 'Stripe Connect',
+            ),
+          ),
+        );
+        getWalletRxObj.getWallet();
+      }
+    } catch (_) {
+      if (dialogCtx != null && dialogCtx!.mounted) {
+        Navigator.pop(dialogCtx!);
+      }
+    }
+  }
+
+  void _showStripeVerificationDialog(
+    BuildContext context, {
+    String? message,
+  }) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Padding(
+            padding: EdgeInsets.only(bottom: 6.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.exclamationmark_shield_fill,
+                  color: const Color(0xFFF59E0B),
+                  size: 22.sp,
+                ),
+                SizedBox(width: 8.w),
+                Flexible(
+                  child: Text(
+                    'Stripe Verification Required',
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          content: Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  message ??
+                      'You must connect and complete verification of your Stripe bank account before requesting a withdrawal.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    color: CupertinoColors.label.resolveFrom(dialogContext),
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(10.r),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6.resolveFrom(dialogContext),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(
+                      color: CupertinoColors.separator.resolveFrom(dialogContext),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('⚠️ ', style: TextStyle(fontSize: 12.sp)),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5.sp,
+                                  color: CupertinoColors.secondaryLabel
+                                      .resolveFrom(dialogContext),
+                                  height: 1.3,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Issue: ',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        'Your Stripe payout account or bank details have not completed verification.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('💡 ', style: TextStyle(fontSize: 12.sp)),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5.sp,
+                                  color: CupertinoColors.secondaryLabel
+                                      .resolveFrom(dialogContext),
+                                  height: 1.3,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Solution: ',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        'Complete the Stripe onboarding process to verify your bank account and receive withdrawals.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Later',
+                style: GoogleFonts.inter(
+                  fontSize: 15.sp,
+                  color: CupertinoColors.secondaryLabel.resolveFrom(dialogContext),
+                ),
+              ),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _startStripeConnectFlow(context);
+              },
+              child: Text(
+                'Verify Stripe',
+                style: GoogleFonts.inter(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF7C3AED),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showConnectStripeSheet(BuildContext context) {
@@ -203,26 +429,9 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                         child: ElevatedButton(
                           onPressed: isLoading
                               ? null
-                              : () async {
-                                  final response = await postStripeConnectRxObj
-                                      .createConnectAccount();
-                                  if (!sheetContext.mounted) return;
-
-                                  final url = response?.data?.url;
-                                  if (url != null && url.isNotEmpty) {
-                                    Navigator.pop(sheetContext);
-                                    await Navigator.push<bool>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            StripeCheckoutWebViewScreen(
-                                          checkoutUrl: url,
-                                          title: 'Stripe Connect',
-                                        ),
-                                      ),
-                                    );
-                                    getWalletRxObj.getWallet();
-                                  }
+                              : () {
+                                  Navigator.pop(sheetContext);
+                                  _startStripeConnectFlow(context);
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -401,35 +610,59 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 6.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF7C3AED)
-                                        .withValues(alpha: 0.15),
+                                Builder(builder: (badgeContext) {
+                                  final isVerified =
+                                      wallet?.isEligibleForWithdrawal == true;
+                                  return InkWell(
+                                    onTap: isVerified
+                                        ? null
+                                        : () => _showStripeVerificationDialog(
+                                              badgeContext,
+                                              message:
+                                                  'Your Stripe bank account requires verification before you can request withdrawals.',
+                                            ),
                                     borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.check_circle_rounded,
-                                        color: Colors.greenAccent,
-                                        size: 14.sp,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8.w,
+                                        vertical: 6.h,
                                       ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        'Connected',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                      decoration: BoxDecoration(
+                                        color: isVerified
+                                            ? const Color(0xFF7C3AED)
+                                                .withValues(alpha: 0.15)
+                                            : const Color(0xFFF59E0B)
+                                                .withValues(alpha: 0.15),
+                                        borderRadius:
+                                            BorderRadius.circular(8.r),
                                       ),
-                                    ],
-                                  ),
-                                ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isVerified
+                                                ? Icons.check_circle_rounded
+                                                : Icons.error_outline_rounded,
+                                            color: isVerified
+                                                ? Colors.greenAccent
+                                                : const Color(0xFFF59E0B),
+                                            size: 14.sp,
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            isVerified
+                                                ? 'Connected'
+                                                : 'Verify Account',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
                                 SizedBox(width: 6.w),
                                 ValueListenableBuilder<bool>(
                                   valueListenable:
@@ -441,35 +674,36 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                                           ? null
                                           : () async {
                                               final bool? confirm =
-                                                  await showDialog<bool>(
+                                                  await showCupertinoDialog<bool>(
                                                 context: context,
                                                 builder: (dialogCtx) =>
-                                                    AlertDialog(
-                                                  backgroundColor:
-                                                      const Color(0xFF1B182B),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20.r),
-                                                  ),
+                                                    CupertinoAlertDialog(
                                                   title: Text(
-                                                    'Disconnect Stripe',
+                                                    'Disconnect Stripe?',
                                                     style: GoogleFonts.inter(
-                                                      color: Colors.white,
+                                                      fontSize: 16.sp,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 16.sp,
                                                     ),
                                                   ),
-                                                  content: Text(
-                                                    'Are you sure you want to disconnect your Stripe Connect account? You will need to reconnect before withdrawing funds.',
-                                                    style: GoogleFonts.inter(
-                                                      color: Colors.white70,
-                                                      fontSize: 13.sp,
+                                                  content: Padding(
+                                                    padding: EdgeInsets.only(
+                                                        top: 8.h),
+                                                    child: Text(
+                                                      'Are you sure you want to disconnect your Stripe Connect account? You will need to reconnect before withdrawing funds.',
+                                                      style:
+                                                          GoogleFonts.inter(
+                                                        fontSize: 13.sp,
+                                                        color: CupertinoColors
+                                                            .label
+                                                            .resolveFrom(
+                                                                dialogCtx),
+                                                        height: 1.35,
+                                                      ),
                                                     ),
                                                   ),
                                                   actions: [
-                                                    TextButton(
+                                                    CupertinoDialogAction(
                                                       onPressed: () =>
                                                           Navigator.of(
                                                                   dialogCtx)
@@ -478,23 +712,18 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                                                         'Cancel',
                                                         style:
                                                             GoogleFonts.inter(
-                                                          color: Colors.white54,
+                                                          fontSize: 15.sp,
+                                                          color:
+                                                              CupertinoColors
+                                                                  .secondaryLabel
+                                                                  .resolveFrom(
+                                                                      dialogCtx),
                                                         ),
                                                       ),
                                                     ),
-                                                    ElevatedButton(
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        backgroundColor:
-                                                            Colors.redAccent,
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      10.r),
-                                                        ),
-                                                      ),
+                                                    CupertinoDialogAction(
+                                                      isDestructiveAction:
+                                                          true,
                                                       onPressed: () =>
                                                           Navigator.of(
                                                                   dialogCtx)
@@ -503,9 +732,12 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                                                         'Disconnect',
                                                         style:
                                                             GoogleFonts.inter(
-                                                          color: Colors.white,
+                                                          fontSize: 15.sp,
                                                           fontWeight:
-                                                              FontWeight.w600,
+                                                              FontWeight.bold,
+                                                          color:
+                                                              CupertinoColors
+                                                                  .destructiveRed,
                                                         ),
                                                       ),
                                                     ),
@@ -782,6 +1014,18 @@ class _MyWalletScreenState extends State<MyWalletScreen> {
                                           Navigator.pop(sheetContext);
                                         }
                                         getWalletRxObj.getWallet();
+                                      } else if (creatorWithdrawRxObj
+                                          .lastErrorIsStripeVerification) {
+                                        if (sheetContext.mounted) {
+                                          Navigator.pop(sheetContext);
+                                        }
+                                        if (mounted) {
+                                          _showStripeVerificationDialog(
+                                            this.context,
+                                            message: creatorWithdrawRxObj
+                                                .lastErrorMessage,
+                                          );
+                                        }
                                       }
                                     },
                               style: ElevatedButton.styleFrom(

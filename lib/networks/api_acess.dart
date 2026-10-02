@@ -14,6 +14,7 @@ import 'package:stevenako_flutter/features/home/model/hom_screen_reals_model.dar
 import 'package:stevenako_flutter/features/home/model/post_my_commants_model.dart';
 import 'package:stevenako_flutter/features/home/model/start_convergatosn_model.dart';
 import 'package:stevenako_flutter/features/home/rx_post_start_convergatosn_api/rx.dart';
+import 'package:stevenako_flutter/features/home/data/rx_delete_post/rx.dart';
 
 import 'package:stevenako_flutter/features/message/data/rx_message_list/rx.dart';
 
@@ -457,6 +458,11 @@ final DisconnectStripeRx disconnectStripeRxObj = DisconnectStripeRx(
 final ReelsCountRx reelsCountRxObj = ReelsCountRx(
   empty: ReelsCountModel(),
   dataFetcher: BehaviorSubject<ReelsCountModel>(),
+);
+
+final DeletePostRx deletePostRxObj = DeletePostRx(
+  empty: false,
+  dataFetcher: BehaviorSubject<bool>(),
 );
 
 

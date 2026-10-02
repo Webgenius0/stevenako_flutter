@@ -16,9 +16,12 @@ import 'package:stevenako_flutter/features/auth/login/model/login_model.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/custom_login_text_field.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/remember_me_check_box_widget.dart';
 import 'package:stevenako_flutter/features/auth/login/widgets/social_login_button.dart';
+import 'package:stevenako_flutter/features/auth/login/widgets/social_consent_bottom_sheet.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/keyboard.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/helpers/secure_storage_helper.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 
 import '../data/rx.dart';
@@ -63,6 +66,29 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       dataFetcher: BehaviorSubject<PostLoginModel>(),
     );
+
+    _loadRememberedCredentials();
+  }
+
+  Future<void> _loadRememberedCredentials() async {
+    try {
+      final creds = await SecureStorageHelper.getSavedCredentials();
+      if (!mounted) return;
+      final isRemembered = creds['remember_me'] == 'true';
+      if (isRemembered) {
+        setState(() {
+          _rememberMe = true;
+          if (creds['email'] != null && creds['email']!.trim().isNotEmpty) {
+            _emailController.text = creds['email']!.trim();
+          }
+          if (creds['password'] != null && creds['password']!.isNotEmpty) {
+            _passwordController.text = creds['password']!;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading remembered credentials: $e');
+    }
   }
 
   @override
@@ -190,6 +216,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.success == true) {
         _failedAttempts = 0;
         _coolDownTimer?.cancel();
+
+        // Securely handle Remember Me credentials
+        if (_rememberMe) {
+          await SecureStorageHelper.saveCredentials(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            rememberMe: true,
+          );
+        } else {
+          await SecureStorageHelper.clearSavedCredentials();
+        }
+
         NavigationService.navigateToReplacement(Routes.navigationMenu);
       } else {
         _handleFailedAttempt();
@@ -239,6 +277,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_isLoading || _isSocialLoading) return;
     KeyboardUtil.hideKeyboard(context);
 
+    // Require explicit consent to Terms, Privacy Policy, and 13+ Age verification
+    final bool alreadyAccepted =
+        appData.read('terms_and_age_accepted') == true;
+    if (!alreadyAccepted) {
+      final bool agreed = await SocialConsentBottomSheet.show(
+        context,
+        providerName: 'Google',
+      );
+      if (!agreed) {
+        return;
+      }
+    }
+
     setState(() => _isSocialLoading = true);
 
     try {
@@ -247,6 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (credential != null) {
+        appData.write('terms_and_age_accepted', true);
         NavigationService.navigateToReplacement(Routes.navigationMenu);
       } else {
         ToastUtil.showShortToast('Google Sign-In was cancelled.');
@@ -458,6 +510,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   setState(() {
                                     _rememberMe = val;
                                   });
+
+                                  if (!val) {
+                                    SecureStorageHelper.clearSavedCredentials();
+                                  }
                                 },
                               ),
 
@@ -534,24 +590,51 @@ class _LoginScreenState extends State<LoginScreen> {
                                     radius: 14,
                                     color: Color(0xFF8B5CF6),
                                   )
-                                : Platform.isAndroid
-                                    ? SocialLoginButton(
+                                : Platform.isIOS
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SocialLoginButton(
+                                            iconPath: AppIcons.google,
+                                            onTap: isButtonDisabled
+                                                ? () {}
+                                                : _handleGoogleSignIn,
+                                          ),
+                                          SizedBox(width: 16.w),
+                                          SocialLoginButton(
+                                            iconPath: AppIcons.apple,
+                                            onTap: isButtonDisabled
+                                                ? () {}
+                                                : () {
+                                                    // Apple Sign-In
+                                                  },
+                                          ),
+                                        ],
+                                      )
+                                    : SocialLoginButton(
                                         iconPath: AppIcons.google,
                                         onTap: isButtonDisabled
                                             ? () {}
                                             : _handleGoogleSignIn,
-                                      )
-                                    : SocialLoginButton(
-                                        iconPath: AppIcons.apple,
-                                        onTap: isButtonDisabled
-                                            ? () {}
-                                            : () {
-                                                // Apple Sign-In
-                                              },
                                       ),
                           ),
 
-                          SizedBox(height: 32.h),
+                          SizedBox(height: 16.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: Text(
+                              'By continuing, you agree to our Terms & Conditions and Privacy Policy and confirm you are at least 13 years old.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF64748B),
+                                fontSize: 11.5.sp,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: 24.h),
 
                           // ------------------------------------------------
                           // SIGN UP

@@ -1,6 +1,7 @@
 import 'dart:developer' as dev;
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'data/rx.dart';
@@ -36,9 +37,9 @@ class GoogleServicesAccount {
       // Step 2 – Exchange for tokens
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      dev.log('🔑 Tokens received:', name: 'GoogleSignIn');
-      dev.log('   ├─ accessToken : ${googleAuth.accessToken ?? 'NULL ❌'}', name: 'GoogleSignIn');
-      dev.log('   └─ idToken     : ${googleAuth.idToken ?? 'NULL ❌'}', name: 'GoogleSignIn');
+      if (kDebugMode) {
+        dev.log('🔑 Tokens received (accessToken available: ${googleAuth.accessToken != null}, idToken available: ${googleAuth.idToken != null})', name: 'GoogleSignIn');
+      }
 
       // Step 3 – Build Firebase credential
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -46,7 +47,9 @@ class GoogleServicesAccount {
         idToken: googleAuth.idToken,
       );
 
-      dev.log('🔐 Firebase credential created (provider: ${credential.providerId})', name: 'GoogleSignIn');
+      if (kDebugMode) {
+        dev.log('🔐 Firebase credential created (provider: ${credential.providerId})', name: 'GoogleSignIn');
+      }
 
       // Step 4 – Sign in to Firebase
       final UserCredential userCredential =
@@ -54,30 +57,9 @@ class GoogleServicesAccount {
 
       final User? user = userCredential.user;
 
-      dev.log('🎉 Firebase Sign-In SUCCESS:', name: 'GoogleSignIn');
-      dev.log('   ├─ uid              : ${user?.uid}', name: 'GoogleSignIn');
-      dev.log('   ├─ displayName      : ${user?.displayName}', name: 'GoogleSignIn');
-      dev.log('   ├─ email            : ${user?.email}', name: 'GoogleSignIn');
-      dev.log('   ├─ emailVerified    : ${user?.emailVerified}', name: 'GoogleSignIn');
-      dev.log('   ├─ phoneNumber      : ${user?.phoneNumber ?? 'N/A'}', name: 'GoogleSignIn');
-      dev.log('   ├─ photoURL         : ${user?.photoURL}', name: 'GoogleSignIn');
-      dev.log('   ├─ isAnonymous      : ${user?.isAnonymous}', name: 'GoogleSignIn');
-      dev.log('   ├─ isNewUser        : ${userCredential.additionalUserInfo?.isNewUser}', name: 'GoogleSignIn');
-      dev.log('   ├─ providerId       : ${userCredential.additionalUserInfo?.providerId}', name: 'GoogleSignIn');
-      dev.log('   ├─ creationTime     : ${user?.metadata.creationTime}', name: 'GoogleSignIn');
-      dev.log('   └─ lastSignInTime   : ${user?.metadata.lastSignInTime}', name: 'GoogleSignIn');
-
-      if (user?.providerData.isNotEmpty == true) {
-        dev.log('📋 Provider data:', name: 'GoogleSignIn');
-        for (final p in user!.providerData) {
-          dev.log('   ├─ providerId : ${p.providerId}', name: 'GoogleSignIn');
-          dev.log('   ├─ uid        : ${p.uid}', name: 'GoogleSignIn');
-          dev.log('   ├─ email      : ${p.email}', name: 'GoogleSignIn');
-          dev.log('   └─ displayName: ${p.displayName}', name: 'GoogleSignIn');
-        }
+      if (kDebugMode) {
+        dev.log('🎉 Firebase Sign-In SUCCESS (uid: ${user?.uid}, isNewUser: ${userCredential.additionalUserInfo?.isNewUser})', name: 'GoogleSignIn');
       }
-
-      dev.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', name: 'GoogleSignIn');
 
       // Step 5 – Send access_token to backend to get app JWT token
       await _rx.loginWithGoogle(accessToken: googleAuth.accessToken ?? '');

@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/home/model/get_commatns_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
+import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
 class PostDetailsScreen extends StatefulWidget {
@@ -56,8 +61,15 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   int _currentImageIndex = 0;
   bool _isFollowing = false;
   bool _isLiked = false;
-  int _likeCount = 10;
-  int _commentCount = 8;
+  int _likeCount = 0;
+  int _commentCount = 0;
+  String _caption = '';
+  String? _userAvatar;
+  String? _userHandle;
+  String? _userName;
+  int? _postUserId;
+  bool _isMyPost = false;
+  String? _timeAgo;
 
   // Active state for replying or editing
   CommentItem? _replyingToComment;
@@ -75,21 +87,63 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   void initState() {
     super.initState();
 
-    final initialUrl =
-        widget.postData?['url'] ??
-        'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop&q=80';
+    final String? initialUrl = widget.postData?['url'];
+    _postImages = [];
+    if (initialUrl != null &&
+        initialUrl.trim().isNotEmpty &&
+        !initialUrl.contains('unsplash.com') &&
+        !initialUrl.contains('mixkit.co')) {
+      _postImages.add(initialUrl.trim());
+    }
 
-    _postImages = [
-      initialUrl,
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=800&auto=format&fit=crop&q=80',
-    ];
+    if (widget.postData?['images'] is List) {
+      for (final img in widget.postData!['images']) {
+        final str = img?.toString().trim() ?? '';
+        if (str.isNotEmpty &&
+            !str.contains('unsplash.com') &&
+            !str.contains('mixkit.co') &&
+            !_postImages.contains(str)) {
+          _postImages.add(str);
+        }
+      }
+    }
 
     if (widget.postData?['likes'] != null) {
-      _likeCount = widget.postData!['likes'];
+      _likeCount = widget.postData!['likes'] is int
+          ? widget.postData!['likes']
+          : int.tryParse(widget.postData!['likes'].toString()) ?? 0;
+    }
+    if (widget.postData?['comments'] != null) {
+      _commentCount = widget.postData!['comments'] is int
+          ? widget.postData!['comments']
+          : int.tryParse(widget.postData!['comments'].toString()) ?? 0;
+    }
+    if (widget.postData?['isLiked'] != null) {
+      _isLiked = widget.postData!['isLiked'] == true;
     }
     if (widget.postData?['isFollowing'] != null) {
-      _isFollowing = widget.postData!['isFollowing'];
+      _isFollowing = widget.postData!['isFollowing'] == true;
+    }
+    if (widget.postData?['caption'] != null) {
+      _caption = widget.postData!['caption'].toString().trim();
+    }
+    if (widget.postData?['avatar'] != null) {
+      final av = widget.postData!['avatar'].toString().trim();
+      if (!av.contains('unsplash.com')) {
+        _userAvatar = av;
+      }
+    }
+    if (widget.postData?['handle'] != null) {
+      _userHandle = widget.postData!['handle'].toString().trim();
+    }
+    if (widget.postData?['userId'] != null) {
+      _postUserId = widget.postData!['userId'] is int
+          ? widget.postData!['userId']
+          : int.tryParse(widget.postData!['userId'].toString());
+    }
+    if (widget.postData?['isMyPost'] == true ||
+        widget.postData?['isSelf'] == true) {
+      _isMyPost = true;
     }
 
     _comments = [];
@@ -110,15 +164,64 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
           if (post.commentsCount != null) _commentCount = post.commentsCount!;
           if (post.isLiked != null) _isLiked = post.isLiked!;
           if (post.user?.isFollow != null) _isFollowing = post.user!.isFollow!;
+          if (post.caption != null) _caption = post.caption!.trim();
+          if (post.isMyPost != null) _isMyPost = post.isMyPost!;
+          if (post.createdAt != null) {
+            _timeAgo = _getTimeAgo(post.createdAt);
+          }
 
-          // Map Media URLs
+          if (post.user != null) {
+            final u = post.user!;
+            if (u.avatar != null &&
+                u.avatar!.trim().isNotEmpty &&
+                !u.avatar!.contains('unsplash.com')) {
+              _userAvatar = u.avatar!.trim();
+            }
+            if (u.username != null && u.username!.trim().isNotEmpty) {
+              _userHandle = '@${u.username!.trim().replaceAll('@', '')}';
+            }
+            if (u.name != null && u.name!.trim().isNotEmpty) {
+              _userName = u.name!.trim();
+            }
+            if (u.id != null) {
+              _postUserId = u.id;
+            }
+          }
+
+          // Map Media URLs - filter out dummy seed URLs (mixkit, unsplash) and videos if photo post
           if (post.media != null && post.media!.isNotEmpty) {
-            final urls = post.media!
-                .map((m) => m.mediaUrl ?? '')
-                .where((u) => u.isNotEmpty)
+            final isPhoto = post.type == 'photo';
+            final validUrls = post.media!
+                .where((m) {
+                  final url = (m.mediaUrl ?? '').trim();
+                  if (url.isEmpty) return false;
+                  if (url.contains('mixkit.co')) return false;
+                  if (url.contains('unsplash.com')) return false;
+                  if (isPhoto && m.mediaType == 'video') return false;
+                  if (isPhoto &&
+                      (url.endsWith('.mp4') ||
+                          url.endsWith('.mov') ||
+                          url.endsWith('.mkv'))) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((m) => m.mediaUrl!.trim())
                 .toList();
-            if (urls.isNotEmpty) {
-              _postImages = urls;
+
+            if (validUrls.isNotEmpty) {
+              _postImages = validUrls;
+            } else {
+              final anyNonDummy = post.media!
+                  .map((m) => (m.mediaUrl ?? '').trim())
+                  .where((u) =>
+                      u.isNotEmpty &&
+                      !u.contains('mixkit.co') &&
+                      !u.contains('unsplash.com'))
+                  .toList();
+              if (anyNonDummy.isNotEmpty) {
+                _postImages = anyNonDummy;
+              }
             }
           }
 
@@ -130,6 +233,24 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
           }
         });
       });
+    }
+  }
+
+  String _getTimeAgo(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    final difference = DateTime.now().toUtc().difference(dateTime.toUtc());
+    if (difference.inDays > 365) {
+      return '${(difference.inDays / 365).floor()}y ago';
+    } else if (difference.inDays > 30) {
+      return '${(difference.inDays / 30).floor()}mo ago';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
     }
   }
 
@@ -151,8 +272,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       text: comment.content ?? '',
       avatarUrl: user?.avatar ?? '',
       timeAgo: comment.createdAt != null
-          ? DateFormat('dd MMM').format(comment.createdAt!.toLocal())
-          : '2h',
+          ? _getTimeAgo(comment.createdAt)
+          : '',
       isLiked: comment.isLiked ?? false,
       likeCount: comment.likesCount ?? 0,
       replies: replies,
@@ -188,18 +309,17 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   }
 
   Future<void> _sharePost() async {
-    final String postHandle = widget.postData?['handle'] ?? '@frances';
-    final String postCaption =
-        'Golden hour ride through the city streets. Nothing beats the feeling of wind rushing past on two wheels. 🏍️✨\n#cycling #streetphotography #goldenhour';
-    final String postUrl =
-        widget.postData?['url'] ??
-        'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop&q=80';
+    final String postHandle = _userHandle?.isNotEmpty == true
+        ? _userHandle!
+        : (widget.postData?['handle'] ?? (_userName?.isNotEmpty == true ? '@$_userName' : ''));
+    final String postCaption = _caption;
+    final String postUrl = _postImages.isNotEmpty ? _postImages.first : '';
     final String shareText =
-        'Check out this post by $postHandle on StevenAko!\n\n"$postCaption"\n\n$postUrl';
+        'Check out this post${postHandle.isNotEmpty ? " by $postHandle" : ""} on StevenAko!\n\n${postCaption.isNotEmpty ? "\"$postCaption\"\n\n" : ""}$postUrl';
 
     try {
       final result = await SharePlus.instance.share(
-        ShareParams(text: shareText, subject: 'Post by $postHandle'),
+        ShareParams(text: shareText, subject: 'Post${postHandle.isNotEmpty ? " by $postHandle" : ""}'),
       );
 
       if (result.status == ShareResultStatus.success) {
@@ -221,110 +341,216 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   }
 
   void _showShareBottomSheet(String shareText) {
-    showModalBottomSheet(
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = (_postUserId ??
+            widget.postData?['userId'] ??
+            widget.postData?['user']?['id'] ??
+            widget.postData?['user_id'])
+        ?.toString()
+        .trim();
+    final bool isOwnPost = _isMyPost ||
+        widget.postData?['isSelf'] == true ||
+        widget.postData?['isMyPost'] == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: const Color(0xFF1E212D),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 10.h),
-              Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+        return CupertinoActionSheet(
+          title: const Text(
+            'Post Options',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                Clipboard.setData(ClipboardData(text: shareText));
+                ToastUtil.showShortToast('Link copied to clipboard!');
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_on_doc, size: 20),
+                  SizedBox(width: 8),
+                  Text('Copy Post Link'),
+                ],
               ),
-              SizedBox(height: 16.h),
-              Text(
-                'Share Post',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                SharePlus.instance.share(ShareParams(text: shareText));
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.share_up, size: 20),
+                  SizedBox(width: 8),
+                  Text('Share via App...'),
+                ],
               ),
-              SizedBox(height: 12.h),
-
-              // Copy Link / Text
-              ListTile(
-                leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text(
-                  'Copy Post Link',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
+            ),
+            if (isOwnPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
-                  Clipboard.setData(ClipboardData(text: shareText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Link copied to clipboard!'),
-                      duration: Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  final dynamic effectiveId =
+                      widget.postId ?? widget.postData?['id'];
+                  _confirmDeletePost(effectiveId);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.delete,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Delete Post'),
+                  ],
+                ),
               ),
-
-              // Share via native apps
-              ListTile(
-                leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text(
-                  'Share via App...',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  SharePlus.instance.share(ShareParams(text: shareText));
-                },
-              ),
-
-              // Direct Message option
-              ListTile(
-                leading: const Icon(
-                  Icons.send_rounded,
-                  color: Color(0xFF9D65FF),
-                ),
-                title: const Text(
-                  'Send in Message',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Sent to direct messages!'),
-                      duration: Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.report_problem_outlined,
-                  color: Color(0xFFFF3F55),
-                ),
-                title: const Text(
-                  'Report Post',
-                  style: TextStyle(color: Color(0xFFFF3F55)),
-                ),
-                onTap: () {
+            if (!isOwnPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
                   final dynamic effectiveId =
                       widget.postId ?? widget.postData?['id'];
                   HomeReportBottomSheet.show(context, postId: effectiveId);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_triangle,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Report Post'),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
-            ],
+            if (!_isMyPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  if (_postUserId != null) {
+                    _confirmBlockUser(
+                      _postUserId.toString(),
+                      _userHandle ?? _userName ?? 'User',
+                    );
+                  }
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.slash_circle,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Block User'),
+                  ],
+                ),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePost(dynamic effectiveId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Post?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this post?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (effectiveId != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(effectiveId);
+                  if (success) {
+                    ToastUtil.showShortToast('Post deleted successfully');
+                    getAllPostRxObj.getAllPosts();
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  } else {
+                    ToastUtil.showShortToast(
+                      'Failed to delete post. Please try again.',
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmBlockUser(String userId, String username) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text('Block @$username?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'They will no longer be able to message you, view your profile, or see your posts. You will not see their content in your feed.',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final res = await blockOrUnblockUserRxObj.blockOrUnblockUser(userId);
+                if (res != null) {
+                  ToastUtil.showShortToast('User blocked successfully');
+                  getAllPostRxObj.getAllPosts();
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                } else {
+                  ToastUtil.showShortToast('Failed to block user. Please try again.');
+                }
+              },
+              child: const Text('Block'),
+            ),
+          ],
         );
       },
     );
@@ -423,13 +649,24 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       return;
     }
 
+    final currentUser =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user;
+    final currentHandle = currentUser?.username != null &&
+            currentUser!.username!.isNotEmpty
+        ? '@${currentUser.username!.replaceAll('@', '')}'
+        : (currentUser?.name != null && currentUser!.name!.isNotEmpty
+            ? '@${currentUser.name}'
+            : '@you');
+    final currentAvatar = currentUser?.avatar ?? '';
+
     // Mode 2 & Mode 3: Reply or New top-level comment
     final newComment = CommentItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userHandle: '@you',
+      userHandle: currentHandle,
       text: ' $text',
-      avatarUrl: '',
+      avatarUrl: currentAvatar,
       timeAgo: 'Just now',
+      userId: currentUser?.id,
     );
 
     setState(() {
@@ -618,10 +855,13 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   // Header Widget with Back Button, User Avatar, Handle, Time, and Follow Button
   Widget _buildHeader(Color accentPurple, Color followBtnColor) {
-    final handle = widget.postData?['handle'] ?? '@frances';
-    final avatar =
-        widget.postData?['avatar'] ??
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
+    final handle = _userHandle?.isNotEmpty == true
+        ? _userHandle!
+        : (widget.postData?['handle'] ??
+            (_userName?.isNotEmpty == true ? '@$_userName' : ''));
+    final avatar = _userAvatar?.isNotEmpty == true
+        ? _userAvatar!
+        : (widget.postData?['avatar'] ?? '');
 
     return Row(
       children: [
@@ -645,7 +885,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         // User Avatar
         GestureDetector(
           onTap: () {
-            final dynamic rawUserId = widget.postData?['userId'];
+            final dynamic rawUserId = _postUserId ?? widget.postData?['userId'];
             final int? userId = rawUserId is int
                 ? rawUserId
                 : int.tryParse(rawUserId?.toString() ?? '');
@@ -658,18 +898,30 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
           },
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.r),
-            child: Image.network(
-              avatar,
-              width: 38.r,
-              height: 38.r,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 38.r,
-                height: 38.r,
-                color: Colors.grey[800],
-                child: const Icon(Icons.person, color: Colors.white70),
-              ),
-            ),
+            child: avatar.trim().isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: avatar.trim(),
+                    width: 38.r,
+                    height: 38.r,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 38.r,
+                      height: 38.r,
+                      color: const Color(0xFF2B2838),
+                    ),
+                    errorWidget: (context, error, stackTrace) => Container(
+                      width: 38.r,
+                      height: 38.r,
+                      color: const Color(0xFF2B2838),
+                      child: const Icon(Icons.person, color: Colors.white70),
+                    ),
+                  )
+                : Container(
+                    width: 38.r,
+                    height: 38.r,
+                    color: const Color(0xFF2B2838),
+                    child: const Icon(Icons.person, color: Colors.white70),
+                  ),
           ),
         ),
         SizedBox(width: 12.w),
@@ -677,7 +929,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
         // User Handle and Time
         GestureDetector(
           onTap: () {
-            final dynamic rawUserId = widget.postData?['userId'];
+            final dynamic rawUserId = _postUserId ?? widget.postData?['userId'];
             final int? userId = rawUserId is int
                 ? rawUserId
                 : int.tryParse(rawUserId?.toString() ?? '');
@@ -692,62 +944,112 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                handle,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
+              if (handle.isNotEmpty)
+                Text(
+                  handle,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                '2 hours ago',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.45),
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w400,
+              if (_timeAgo != null && _timeAgo!.isNotEmpty) ...[
+                SizedBox(height: 2.h),
+                Text(
+                  _timeAgo!,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
 
         const Spacer(),
 
-        // Follow Button
-        GestureDetector(
-          onTap: _toggleFollow,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 7.h),
-            decoration: BoxDecoration(
-              color: _isFollowing ? Colors.white24 : followBtnColor,
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Text(
-              _isFollowing ? 'Following' : 'Follow',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: 8.w),
-        IconButton(
-          onPressed: () {
-            final dynamic effectiveId = widget.postId ?? widget.postData?['id'];
-            HomeReportBottomSheet.show(context, postId: effectiveId);
+        // Follow Button and More Options (only for other users)
+        Builder(
+          builder: (context) {
+            final dynamic savedUserId =
+                appData.read('user_id') ?? appData.read(kKeyUserID);
+            final dynamic profileUserId =
+                getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+            final String? currentIdStr =
+                (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+                    ? savedUserId.toString().trim()
+                    : profileUserId?.toString().trim();
+            final String? postUserIdStr = (_postUserId ??
+                    widget.postData?['userId'] ??
+                    widget.postData?['user']?['id'] ??
+                    widget.postData?['user_id'])
+                ?.toString()
+                .trim();
+            final bool isOwnPost = _isMyPost ||
+                widget.postData?['isSelf'] == true ||
+                widget.postData?['isMyPost'] == true ||
+                (currentIdStr != null &&
+                    postUserIdStr != null &&
+                    currentIdStr == postUserIdStr);
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isOwnPost)
+                  GestureDetector(
+                    onTap: _toggleFollow,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 18.w, vertical: 7.h),
+                      decoration: BoxDecoration(
+                        color: _isFollowing ? Colors.white24 : followBtnColor,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        _isFollowing ? 'Following' : 'Follow',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (isOwnPost) ...[
+                  IconButton(
+                    onPressed: () {
+                      final dynamic effectiveId =
+                          widget.postId ?? widget.postData?['id'];
+                      _confirmDeletePost(effectiveId);
+                    },
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFFFF4D4D),
+                      size: 22,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  SizedBox(width: 8.w),
+                ],
+                IconButton(
+                  onPressed: () => _showShareBottomSheet(
+                    _caption.isNotEmpty ? _caption : 'Stevenako post',
+                  ),
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            );
           },
-          icon: const Icon(
-            Icons.more_vert_rounded,
-            color: Colors.white70,
-            size: 20,
-          ),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
         ),
       ],
     );
@@ -755,6 +1057,31 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   // Main Image Widget with Instagram-style PageView (Image 1 to 2 to 3 scroller)
   Widget _buildPostImage() {
+    if (_postImages.isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: 250.h,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E212D),
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Center(
+          child: Shimmer.fromColors(
+            baseColor: const Color(0xFF1E212D),
+            highlightColor: const Color(0xFF2E3245),
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       height: 250.h,
@@ -783,94 +1110,93 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                 });
               },
               itemBuilder: (context, index) {
-                return Image.network(
-                  _postImages[index],
+                final imageUrl = _postImages[index];
+                return CachedNetworkImage(
+                  imageUrl: imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: const Color(0xFF1E212D),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFFF3F5E),
-                          strokeWidth: 2,
+                  placeholder: (context, url) => Container(
+                    color: const Color(0xFF1E212D),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFFF3F5E),
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: const Color(0xFF1E212D),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported_rounded,
+                          size: 48,
+                          color: Colors.white38,
                         ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: const Color(0xFF1E212D),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.image_not_supported_rounded,
-                            size: 48,
-                            color: Colors.white38,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Photo',
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                        SizedBox(height: 8),
+                        Text(
+                          'Photo unavailable',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
 
             // Top Right Badge (1/3, 2/3, 3/3 like Instagram)
-            Positioned(
-              top: 12.h,
-              right: 12.w,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  '${_currentImageIndex + 1}/${_postImages.length}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+            if (_postImages.length > 1)
+              Positioned(
+                top: 12.h,
+                right: 12.w,
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    '${_currentImageIndex + 1}/${_postImages.length}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
-            ),
 
             // Bottom Center Pagination Dots (Instagram style indicator)
-            Positioned(
-              bottom: 12.h,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_postImages.length, (index) {
-                  final bool isActive = _currentImageIndex == index;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    width: isActive ? 18.w : 6.w,
-                    height: 6.h,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  );
-                }),
+            if (_postImages.length > 1)
+              Positioned(
+                bottom: 12.h,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_postImages.length, (index) {
+                    final bool isActive = _currentImageIndex == index;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      margin: EdgeInsets.symmetric(horizontal: 3.w),
+                      width: isActive ? 18.w : 6.w,
+                      height: 6.h,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                    );
+                  }),
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -954,12 +1280,15 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   // Caption text and hashtags
   Widget _buildCaptionAndHashtags(Color accentPurple) {
+    if (_caption.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Caption
         Text(
-          'Golden hour ride through the city streets. Nothing beats the feeling of wind rushing past on two wheels. 🏍️✨',
+          _caption,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.95),
             fontSize: 14.5.sp,
@@ -967,18 +1296,6 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
             fontWeight: FontWeight.w400,
           ),
         ),
-        SizedBox(height: 10.h),
-
-        // Hashtags
-        // Wrap(
-        //   spacing: 8.w,
-        //   runSpacing: 4.h,
-        //   children: [
-        //     _buildHashtag('#cycling', accentPurple),
-        //     _buildHashtag('#streetphotography', accentPurple),
-        //     _buildHashtag('#goldenhour', accentPurple),
-        //   ],
-        // ),
       ],
     );
   }
@@ -1050,22 +1367,38 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(avatarSize / 2),
-              child: Image.network(
-                comment.avatarUrl,
-                width: avatarSize,
-                height: avatarSize,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: avatarSize,
-                  height: avatarSize,
-                  color: Colors.grey[800],
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white70,
-                    size: isReply ? 16 : 20,
-                  ),
-                ),
-              ),
+              child: comment.avatarUrl.trim().isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: comment.avatarUrl.trim(),
+                      width: avatarSize,
+                      height: avatarSize,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: avatarSize,
+                        height: avatarSize,
+                        color: Colors.grey[800],
+                      ),
+                      errorWidget: (context, error, stackTrace) => Container(
+                        width: avatarSize,
+                        height: avatarSize,
+                        color: Colors.grey[800],
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white70,
+                          size: isReply ? 16 : 20,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      color: Colors.grey[800],
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white70,
+                        size: isReply ? 16 : 20,
+                      ),
+                    ),
             ),
           ),
           SizedBox(width: 10.w),

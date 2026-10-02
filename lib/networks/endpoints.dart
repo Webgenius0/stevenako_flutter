@@ -2,9 +2,28 @@
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-String get url =>
-    dotenv.env['BASE_URL'] ?? "https://dashboard.realmworldapp.live/api";
+String get url {
+  final envUrl = dotenv.env['BASE_URL'];
+  if (envUrl != null && envUrl.trim().isNotEmpty) {
+    return envUrl.trim();
+  }
+  const dartDefineUrl = String.fromEnvironment('BASE_URL');
+  if (dartDefineUrl.isNotEmpty) {
+    return dartDefineUrl;
+  }
+  return "https://dashboard.realmworldapp.live/api";
+}
+
 String get imageUrl => url;
+
+String get baseHost {
+  try {
+    final uri = Uri.parse(url);
+    return uri.host;
+  } catch (_) {
+    return "dashboard.realmworldapp.live";
+  }
+}
 
 final class NetworkConstants {
   NetworkConstants._();
@@ -131,6 +150,7 @@ final class Endpoints {
   static String reportUser(String userId) => "/user/report/$userId";
   static String reportPost(dynamic postId) => "/user/posts/$postId/report";
   static String postView(dynamic postId) => "/user/posts/$postId/view";
+  static String deletePost(dynamic postId) => "/user/posts/$postId";
   static String myWallet() => "/my-wallet";
   static String walletDeposit() => "/user/wallet/deposit";
   static String stripeConnect() => "/user/stripe/connect";

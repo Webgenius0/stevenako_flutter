@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -223,6 +224,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
         'id': post.id,
         'userId': post.user?.id,
         'isSelf': isSelf,
+        'isMyPost': post.isMyPost == true || isSelf,
         'itemType': isAd ? 'ad' : 'post',
         'isAd': isAd,
         'isImage': isImageMedia,
@@ -497,6 +499,7 @@ class _ReelsSubScreenState extends State<ReelsSubScreen> {
               isVideoInitialized: _initializedStates[index] ?? false,
               hasError: _errorStates[index] ?? false,
               onRetry: () => _initControllerForIndex(index),
+              onDelete: _fetchReels,
               onStartPlayback: () {
                 if (!_hasUserStartedPlayback) {
                   setState(() {
@@ -520,6 +523,7 @@ class ReelPageItem extends StatefulWidget {
   final bool hasError;
   final VoidCallback onRetry;
   final VoidCallback? onStartPlayback;
+  final VoidCallback? onDelete;
 
   const ReelPageItem({
     super.key,
@@ -530,6 +534,7 @@ class ReelPageItem extends StatefulWidget {
     this.hasError = false,
     required this.onRetry,
     this.onStartPlayback,
+    this.onDelete,
   });
 
   @override
@@ -811,133 +816,236 @@ class _ReelPageItemState extends State<ReelPageItem>
     }
   }
 
-  Future<void> _shareVideo() async {
+  void _shareVideo() {
     final String userHandle = widget.data['userHandle'] ?? '@user';
     final String caption = widget.data['caption'] ?? '';
     final String videoUrl = widget.data['videoUrl'] ?? '';
     final String shareText =
         'Watch this reel by $userHandle on StevenAko!\n\n"$caption"\n\n$videoUrl';
 
-    try {
-      final result = await SharePlus.instance.share(
-        ShareParams(text: shareText, subject: 'Reel by $userHandle'),
-      );
-      if (result.status == ShareResultStatus.success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video link shared!'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showShareBottomSheet(context, shareText);
-      }
-    }
+    _showShareBottomSheet(context, shareText);
   }
 
   void _showShareBottomSheet(BuildContext context, String shareText) {
-    showModalBottomSheet(
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = widget.data['userId']?.toString().trim();
+    final bool isOwnPost = widget.data['isSelf'] == true ||
+        widget.data['isMyPost'] == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: const Color(0xFF1E212D),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 10.h),
-              Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+        return CupertinoActionSheet(
+          title: const Text(
+            'Video Options',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                Clipboard.setData(ClipboardData(text: shareText));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Video link copied to clipboard!'),
+                    duration: Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_on_doc, size: 20),
+                  SizedBox(width: 8),
+                  Text('Copy Video Link'),
+                ],
               ),
-              SizedBox(height: 16.h),
-              Text(
-                'Share Video',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                SharePlus.instance.share(ShareParams(text: shareText));
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.share_up, size: 20),
+                  SizedBox(width: 8),
+                  Text('Share via App...'),
+                ],
               ),
-              SizedBox(height: 12.h),
-
-              ListTile(
-                leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text(
-                  'Copy Video Link',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Video sent in message!'),
+                    duration: Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.chat_bubble, size: 20),
+                  SizedBox(width: 8),
+                  Text('Send in Message'),
+                ],
+              ),
+            ),
+            if (isOwnPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
-                  Clipboard.setData(ClipboardData(text: shareText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Video link copied to clipboard!'),
-                      duration: Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  _confirmDeleteReel(widget.data['id']);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.delete,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Delete Reel'),
+                  ],
+                ),
               ),
-
-              ListTile(
-                leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text(
-                  'Share via App...',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  SharePlus.instance.share(ShareParams(text: shareText));
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(
-                  Icons.send_rounded,
-                  color: Color(0xFF9D65FF),
-                ),
-                title: const Text(
-                  'Send in Message',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Video sent in message!'),
-                      duration: Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.report_problem_outlined,
-                  color: Color(0xFFFF3F55),
-                ),
-                title: const Text(
-                  'Report Reel',
-                  style: TextStyle(color: Color(0xFFFF3F55)),
-                ),
-                onTap: () {
+            if (!isOwnPost) ...[
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
                   HomeReportBottomSheet.show(context, postId: widget.data['id']);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_triangle,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Report Reel'),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  final authorId = widget.data['userId'];
+                  final authorName = widget.data['userName'] ?? widget.data['userHandle'] ?? 'User';
+                  if (authorId != null) {
+                    _confirmBlockUser(authorId.toString(), authorName.toString());
+                  }
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.slash_circle,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Block User'),
+                  ],
+                ),
+              ),
             ],
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteReel(dynamic reelId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Reel?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this reel?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (reelId != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(reelId);
+                  if (success) {
+                    ToastUtil.showShortToast('Reel deleted successfully');
+                    widget.onDelete?.call();
+                  } else {
+                    ToastUtil.showShortToast(
+                      'Failed to delete reel. Please try again.',
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmBlockUser(String userId, String username) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text('Block @$username?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'They will no longer be able to message you, view your profile, or see your posts. You will not see their reels in your feed.',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final res = await blockOrUnblockUserRxObj.blockOrUnblockUser(userId);
+                if (res != null) {
+                  ToastUtil.showShortToast('User blocked successfully');
+                  widget.onDelete?.call();
+                } else {
+                  ToastUtil.showShortToast('Failed to block user. Please try again.');
+                }
+              },
+              child: const Text('Block'),
+            ),
+          ],
         );
       },
     );
@@ -2111,6 +2219,15 @@ class _ReelPageItemState extends State<ReelPageItem>
                   iconScaleX: -1.0,
                   onTap: _shareVideo,
                 ),
+                if (isOwnPost) ...[
+                  const SizedBox(height: 16),
+                  _buildActionItem(
+                    icon: CupertinoIcons.delete,
+                    iconColor: const Color(0xFFFF4D4D),
+                    label: 'Delete',
+                    onTap: () => _confirmDeleteReel(widget.data['id']),
+                  ),
+                ],
                 const SizedBox(height: 16),
 
                 RotationTransition(

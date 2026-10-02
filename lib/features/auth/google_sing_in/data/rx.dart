@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../constants/app_constants.dart';
 import '../../../../helpers/di.dart';
+import '../../../../helpers/secure_storage_helper.dart';
 import '../../../../helpers/toast.dart';
 import '../../../../networks/dio/dio.dart';
 import '../google_sing_in_model.dart';
@@ -56,6 +57,10 @@ final class GoogleSignInRx {
     appData.write(kKeyAccessToken, token);
     appData.write('is_guest', false);
     appData.write('user_id', user?.id?.toString() ?? '');
+
+    if (token.isNotEmpty) {
+      SecureStorageHelper.saveAccessToken(token);
+    }
 
     // ── Update Dio authorization header ──────────────────────────────────────
     if (token.isNotEmpty) {

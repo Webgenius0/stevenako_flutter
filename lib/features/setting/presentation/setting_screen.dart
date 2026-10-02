@@ -8,6 +8,7 @@ import 'package:stevenako_flutter/features/home/presentation/qr_code_screeen.dar
 import 'package:stevenako_flutter/features/message/widgets/custom_app_bar.dart';
 import 'package:stevenako_flutter/helpers/all_routes.dart';
 import 'package:stevenako_flutter/helpers/navigation_service.dart';
+import 'package:stevenako_flutter/features/setting/widgets/custom_delete_account_dialog.dart';
 import 'package:stevenako_flutter/features/setting/widgets/custom_logout_dialog.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -18,13 +19,19 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  // Show dialog with a QR Code
-
   // Show logout confirmation dialog
   void _showLogoutDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) => const CustomLogoutDialog(),
+    );
+  }
+
+  // Show delete account confirmation dialog
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => const CustomDeleteAccountDialog(),
     );
   }
 
@@ -195,6 +202,16 @@ class _SettingScreenState extends State<SettingScreen> {
                                   _showLogoutDialog();
                                 },
                               ),
+                              SizedBox(height: 12.h),
+
+                              // --------------- Delete Account Card ---------------
+                              _buildDeleteAccountCard(
+                                icon: Icons.delete_outline_rounded,
+                                label: 'Delete Account',
+                                onTap: () {
+                                  _showDeleteAccountDialog();
+                                },
+                              ),
                               SizedBox(height: 32.h),
                             ],
                           ),
@@ -290,6 +307,54 @@ class _SettingScreenState extends State<SettingScreen> {
                     label,
                     style: GoogleFonts.inter(
                       color: const Color(0xFFEE8E80),
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper widget builder for delete account button
+  Widget _buildDeleteAccountCard({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF450A0A).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(100.r),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(100.r),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: const Color(0xFFEF4444),
+                  size: 22.sp,
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFEF4444),
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),

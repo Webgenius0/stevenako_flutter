@@ -1,16 +1,22 @@
 import 'package:auto_animated/auto_animated.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_post_model.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/helpers/ui_helpers.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
+import 'package:stevenako_flutter/provider/post_comments_provider.dart';
+
 
 class PostsSubScreenTwo extends StatefulWidget {
   const PostsSubScreenTwo({super.key});
@@ -44,52 +50,62 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
         ? caption
         : (postUrl.isNotEmpty ? postUrl : 'Check out this post on Stevenako!');
 
-    showModalBottomSheet(
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = post.user?.id?.toString().trim();
+    final bool isOwnPost = post.isMyPost == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        return CupertinoActionSheet(
+          title: const Text('Post Options', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Post saved!'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.bookmark, size: 20),
+                  SizedBox(width: 8),
+                  Text('Save post'),
+                ],
               ),
-              const SizedBox(height: 8),
-              _buildOptionTile(
-                icon: Icons.bookmark_border,
-                label: 'Save post',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Post saved!'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                _showShareOptions(context, postId, shareText, isOwnPost: isOwnPost);
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.share, size: 20),
+                  SizedBox(width: 8),
+                  Text('Share post'),
+                ],
               ),
-              _buildOptionTile(
-                icon: Icons.share_outlined,
-                label: 'Share post',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _showShareOptions(context, postId, shareText);
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.edit_outlined,
-                label: 'Edit post',
-                onTap: () {
+            ),
+            if (isOwnPost) ...[
+              CupertinoActionSheetAction(
+                onPressed: () {
                   Navigator.pop(sheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -98,144 +114,176 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                     ),
                   );
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.pencil, size: 20),
+                    SizedBox(width: 8),
+                    Text('Edit post'),
+                  ],
+                ),
               ),
-              _buildOptionTile(
-                icon: Icons.report_problem_outlined,
-                label: 'Report post',
-                iconColor: const Color(0xFFFF3F55),
-                textColor: const Color(0xFFFF3F55),
-                onTap: () {
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  _confirmDelete(index, postId);
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.delete, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Delete post'),
+                  ],
+                ),
+              ),
+            ] else ...[
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
                   HomeReportBottomSheet.show(context, postId: postId);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_triangle, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Report post'),
+                  ],
+                ),
               ),
-              const Divider(color: Colors.white12, height: 8),
-              _buildOptionTile(
-                icon: Icons.delete_outline,
-                label: 'Delete post',
-                iconColor: const Color(0xFFFF3F55),
-                textColor: const Color(0xFFFF3F55),
-                onTap: () {
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
-                  _confirmDelete(index);
+                  final authorId = post.user?.id;
+                  final authorName = post.user?.username ?? post.user?.name ?? 'User';
+                  if (authorId != null) {
+                    _confirmBlockUser(authorId.toString(), authorName);
+                  }
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.slash_circle, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Block user'),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
             ],
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
         );
       },
     );
   }
 
-  void _showShareOptions(BuildContext context, int? postId, String shareText) {
-    showModalBottomSheet(
+  void _showShareOptions(BuildContext context, int? postId, String shareText, {bool isOwnPost = false}) {
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text(
-                  'Copy Post Text / Link',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  Clipboard.setData(ClipboardData(text: shareText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Copied to clipboard!'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text(
-                  'Share via App...',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  SharePlus.instance.share(ShareParams(text: shareText));
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.report_problem_outlined,
-                  color: Color(0xFFFF3F55),
-                ),
-                title: const Text(
-                  'Report Post',
-                  style: TextStyle(color: Color(0xFFFF3F55)),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  HomeReportBottomSheet.show(context, postId: postId);
-                },
-              ),
-              SizedBox(height: 12.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _confirmDelete(int index) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2C),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Delete post?',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            'This action cannot be undone.',
-            style: TextStyle(color: Colors.white70),
-          ),
+      builder: (BuildContext sheetContext) {
+        return CupertinoActionSheet(
+          title: const Text('Share Options', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.white54),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                Clipboard.setData(ClipboardData(text: shareText));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Copied to clipboard!'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_on_doc, size: 20),
+                  SizedBox(width: 8),
+                  Text('Copy Post Text / Link'),
+                ],
               ),
             ),
-            TextButton(
+            CupertinoActionSheetAction(
               onPressed: () {
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Post action executed.')));
+                Navigator.pop(sheetContext);
+                SharePlus.instance.share(ShareParams(text: shareText));
               },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Color(0xFFFF3F55)),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.share_up, size: 20),
+                  SizedBox(width: 8),
+                  Text('Share via App...'),
+                ],
               ),
+            ),
+            if (!isOwnPost)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  HomeReportBottomSheet.show(context, postId: postId);
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_triangle, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Report Post'),
+                  ],
+                ),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDelete(int index, dynamic postId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Post?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text('This action cannot be undone. Are you sure you want to delete this post?'),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (postId != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(postId);
+                  if (success) {
+                    ToastUtil.showShortToast('Post deleted successfully');
+                    getAllPostRxObj.getAllPosts();
+                  } else {
+                    ToastUtil.showShortToast('Failed to delete post. Please try again.');
+                  }
+                }
+              },
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -243,8 +291,54 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     );
   }
 
-  // ---------- Comments bottom sheet ----------
+  void _confirmBlockUser(String userId, String username) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text('Block @$username?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'They will no longer be able to message you, view your profile, or see your posts. You will not see their content in your feed.',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final res = await blockOrUnblockUserRxObj.blockOrUnblockUser(userId);
+                if (res != null) {
+                  ToastUtil.showShortToast('User blocked successfully');
+                  _refreshPosts();
+                } else {
+                  ToastUtil.showShortToast('Failed to block user. Please try again.');
+                }
+              },
+              child: const Text('Block'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ---------- Comments bottom sheet with Provider & Apple Cupertino Design ----------
   void _showCommentsSheet(Map<String, dynamic> postData) {
+    final String postKey = postData['postId']?.toString() ??
+        postData['id']?.toString() ??
+        'post_${postData['userName']}_${(postData['text'] ?? '').hashCode}';
+
+    final commentsProvider =
+        Provider.of<PostCommentsProvider>(context, listen: false);
+    commentsProvider.initializeComments(postKey, postData['comments']);
+    commentsProvider.setActivePost(postKey);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -255,6 +349,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       builder: (sheetContext) {
         return _CommentsSheet(
           post: postData,
+          postKey: postKey,
           onCommentsChanged: (updatedComments) {
             setState(() {
               postData['comments'] = updatedComments;
@@ -265,24 +360,12 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     );
   }
 
-  Widget _buildOptionTile({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color iconColor = Colors.white70,
-    Color textColor = Colors.white,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(label, style: TextStyle(color: textColor, fontSize: 14.5)),
-      onTap: onTap,
-    );
-  }
+
 
   Widget _buildAvatarImage(String? url) {
     if (url == null || url.isEmpty) {
-      return const CircleAvatar(
-        radius: 18,
+      return   CircleAvatar(
+        radius: 18.r,
         backgroundColor: Color(0xFF2A2A3A),
         child: Icon(Icons.person, color: Colors.white54, size: 20),
       );
@@ -291,15 +374,15 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       borderRadius: BorderRadius.circular(18),
       child: CachedNetworkImage(
         imageUrl: url,
-        width: 36,
-        height: 36,
+        width: 36.w,
+        height: 36.h,
         fit: BoxFit.cover,
         placeholder: (context, url) => Shimmer.fromColors(
           baseColor: const Color(0xFF1E1E2C),
           highlightColor: const Color(0xFF2E2E42),
           child: Container(
-            width: 36,
-            height: 36,
+            width: 36.w,
+            height: 36.h,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Color(0xFF1E1E2C),
@@ -348,6 +431,69 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
   }
 
+  void _openImageFullscreen(BuildContext context, String imageUrl) {
+    if (imageUrl.isEmpty) return;
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withValues(alpha: 0.95),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => const Center(
+                        child: CupertinoActivityIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => const Center(
+                        child: Icon(
+                          Icons.broken_image_rounded,
+                          color: Colors.white38,
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 12.h,
+                  right: 16.w,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: EdgeInsets.all(8.r),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24, width: 1),
+                      ),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        color: Colors.white,
+                        size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildPostMediaImage(String? rawUrl) {
     final fullUrl = _resolveFullMediaUrl(rawUrl);
     if (!_isDisplayableImageUrl(fullUrl)) {
@@ -355,29 +501,55 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     }
     return Padding(
       padding: EdgeInsets.only(top: 10.h),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: 360.h,
-            minHeight: 120.h,
-          ),
-          child: CachedNetworkImage(
-            imageUrl: fullUrl,
+      child: GestureDetector(
+        onTap: () => _openImageFullscreen(context, fullUrl),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: Container(
             width: double.infinity,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Shimmer.fromColors(
-              baseColor: const Color(0xFF1E1E2C),
-              highlightColor: const Color(0xFF2E2E42),
-              child: Container(
-                height: 180.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E2C),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
+            constraints: BoxConstraints(
+              minHeight: 160.h,
+              maxHeight: 380.h,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF151422),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 0.8,
               ),
             ),
-            errorWidget: (context, url, error) => const SizedBox.shrink(),
+            child: CachedNetworkImage(
+              imageUrl: fullUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              imageBuilder: (context, imageProvider) => Container(
+                width: double.infinity,
+                constraints: BoxConstraints(
+                  minHeight: 160.h,
+                  maxHeight: 380.h,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                ),
+              ),
+              placeholder: (context, url) => Shimmer.fromColors(
+                baseColor: const Color(0xFF1E1E2C),
+                highlightColor: const Color(0xFF2E2E42),
+                child: Container(
+                  height: 200.h,
+                  width: double.infinity,
+                  color: const Color(0xFF1E1E2C),
+                ),
+              ),
+              errorWidget: (context, url, error) => const SizedBox.shrink(),
+            ),
           ),
         ),
       ),
@@ -390,7 +562,7 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
       bottom: false,
       child: Container(
         color: const Color(0xFF0F0E17),
-        padding: EdgeInsets.only(top: 64.h),
+        padding: EdgeInsets.only(top: 60.h),
         child: RefreshIndicator(
           color: const Color(0xFF8B5CF6),
           backgroundColor: Colors.black,
@@ -422,8 +594,8 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                               color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(20.r),
                               border: Border.all(
-                                color: const Color(0xFFEF4444).withValues(alpha: 0.3),
-                                width: 1,
+                                color:   Color(0xFFEF4444).withValues(alpha: 0.3),
+                                width: 1.w,
                               ),
                             ),
                             child: Column(
@@ -585,11 +757,28 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                       postModel.caption ?? postModel.title ?? '';
 
                   final Map<String, dynamic> postDataForSheet = {
+                    'postId': postId,
+                    'id': postId,
                     'userName': userName,
                     'avatar': avatarUrl,
                     'text': captionText,
                     'comments': <Map<String, String>>[],
                   };
+
+
+                  final dynamic savedUserId =
+                      appData.read('user_id') ?? appData.read(kKeyUserID);
+                  final dynamic profileUserId =
+                      getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+                  final String? currentIdStr =
+                      (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+                          ? savedUserId.toString().trim()
+                          : profileUserId?.toString().trim();
+                  final String? postUserIdStr = postModel.user?.id?.toString().trim();
+                  final bool isOwnPost = postModel.isMyPost == true ||
+                      (currentIdStr != null &&
+                          postUserIdStr != null &&
+                          currentIdStr == postUserIdStr);
 
                   return FadeTransition(
                     opacity: animation,
@@ -613,6 +802,8 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                           commentsCount: commentsCount,
                           postDataForSheet: postDataForSheet,
                           userId: postModel.user?.id,
+                          isOwnPost: isOwnPost,
+                          onDeleteTap: () => _confirmDelete(index, postId),
                           onLikeTap: () {
                             setState(() {
                               if (_likedPostIds.contains(postId)) {
@@ -628,13 +819,16 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                           },
                           onMoreTap: () =>
                               _showPostOptions(context, postModel, index),
-                          onShareTap: () => _showShareOptions(
-                            context,
-                            postId,
-                            captionText.isNotEmpty
-                                ? captionText
-                                : (mediaUrl ?? 'Check out this post on Stevenako!'),
-                          ),
+                          onShareTap: () {
+                            _showShareOptions(
+                              context,
+                              postId,
+                              captionText.isNotEmpty
+                                  ? captionText
+                                  : (mediaUrl ?? 'Check out this post on Stevenako!'),
+                              isOwnPost: isOwnPost,
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -663,6 +857,8 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
     required VoidCallback onLikeTap,
     required VoidCallback onMoreTap,
     required VoidCallback onShareTap,
+    bool isOwnPost = false,
+    VoidCallback? onDeleteTap,
     int? userId,
   }) {
     final String resolvedMediaUrl = _resolveFullMediaUrl(mediaUrl);
@@ -731,6 +927,23 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                   ),
                 ),
               ),
+              if (isOwnPost && onDeleteTap != null)
+                GestureDetector(
+                  onTap: onDeleteTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF4D4D).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFFFF4D4D),
+                      size: 18,
+                    ),
+                  ),
+                ),
               GestureDetector(
                 onTap: onMoreTap,
                 child: const Padding(
@@ -799,15 +1012,27 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                         size: 18,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$commentsCount',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12.5,
-                      ),
+                      SizedBox(width: 6.w),
+                    Builder(
+                      builder: (ctx) {
+                        final String postKey = postId.toString();
+
+                        final dynamicCommentsCount =
+                            ctx.watch<PostCommentsProvider>().getCommentCount(postKey);
+                        final totalComments =
+                            (commentsCount > 0 ? commentsCount : 0) +
+                            dynamicCommentsCount;
+                        return Text(
+                          '$totalComments',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                          ),
+                        );
+                      },
                     ),
                   ],
+
                 ),
               ),
               UIHelper.horizontalSpace(16.w),
@@ -817,10 +1042,10 @@ class _PostsSubScreenTwoState extends State<PostsSubScreenTwo> {
                   'assets/icons/sheee.png',
                   height: 17.w,
                   width: 17.w,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
+                  errorBuilder: (context, error, stackTrace) =>   Icon(
                     Icons.share_outlined,
                     color: Colors.white70,
-                    size: 18,
+                    size: 18.sp,
                   ),
                 ),
               ),
@@ -952,13 +1177,18 @@ class _PostsShimmerLoaderState extends State<PostsShimmerLoader>
 }
 
 // ==========================================
-// Comments Bottom Sheet Widget
+// Comments Bottom Sheet Widget (Provider State Management & Apple Cupertino Design)
 // ==========================================
 class _CommentsSheet extends StatefulWidget {
   final Map<String, dynamic> post;
+  final String postKey;
   final ValueChanged<List<Map<String, String>>> onCommentsChanged;
 
-  const _CommentsSheet({required this.post, required this.onCommentsChanged});
+  const _CommentsSheet({
+    required this.post,
+    required this.postKey,
+    required this.onCommentsChanged,
+  });
 
   @override
   State<_CommentsSheet> createState() => _CommentsSheetState();
@@ -967,223 +1197,18 @@ class _CommentsSheet extends StatefulWidget {
 class _CommentsSheetState extends State<_CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  late List<Map<String, String>> _comments;
-
-  // Reply / Edit state
-  int? _replyingToIndex;
-  int? _editingIndex;
-
-  static const String _currentUserName = 'You';
-  static const String _currentUserAvatar =
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80';
 
   @override
   void initState() {
     super.initState();
-    _comments = List<Map<String, String>>.from(widget.post['comments']);
-  }
-
-  void _submitComment() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      if (_editingIndex != null) {
-        // Save edited comment
-        _comments[_editingIndex!]['text'] = text;
-        _comments[_editingIndex!]['edited'] = 'true';
-        _editingIndex = null;
-      } else if (_replyingToIndex != null) {
-        // Add as a reply comment (tagged with replyTo name)
-        final replyToName = _comments[_replyingToIndex!]['userName'];
-        _comments.add({
-          'userName': _currentUserName,
-          'avatar': _currentUserAvatar,
-          'text': text,
-          'replyTo': replyToName ?? '',
-        });
-        _replyingToIndex = null;
-      } else {
-        _comments.add({
-          'userName': _currentUserName,
-          'avatar': _currentUserAvatar,
-          'text': text,
-        });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final provider =
+            Provider.of<PostCommentsProvider>(context, listen: false);
+        provider.setActivePost(widget.postKey);
+        provider.initializeComments(widget.postKey, widget.post['comments']);
       }
     });
-
-    widget.onCommentsChanged(_comments);
-    _controller.clear();
-    FocusScope.of(context).unfocus();
-  }
-
-  void _startReply(int index) {
-    setState(() {
-      _replyingToIndex = index;
-      _editingIndex = null;
-      _controller.clear();
-    });
-    _focusNode.requestFocus();
-  }
-
-  void _startEdit(int index) {
-    setState(() {
-      _editingIndex = index;
-      _replyingToIndex = null;
-      _controller.text = _comments[index]['text'] ?? '';
-      _controller.selection = TextSelection.fromPosition(
-        TextPosition(offset: _controller.text.length),
-      );
-    });
-    _focusNode.requestFocus();
-  }
-
-  void _cancelReplyOrEdit() {
-    setState(() {
-      _replyingToIndex = null;
-      _editingIndex = null;
-      _controller.clear();
-    });
-    _focusNode.unfocus();
-  }
-
-  void _deleteComment(int index) {
-    setState(() {
-      _comments.removeAt(index);
-      if (_editingIndex == index) _editingIndex = null;
-      if (_replyingToIndex == index) _replyingToIndex = null;
-    });
-    widget.onCommentsChanged(_comments);
-  }
-
-  // Bottom sheet with Reply / Edit / Delete options for a comment
-  void _showCommentOptions(int index) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E2C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: const Icon(Icons.reply, color: Colors.white70),
-                title: const Text(
-                  'Reply',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _startReply(index);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white70,
-                ),
-                title: const Text(
-                  'Edit',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _startEdit(index);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.copy_rounded,
-                  color: Colors.white70,
-                ),
-                title: const Text(
-                  'Copy text',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  final text = _comments[index]['text'] ?? '';
-                  Clipboard.setData(ClipboardData(text: text));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Comment copied to clipboard!')),
-                  );
-                },
-              ),
-              const Divider(color: Colors.white12, height: 8),
-              ListTile(
-                leading: const Icon(
-                  Icons.delete_outline,
-                  color: Color(0xFFFF3F55),
-                ),
-                title: const Text(
-                  'Delete',
-                  style: TextStyle(color: Color(0xFFFF3F55), fontSize: 14.5),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _confirmDeleteComment(index);
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _confirmDeleteComment(int index) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2C),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Delete comment?',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            'This action cannot be undone.',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.white54),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                _deleteComment(index);
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Color(0xFFFF3F55)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -1193,307 +1218,566 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     super.dispose();
   }
 
+  void _submitComment(PostCommentsProvider provider) {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    provider.addComment(
+      postKey: widget.postKey,
+      text: text,
+      userName: provider.getCurrentUserName(),
+      avatar: provider.getCurrentUserAvatar(),
+      userId: provider.getCurrentUserId(),
+    );
+
+    widget.onCommentsChanged(
+      provider.getComments(widget.postKey).map((c) => c.toMap()).toList(),
+    );
+    _controller.clear();
+    FocusScope.of(context).unfocus();
+  }
+
+  void _startReply(PostCommentsProvider provider, int index) {
+    provider.startReply(index);
+    _controller.clear();
+    _focusNode.requestFocus();
+  }
+
+  void _startEdit(
+    PostCommentsProvider provider,
+    int index,
+    String currentText,
+  ) {
+    provider.startEdit(index);
+    _controller.text = currentText;
+    _controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: _controller.text.length),
+    );
+    _focusNode.requestFocus();
+  }
+
+  void _cancelReplyOrEdit(PostCommentsProvider provider) {
+    provider.cancelReplyOrEdit();
+    _controller.clear();
+    _focusNode.unfocus();
+  }
+
+  void _deleteComment(PostCommentsProvider provider, int index) {
+    provider.deleteComment(postKey: widget.postKey, index: index);
+    widget.onCommentsChanged(
+      provider.getComments(widget.postKey).map((c) => c.toMap()).toList(),
+    );
+  }
+
+  // Apple CupertinoActionSheet for comment options
+  void _showCommentOptions(
+    BuildContext context,
+    PostCommentsProvider provider,
+    int index,
+    PostCommentItem comment,
+  ) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (actionSheetContext) {
+        return CupertinoActionSheet(
+          title: Text(
+            'Comment by ${comment.userName}',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          message: Text(
+            comment.text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12),
+          ),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(actionSheetContext);
+                _startReply(provider, index);
+              },
+              child:   Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.reply, size: 18.sp),
+                  SizedBox(width: 8.w),
+                  Text('Reply'),
+                ],
+              ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(actionSheetContext);
+                _startEdit(provider, index, comment.text);
+              },
+              child:   Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.pencil, size: 18.sp),
+                  SizedBox(width: 8.w),
+                  Text('Edit'),
+                ],
+              ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(actionSheetContext);
+                Clipboard.setData(ClipboardData(text: comment.text));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Comment copied to clipboard!')),
+                );
+              },
+              child:   Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_on_doc, size: 18.sp),
+                  SizedBox(width: 8.w),
+                  Text('Copy text'),
+                ],
+              ),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(actionSheetContext);
+              _confirmDeleteComment(context, provider, index);
+            },
+            child:   Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.delete,
+                    size: 18.sp, color: CupertinoColors.destructiveRed),
+                SizedBox(width: 8.w),
+                Text('Delete'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Apple CupertinoAlertDialog for delete confirmation
+  void _confirmDeleteComment(
+    BuildContext context,
+    PostCommentsProvider provider,
+    int index,
+  ) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Comment?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this comment?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _deleteComment(provider, index);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Comment deleted.')),
+                );
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.65,
-        minChildSize: 0.4,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Comments (${_comments.length})',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Divider(color: Colors.white12, height: 1),
+    return Consumer<PostCommentsProvider>(
+      builder: (context, provider, child) {
+        final comments = provider.getComments(widget.postKey);
+        final replyingIndex = provider.replyingToIndex;
+        final editingIndex = provider.editingIndex;
+        final currentUserAvatar = provider.getCurrentUserAvatar();
 
-              // Comments list
-              Expanded(
-                child: _comments.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No comments yet.\nBe the first to comment!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white38, fontSize: 13),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: _comments.length,
-                        itemBuilder: (context, index) {
-                          final comment = _comments[index];
-                          final replyTo = comment['replyTo'];
-                          final wasEdited = comment['edited'] == 'true';
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.65,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            expand: false,
+            builder: (context, scrollController) {
+              return Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Comments (${comments.length})',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(color: Colors.white12, height: 1),
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 18),
-                            child: GestureDetector(
-                              onLongPress: () => _showCommentOptions(index),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      final dynamic rawUserId =
-                                          comment['userId'];
-                                      final int? userId = rawUserId is int
-                                          ? rawUserId
-                                          : int.tryParse(
-                                              rawUserId?.toString() ?? '',
-                                            );
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ProfileScreen(userId: userId),
-                                        ),
-                                      );
-                                    },
-                                    child: CircleAvatar(
-                                      radius: 16,
-                                      backgroundImage: NetworkImage(
-                                        comment['avatar']!,
-                                      ),
-                                    ),
+                  // Comments list
+                  Expanded(
+                    child: comments.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No comments yet.\nBe the first to comment!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.white38, fontSize: 13),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            itemCount: comments.length,
+                            itemBuilder: (context, index) {
+                              final comment = comments[index];
+                              final replyTo = comment.replyTo;
+                              final wasEdited = comment.edited;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 18),
+                                child: GestureDetector(
+                                  onLongPress: () => _showCommentOptions(
+                                    context,
+                                    provider,
+                                    index,
+                                    comment,
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (replyTo != null &&
-                                            replyTo.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 3,
-                                            ),
-                                            child: Text(
-                                              'Replying to $replyTo',
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          final dynamic rawUserId =
+                                              comment.userId;
+                                          final int? userId = rawUserId is int
+                                              ? rawUserId
+                                              : int.tryParse(
+                                                  rawUserId?.toString() ?? '',
+                                                );
+                                          if (userId != null) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProfileScreen(
+                                                        userId: userId),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          child: comment.avatar.isNotEmpty
+                                              ? CachedNetworkImage(
+                                                  imageUrl: comment.avatar,
+                                                  width: 32,
+                                                  height: 32,
+                                                  fit: BoxFit.cover,
+                                                  errorWidget: (context, url, error) =>
+                                                      _buildAvatarFallback(
+                                                          comment.userName),
+                                                )
+                                              : _buildAvatarFallback(
+                                                  comment.userName),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (replyTo != null &&
+                                                replyTo.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 3),
+                                                child: Text(
+                                                  'Replying to $replyTo',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFFFF3F55),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            Text(
+                                              comment.userName,
                                               style: const TextStyle(
-                                                color: Color(0xFFFF3F55),
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
                                               ),
                                             ),
-                                          ),
-                                        Text(
-                                          comment['userName']!,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                          ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              comment.text,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                if (wasEdited)
+                                                  const Padding(
+                                                    padding: EdgeInsets.only(
+                                                        right: 10),
+                                                    child: Text(
+                                                      'edited',
+                                                      style: TextStyle(
+                                                        color: Colors.white30,
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                GestureDetector(
+                                                  onTap: () => _startReply(
+                                                      provider, index),
+                                                  child: const Text(
+                                                    'Reply',
+                                                    style: TextStyle(
+                                                      color: Colors.white54,
+                                                      fontSize: 11.5,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 14),
+                                                GestureDetector(
+                                                  onTap: () => _startEdit(
+                                                      provider,
+                                                      index,
+                                                      comment.text),
+                                                  child: const Text(
+                                                    'Edit',
+                                                    style: TextStyle(
+                                                      color: Colors.white54,
+                                                      fontSize: 11.5,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 14),
+                                                GestureDetector(
+                                                  onTap: () =>
+                                                      _confirmDeleteComment(
+                                                          context,
+                                                          provider,
+                                                          index),
+                                                  child: const Text(
+                                                    'Delete',
+                                                    style: TextStyle(
+                                                      color: Color(0xFFFF3F55),
+                                                      fontSize: 11.5,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          comment['text']!,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                           children: [
-                                             if (wasEdited)
-                                               const Padding(
-                                                 padding: EdgeInsets.only(
-                                                   right: 10,
-                                                 ),
-                                                 child: Text(
-                                                   'edited',
-                                                   style: TextStyle(
-                                                     color: Colors.white30,
-                                                     fontSize: 11,
-                                                   ),
-                                                 ),
-                                               ),
-                                             GestureDetector(
-                                               onTap: () => _startReply(index),
-                                               child: const Text(
-                                                 'Reply',
-                                                 style: TextStyle(
-                                                   color: Colors.white54,
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                             const SizedBox(width: 14),
-                                             GestureDetector(
-                                               onTap: () => _startEdit(index),
-                                               child: const Text(
-                                                 'Edit',
-                                                 style: TextStyle(
-                                                   color: Colors.white54,
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                             const SizedBox(width: 14),
-                                             GestureDetector(
-                                               onTap: () => _confirmDeleteComment(index),
-                                               child: const Text(
-                                                 'Delete',
-                                                 style: TextStyle(
-                                                   color: Color(0xFFFF3F55),
-                                                   fontSize: 11.5,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  // 3-dot options button (also opens same sheet)
-                                  GestureDetector(
-                                    onTap: () => _showCommentOptions(index),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.more_vert,
-                                        color: Colors.white38,
-                                        size: 18,
                                       ),
-                                    ),
+                                      GestureDetector(
+                                        onTap: () => _showCommentOptions(
+                                          context,
+                                          provider,
+                                          index,
+                                          comment,
+                                        ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4),
+                                          child: Icon(
+                                            CupertinoIcons.ellipsis,
+                                            color: Colors.white38,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Reply / Edit banner
+                  if (replyingIndex != null || editingIndex != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      color: const Color(0xFF2A2A3A),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              editingIndex != null
+                                  ? 'Editing comment'
+                                  : (replyingIndex != null &&
+                                          replyingIndex < comments.length)
+                                      ? 'Replying to ${comments[replyingIndex].userName}'
+                                      : 'Replying to comment',
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12.5,
                               ),
                             ),
-                          );
-                        },
-                      ),
-              ),
-
-              // Reply / Edit banner
-              if (_replyingToIndex != null || _editingIndex != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  color: const Color(0xFF2A2A3A),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _editingIndex != null
-                              ? 'Editing comment'
-                              : 'Replying to ${_comments[_replyingToIndex!]['userName']}',
-                          style: const TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12.5,
                           ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _cancelReplyOrEdit,
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white54,
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Input field
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  child: Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 16,
-                        backgroundImage: NetworkImage(_currentUserAvatar),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _focusNode,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.5,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: _editingIndex != null
-                                ? 'Edit your comment...'
-                                : _replyingToIndex != null
-                                ? 'Write a reply...'
-                                : 'Add a comment...',
-                            hintStyle: const TextStyle(color: Colors.white38),
-                            filled: true,
-                            fillColor: const Color(0xFF2A2A3A),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
+                          GestureDetector(
+                            onTap: () => _cancelReplyOrEdit(provider),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white54,
+                              size: 16,
                             ),
                           ),
-                          onSubmitted: (_) => _submitComment(),
-                          textInputAction: TextInputAction.send,
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _submitComment,
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFF3F55),
-                            shape: BoxShape.circle,
+                    ),
+
+                  // Input field
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: currentUserAvatar.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: currentUserAvatar,
+                                    width: 32,
+                                    height: 32,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        _buildAvatarFallback(
+                                            provider.getCurrentUserName()),
+                                  )
+                                : _buildAvatarFallback(
+                                    provider.getCurrentUserName()),
                           ),
-                          child: const Icon(
-                            Icons.send_rounded,
-                            color: Colors.white,
-                            size: 18,
+
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13.5,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: editingIndex != null
+                                    ? 'Edit your comment...'
+                                    : replyingIndex != null
+                                    ? 'Write a reply...'
+                                    : 'Add a comment...',
+                                hintStyle:
+                                    const TextStyle(color: Colors.white38),
+                                filled: true,
+                                fillColor: const Color(0xFF2A2A3A),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              onSubmitted: (_) => _submitComment(provider),
+                              textInputAction: TextInputAction.send,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => _submitComment(provider),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFF3F55),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.send_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatarFallback(String name) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+    return Container(
+      width: 32,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Color(0xFF8B5CF6),
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
+

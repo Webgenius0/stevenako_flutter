@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,7 +10,9 @@ import 'package:shimmer/shimmer.dart';
 import 'package:stevenako_flutter/features/home/model/get_all_photo_model.dart';
 import 'package:stevenako_flutter/features/home/presentation/post_deatils_screeen.dart';
 import 'package:stevenako_flutter/features/profile/presentation/profile_screen.dart';
+import 'package:stevenako_flutter/constants/app_constants.dart';
 import 'package:stevenako_flutter/features/home/presentation/widgets/home_report_bottom_sheet.dart';
+import 'package:stevenako_flutter/helpers/di.dart';
 import 'package:stevenako_flutter/helpers/toast.dart';
 import 'package:stevenako_flutter/networks/api_acess.dart';
 
@@ -514,72 +517,193 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
         ? widget.post.id as int
         : int.tryParse(widget.post.id?.toString() ?? '');
 
-    showModalBottomSheet(
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = widget.post.user?.id?.toString().trim();
+    final bool isOwnPhoto = widget.post.isMyPost == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: const Color(0xFF1E212D),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 10.h),
-              Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+      builder: (BuildContext sheetContext) {
+        return CupertinoActionSheet(
+          title: const Text('Photo Options', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                Clipboard.setData(ClipboardData(text: photoUrl));
+                ToastUtil.showShortToast('Link copied to clipboard!');
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_on_doc, size: 20),
+                  SizedBox(width: 8),
+                  Text('Copy Photo Link'),
+                ],
               ),
-              SizedBox(height: 16.h),
-              Text(
-                'Photo Options',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                SharePlus.instance.share(ShareParams(text: photoUrl));
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.share_up, size: 20),
+                  SizedBox(width: 8),
+                  Text('Share via App...'),
+                ],
               ),
-              SizedBox(height: 12.h),
-              ListTile(
-                leading: const Icon(Icons.copy_rounded, color: Colors.white),
-                title: const Text('Copy Photo Link',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () {
+            ),
+            if (isOwnPhoto)
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
-                  Clipboard.setData(ClipboardData(text: photoUrl));
-                  ToastUtil.showShortToast('Link copied to clipboard!');
+                  _confirmDeletePhoto(pid);
                 },
-              ),
-              ListTile(
-                leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text('Share via App...',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  SharePlus.instance.share(ShareParams(text: photoUrl));
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.report_problem_outlined,
-                  color: Color(0xFFFF3F55),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.delete,
+                        size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Delete Photo'),
+                  ],
                 ),
-                title: const Text(
-                  'Report Photo',
-                  style: TextStyle(color: Color(0xFFFF3F55)),
-                ),
-                onTap: () {
+              ),
+            if (!isOwnPhoto) ...[
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
                   Navigator.pop(sheetContext);
                   HomeReportBottomSheet.show(context, postId: pid);
                 },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_triangle, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Report Photo'),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  final authorId = widget.post.user?.id;
+                  final authorName = widget.post.user?.username ?? widget.post.user?.name ?? 'User';
+                  if (authorId != null) {
+                    _confirmBlockUser(authorId.toString(), authorName);
+                  }
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.slash_circle, size: 20, color: CupertinoColors.destructiveRed),
+                    SizedBox(width: 8),
+                    Text('Block User'),
+                  ],
+                ),
+              ),
             ],
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(sheetContext),
+            child: const Text('Cancel'),
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePhoto(dynamic pid) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Delete Photo?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This action cannot be undone. Are you sure you want to delete this photo?',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                if (pid != null) {
+                  final bool success =
+                      await deletePostRxObj.deletePost(pid);
+                  if (success) {
+                    ToastUtil.showShortToast('Photo deleted successfully');
+                    getAllPhotoRxObj.getPhotos();
+                  } else {
+                    ToastUtil.showShortToast(
+                      'Failed to delete photo. Please try again.',
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmBlockUser(String userId, String username) {
+    showCupertinoDialog(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text('Block @$username?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'They will no longer be able to message you, view your profile, or see your posts. You will not see their photos in your feed.',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final res = await blockOrUnblockUserRxObj.blockOrUnblockUser(userId);
+                if (res != null) {
+                  ToastUtil.showShortToast('User blocked successfully');
+                  getAllPhotoRxObj.getPhotos();
+                } else {
+                  ToastUtil.showShortToast('Failed to block user. Please try again.');
+                }
+              },
+              child: const Text('Block'),
+            ),
+          ],
         );
       },
     );
@@ -641,6 +765,20 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
         ? '@$username'
         : (name != null && name.isNotEmpty ? name : '@user');
 
+    final dynamic savedUserId =
+        appData.read('user_id') ?? appData.read(kKeyUserID);
+    final dynamic profileUserId =
+        getUserProfileRxObj.dataFetcher.valueOrNull?.data?.user?.id;
+    final String? currentIdStr =
+        (savedUserId != null && savedUserId.toString().trim().isNotEmpty)
+            ? savedUserId.toString().trim()
+            : profileUserId?.toString().trim();
+    final String? postUserIdStr = widget.post.user?.id?.toString().trim();
+    final bool isOwnPhoto = widget.post.isMyPost == true ||
+        (currentIdStr != null &&
+            postUserIdStr != null &&
+            currentIdStr == postUserIdStr);
+
     return FadeTransition(
       opacity: _entranceFade,
       child: SlideTransition(
@@ -658,6 +796,7 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                   onTapCancel: () => setState(() => _isPressed = false),
                   onDoubleTap: _handleDoubleTap,
                   onLongPress: () {
+                    if (isOwnPhoto) return;
                     final int? pid = widget.post.id is int
                         ? widget.post.id as int
                         : int.tryParse(widget.post.id?.toString() ?? '');
@@ -730,11 +869,12 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                               ),
                             ),
 
-                          // Follow / Following badge, top-right — toggleable button, never hidden!
-                          Positioned(
-                            top: 10.r,
-                            right: 10.r,
-                            child: GestureDetector(
+                          // Follow / Following badge, top-right — toggleable button, hidden for own photos
+                          if (!isOwnPhoto)
+                            Positioned(
+                              top: 10.r,
+                              right: 10.r,
+                              child: GestureDetector(
                               onTap: _toggleFollow,
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
@@ -992,16 +1132,27 @@ class _PhotoTileState extends State<_PhotoTile> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
+                  // Delete button for own photo
+                  if (isOwnPhoto) ...[
+                    SizedBox(width: 8.w),
+                    _BounceTap(
+                      onTap: () {
+                        final int? pid = widget.post.id is int
+                            ? widget.post.id as int
+                            : int.tryParse(widget.post.id?.toString() ?? '');
+                        _confirmDeletePhoto(pid);
+                      },
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: const Color(0xFFFF4D4D),
+                        size: 16.r,
+                      ),
+                    ),
+                  ],
+                  // More / Options button
                   SizedBox(width: 8.w),
-
-                  // Report / Options button
                   _BounceTap(
-                    onTap: () {
-                      final int? pid = widget.post.id is int
-                          ? widget.post.id as int
-                          : int.tryParse(widget.post.id?.toString() ?? '');
-                      HomeReportBottomSheet.show(context, postId: pid);
-                    },
+                    onTap: _handleShare,
                     child: Icon(
                       Icons.more_vert_rounded,
                       color: Colors.white70,
