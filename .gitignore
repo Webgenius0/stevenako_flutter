@@ -13,8 +13,6 @@
 migrate_working_dir/
 
 # Environment variables
-.env
-.env.*
 !.env.example
 
 # IntelliJ related
@@ -50,6 +48,8 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 branch_structure.json
+.gitignore
 temp_auto_push.bat
 temp_interactive_push.bat
-.gitignore
+config.bat
+node_modules
