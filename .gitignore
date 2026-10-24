@@ -13,8 +13,6 @@
 migrate_working_dir/
 
 # Environment variables
-.env
-.env.*
 !.env.example
 
 # IntelliJ related
@@ -23,8 +21,8 @@ migrate_working_dir/
 *.iws
 .idea/
 
-temp_auto_push.bat
 # VS Code which you may wish to be included in version control, so this line
+temp_auto_push.bat
 # is commented out by default.
 
 # Flutter/Dart/Pub related
@@ -51,3 +49,5 @@ app.*.map.json
 # FVM Version Cache
 .fvm/.gitignore
 branch_structure.json
+config.bat
+node_modules
